@@ -2,10 +2,12 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Sequence,Literal
 from dataclasses import dataclass
-
+from bs4 import BeautifulSoup as bs
+from urllib import parse
 
 from exceptions import CantGetData
 from client import NaumenUUID
+
 
 class PageType(Enum):
     
@@ -162,6 +164,23 @@ def parse_naumen_page(page: str, name_report: str,
     #TODO return parsed_collections
     
     
+def _get_url_param_value(url: str, needed_param: str):
+    """Функция парсинга URL и получение значения необходимого GET параметра.
+    
+    Args:
+        url: строчная ссылка.
+        needed_param: ключ необходимого GET параметра. 
+        
+    Returns:
+        Значение необходимого GET параметра
+        
+    Raises:
+
+    """    
+    param_value = parse.parse_qs(parse.urlparse(url).query)[needed_param][0]  
+    return param_value
+
+
 def _parse_reports_lits(text: str, name: str) -> Sequence[NaumenUUID] | \
                                                       Sequence[Literal['']]:
     """Функция парсинга страницы с отчётами и получение UUID отчёта.
@@ -174,11 +193,16 @@ def _parse_reports_lits(text: str, name: str) -> Sequence[NaumenUUID] | \
         Коллекцию с найденными элементами.
         
     Raises:
-        CantGetData: Если не удалось найти данные.
 
     """
-    #TODO Логика парсинга.
-    pass
+    soup = bs(text, "html.parser")
+    report_tag = soup.select(f'[title="{name}"]')
+    if report_tag:
+        url = report_tag[0]['href']
+        return (NaumenUUID(_get_url_param_value(url, 'uuid')), ) 
+    return ('',)
+        
+        
 
 
 def _parse_issues_table(text: str) -> Sequence | Sequence[Literal['']]:
@@ -193,7 +217,7 @@ def _parse_issues_table(text: str) -> Sequence | Sequence[Literal['']]:
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    pass
+    soup = bs(text, "html.parser")
     #TODO Логика парсинга.
 
 
@@ -209,7 +233,7 @@ def _parse_card_issue(text: str) -> Sequence | Sequence[Literal['']]:
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    pass
+    soup = bs(text, "html.parser")
     #TODO Логика парсинга.
     
     
@@ -225,7 +249,7 @@ def _parse_service_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    pass
+    soup = bs(text, "html.parser")
     #TODO Логика парсинга.
     
     
@@ -241,7 +265,7 @@ def _parse_mttr_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    pass
+    soup = bs(text, "html.parser")
     #TODO Логика парсинга.
     
 
@@ -257,5 +281,5 @@ def _parse_flr_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    pass
+    soup = bs(text, "html.parser")
     #TODO Логика парсинга.
