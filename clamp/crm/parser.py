@@ -1,7 +1,9 @@
 from enum import Enum
-from typing import Sequence
+from typing import Sequence,Literal
+
 
 from exceptions import CantGetData
+from client import NaumenUUID
 
 class PageType(Enum):
     
@@ -44,15 +46,114 @@ def parse_naumen_page(page: str, name_report: str,
          raise CantGetData
      
     page_parsers = {
-        PageType.REPORT_LIST_PAGE: '',
-        PageType.ISSUES_TABLE_PAGE: '',
-        PageType.ISSUE_CARD_PAGE: '',
-        PageType.SERVICE_LEVEL_REPORT_PAGE: '',
-        PageType.MMTR_LEVEL_REPORT_PAGE: '',
-        PageType.FLR_LEVEL_REPORT_PAGE: ''
+        PageType.REPORT_LIST_PAGE: _parse_reports_lits,
+        PageType.ISSUES_TABLE_PAGE: _parse_issues_table,
+        PageType.ISSUE_CARD_PAGE: _parse_card_issue,
+        PageType.SERVICE_LEVEL_REPORT_PAGE: _parse_service_lavel_report,
+        PageType.MMTR_LEVEL_REPORT_PAGE: _parse_mttr_lavel_report,
+        PageType.FLR_LEVEL_REPORT_PAGE: _parse_flr_lavel_report,
     }
     
     parser = page_parsers[type_page]
     
     #TODO parsed_collections: Sequence = parser(...)
     #TODO return parsed_collections
+    
+    
+def _parse_reports_lits(text: str, name: str) -> Sequence[NaumenUUID] | \
+                                                      Sequence[Literal['']]:
+    """Функция парсинга страницы с отчётами и получение UUID отчёта.
+    
+    Args:
+        text: сырой текст страницы.
+        name: уникальное название отчета.
+        
+    Returns:
+        Коллекцию с найденными элементами.
+        
+    Raises:
+        CantGetData: Если не удалось найти данные.
+
+    """
+    #TODO Логика парсинга.
+    pass
+
+
+def _parse_issues_table(text: str) -> Sequence | Sequence[Literal['']]:
+    """Функция парсинга страницы с обращениями на группе.
+    
+    Args:
+        text: сырой текст страницы.
+        
+    Returns:
+        Коллекцию с найденными элементами.
+        
+    Raises:
+        CantGetData: Если не удалось найти данные.
+    """
+    pass
+    #TODO Логика парсинга.
+
+
+def _parse_card_issue(text: str) -> Sequence | Sequence[Literal['']]:
+    """Функция парсинга картточки обращения.
+    
+    Args:
+        text: сырой текст страницы.
+        
+    Returns:
+        Коллекцию с найденными элементами.
+        
+    Raises:
+        CantGetData: Если не удалось найти данные.
+    """
+    pass
+    #TODO Логика парсинга.
+    
+    
+def _parse_service_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
+    """Функция парсинга картточки обращения.
+    
+    Args:
+        text: сырой текст страницы.
+        
+    Returns:
+        Коллекцию с найденными элементами.
+        
+    Raises:
+        CantGetData: Если не удалось найти данные.
+    """
+    pass
+    #TODO Логика парсинга.
+    
+    
+def _parse_mttr_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
+    """Функция парсинга картточки обращения.
+    
+    Args:
+        text: сырой текст страницы.
+        
+    Returns:
+        Коллекцию с найденными элементами.
+        
+    Raises:
+        CantGetData: Если не удалось найти данные.
+    """
+    pass
+    #TODO Логика парсинга.
+    
+
+def _parse_flr_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
+    """Функция парсинга картточки обращения.
+    
+    Args:
+        text: сырой текст страницы.
+        
+    Returns:
+        Коллекцию с найденными элементами.
+        
+    Raises:
+        CantGetData: Если не удалось найти данные.
+    """
+    pass
+    #TODO Логика парсинга.
