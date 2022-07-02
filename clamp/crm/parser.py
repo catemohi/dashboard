@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Sequence,Literal
 from dataclasses import dataclass
@@ -27,16 +28,46 @@ class PageType(Enum):
     FLR_LEVEL_REPORT_PAGE = 6
     
     
-@dataclass(slots=True, frozen=True)
+@dataclass
 class Issue:
     
     """Класс данных для хранения данных по обращению.
     
         Attributes:
-
+            uuid: уникалный идентификатор обьекта в CRM системе.
+            number: номер обращения.
+            name: название обращения.
+            issue_type: тип обращения
+            step: шаг на котром находится обращение.
+            step_time: время последнего шага .
+            responsible: ответственный за последний шаг.
+            last_edit_time: время последнего изменения.
+            vip_contractor: имеет ли клиент статус vip.
+            create_date: дата создания обращения.
+            uuid_service: уникалный идентификатор обьекта в CRM системе.
+            name_service: название услуги.
+            uuid_contractor: уникалный идентификатор обьекта в CRM системе.
+            name_contractor: название контр агента.
+            return_to_work_time: время возврата обращения в работу.
+            description: описание обращения.
     """
-    pass
-    
+    uuid: NaumenUUID
+    number: int
+    name: str
+    issue_type: str
+    step: str
+    step_time: timedelta
+    responsible: str
+    last_edit_time: datetime
+    vip_contractor: bool
+    create_date: datetime
+    uuid_service: NaumenUUID
+    name_service: str
+    uuid_contractor: NaumenUUID
+    name_contractor: str
+    return_to_work_time: datetime
+    description: str
+   
     
 @dataclass(slots=True, frozen=True)
 class ServiceLevel:
@@ -44,9 +75,21 @@ class ServiceLevel:
     """Класс данных для хранения данных отчета Service Level.
     
         Attributes:
-
+            date: дата отсчёта.
+            group: группа отчёта.
+            total_issues: всего обращений.
+            total_primary_issues: всего первичных обращений.
+            num_issues_before_deadline: кол-во вовремя принятых обращений.
+            num_issues_after_deadline: кол-во принятых после срока обращений.
+            service_level: уровень servece level в процентах.
     """
-    pass    
+    date: datetime
+    group: str
+    total_issues: int
+    total_primary_issues: int
+    num_issues_before_deadline: int
+    num_issues_after_deadline: int
+    service_level: float
 
 
 @dataclass(slots=True, frozen=True)
@@ -55,9 +98,16 @@ class Mttr:
     """Класс данных для хранения данных отчета MTTR.
     
         Attributes:
+            date: дата отсчёта.
+            total_issues: всего обращений.
+            average_mttr: cредний МТТР.
+            average_mttr_tech_support: cредний МТТР тех.поддержки.
 
     """
-    pass    
+    date: datetime
+    total_issues: int
+    average_mttr: timedelta
+    average_mttr_tech_support: timedelta
 
 
 @dataclass(slots=True, frozen=True)
@@ -66,9 +116,16 @@ class Flr:
     """Класс данных для хранения данных отчета FLR.
     
         Attributes:
+            date: дата отсчёта.
+            flr_level: уровень flr level в процентах.
+            num_issues_closed_independently: Обращения закрытые самостоятельно.
+            total_primary_issues: всего первичных обращений.
 
     """
-    pass    
+    date: datetime
+    flr_level: float
+    num_issues_closed_independently: int
+    total_primary_issues: int
 
 
 def parse_naumen_page(page: str, name_report: str,
