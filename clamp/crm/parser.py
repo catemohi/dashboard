@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Sequence,Literal
+from dataclasses import dataclass
 
 
 from exceptions import CantGetData
@@ -26,6 +27,50 @@ class PageType(Enum):
     FLR_LEVEL_REPORT_PAGE = 6
     
     
+@dataclass(slots=True, frozen=True)
+class Issue:
+    
+    """Класс данных для хранения данных по обращению.
+    
+        Attributes:
+
+    """
+    pass
+    
+    
+@dataclass(slots=True, frozen=True)
+class ServiceLevel:
+    
+    """Класс данных для хранения данных отчета Service Level.
+    
+        Attributes:
+
+    """
+    pass    
+
+
+@dataclass(slots=True, frozen=True)
+class Mttr:
+    
+    """Класс данных для хранения данных отчета MTTR.
+    
+        Attributes:
+
+    """
+    pass    
+
+
+@dataclass(slots=True, frozen=True)
+class Flr:
+    
+    """Класс данных для хранения данных отчета FLR.
+    
+        Attributes:
+
+    """
+    pass    
+
+
 def parse_naumen_page(page: str, name_report: str,
                       type_page: PageType) -> Sequence:
     """Функция парсинга страниц из crm Naumen, входной интерфейс подмодуля.
