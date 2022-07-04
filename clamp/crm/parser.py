@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Sequence,Literal
+from typing import Sequence,Literal, Iterable
 from dataclasses import dataclass
-from bs4 import BeautifulSoup as bs
+from bs4 import BeautifulSoup, element
 from urllib import parse
+from re import findall
+from django.utils.timezone import make_aware
 
 from exceptions import CantGetData
 from client import NaumenUUID
@@ -180,6 +182,53 @@ def _get_url_param_value(url: str, needed_param: str):
     param_value = parse.parse_qs(parse.urlparse(url).query)[needed_param][0]  
     return param_value
 
+def _get_columns_name(soup: BeautifulSoup) -> Iterable[str]:
+    """Функция парсинга названий столбцов отчётов.
+    
+    Args:
+        soup: подготовленная для парсинга HTML страница.
+        
+    Returns:
+        Коллекцию с названиями столбцов.
+        
+    Raises:
+
+    """
+    column_name = [tag.text.strip() for tag in soup.select(".supp tr th b")]
+    return tuple(column_name)
+
+def  _get_step_duration(raw_duration: str) -> timedelta:
+    """Функция для парсинга строки продолжительности в обьект timedelta.
+    
+    Args:
+        raw_duration: строчная задержка.
+        
+    Returns:
+        Объект задержки шага.
+        
+    Raises:
+
+    """
+    duration = dict(zip(('days', 'h', 'min'), findall(r'\d+', raw_duration)))
+    duration = timedelta(days=duration['days'],
+                         hours=duration['h'], minutes=duration['min'])
+    return duration
+         
+
+def  _get_issue_num(issue_name: str) -> str:
+    """Функция для парсинга номера обращения.
+    
+    Args:
+        issue_name: имя обращения.
+        
+    Returns:
+        Номер обращения.
+        
+    Raises:
+
+    """
+    number = findall(r'\d{7,10}', issue_name)[0]
+    return number
 
 def _parse_reports_lits(text: str, name: str) -> Sequence[NaumenUUID] | \
                                                       Sequence[Literal['']]:
@@ -195,7 +244,7 @@ def _parse_reports_lits(text: str, name: str) -> Sequence[NaumenUUID] | \
     Raises:
 
     """
-    soup = bs(text, "html.parser")
+    soup = BeautifulSoup(text, "html.parser")
     report_tag = soup.select(f'[title="{name}"]')
     if report_tag:
         url = report_tag[0]['href']
@@ -203,8 +252,6 @@ def _parse_reports_lits(text: str, name: str) -> Sequence[NaumenUUID] | \
     return ('',)
         
         
-
-
 def _parse_issues_table(text: str) -> Sequence | Sequence[Literal['']]:
     """Функция парсинга страницы с обращениями на группе.
     
@@ -217,8 +264,40 @@ def _parse_issues_table(text: str) -> Sequence | Sequence[Literal['']]:
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    soup = bs(text, "html.parser")
-    #TODO Логика парсинга.
+    soup = BeautifulSoup(text, "html.parser")
+    category = _get_columns_name(soup)
+    rows = soup.select(".supp tr")[7:-1]
+    if len(rows) < 1:
+        raise CantGetData
+    def parse_table_row(row: element.Tag, 
+                        category: Iterable[str]) -> Issue:
+        """Функция парсинга строки таблицы.
+
+        Args:
+            row: сырая строка.
+            category: названия столбцов, строки.
+
+        Returns:
+            Issue: объект обращения.
+            
+        """
+        issue = Issue()
+        issus_params = [
+            col.text.replace('\n', '').strip() for col in row.select('td')]
+        issues_dict = dict(zip(category, issus_params))
+        _url = (row.find('a', href=True)['href'])
+        issue.uuid = _get_url_param_value(_url, 'uuid')
+        issue.number = _get_issue_num(issues_dict['Обращение'])
+        issue.step_time = _get_step_duration(issues_dict['Время решения'])
+        issue.last_edit_time = datetime.now() - issue.step_time
+        issue.name = issues_dict['Обращение']
+        issue.issue_type = issues_dict['Тип обращения']
+        issue.step = issues_dict['Состояние']
+        issue.responsible = issues_dict['Ответственный']
+        return issue   
+    
+    issues = [parse_table_row(row, category) for row in rows]
+    return issues
 
 
 def _parse_card_issue(text: str) -> Sequence | Sequence[Literal['']]:
@@ -233,7 +312,7 @@ def _parse_card_issue(text: str) -> Sequence | Sequence[Literal['']]:
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    soup = bs(text, "html.parser")
+    soup = BeautifulSoup(text, "html.parser")
     #TODO Логика парсинга.
     
     
@@ -249,7 +328,7 @@ def _parse_service_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    soup = bs(text, "html.parser")
+    soup = BeautifulSoup(text, "html.parser")
     #TODO Логика парсинга.
     
     
@@ -265,7 +344,7 @@ def _parse_mttr_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    soup = bs(text, "html.parser")
+    soup = BeautifulSoup(text, "html.parser")
     #TODO Логика парсинга.
     
 
@@ -281,5 +360,5 @@ def _parse_flr_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    soup = bs(text, "html.parser")
+    soup = BeautifulSoup(text, "html.parser")
     #TODO Логика парсинга.
