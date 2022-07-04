@@ -1,0 +1,194 @@
+{
+    "url": {
+        "main": "",
+        "login": "",
+        "create": "",
+        "delete": "",
+        "open": ""
+    },
+    "service level report": {
+        "uuid": "",
+        "create request": {
+            "data": {
+                "title": {"name": "", "value": ""},
+                "param1": {
+                    "name": "",
+                    "value": ""},
+                "deadline": {
+                    "name": "",
+                    "value": ""},
+                "param4": {
+                    "name": "",
+                    "value": ""},
+                "param5": {
+                    "name": "",
+                    "value": ""},
+                "start data": {
+                    "name": "",
+                    "value": ""},
+                "final_date": {
+                    "name": "",
+                    "value": ""}
+                },
+            "params": {
+                "param1": {
+                    "name": "",
+                    "value": "':'" }
+            }
+        }
+    },
+    "flr report": {
+        "uuid": "",
+        "create request": {
+            "data": {
+                "title": {"name": "", "value": ""},
+                "param1": {
+                    "name": "",
+                    "value": ""},
+                "param2": {
+                    "name": "",
+                    "value": ""},
+                "param3": {
+                    "name": "",
+                    "value": ""},
+                "param4": {
+                    "name": "",
+                    "value": ""},
+                "param7": {
+                    "name": "",
+                    "value": ""},
+                "param8": {
+                    "name": "",
+                    "value": ""},
+                "start data": {
+                    "name": "",
+                    "value": ""},
+                "final_date": {
+                    "name": "",
+                    "value": ""}
+                },
+            "params": {
+                "param1": {
+                    "name": "",
+                    "value": "':'" }
+            }
+        }
+    },
+    "mttr report": {
+        "uuid": "",
+        "create request": {
+            "data": {
+                "title": {"name": "", "value": ""},
+                "param1": {
+                    "name": "",
+                    "value": ""},
+                "param2": {
+                    "name": "",
+                    "value": ""},
+                "param3": {
+                    "name": "",
+                    "value": ""},
+                "param4": {
+                    "name": "",
+                    "value": ""},
+                "param7": {
+                    "name": "",
+                    "value": ""},
+                "param8": {
+                    "name": "",
+                    "value": ""},
+                "start data": {
+                    "name": "",
+                    "value": ""},
+                "final_date": {
+                    "name": "",
+                    "value": ""}
+                },
+            "params": {
+                "param1": {
+                    "name": "",
+                    "value": "':'" }
+            }
+        }
+    },
+    "issues": {
+        "uuid": "",
+        "create request": {
+            "data": {
+                "title": {"name": "", "value": ""},
+                "param1": {
+                    "name": "",
+                    "value": ""},
+                "param2": {
+                    "name": "",
+                    "value": ""},
+                "param3": {
+                    "name": "",
+                    "value": ""},
+                "param4": {
+                    "name": "",
+                    "value": ""},
+                "param5": {
+                    "name": "",
+                    "value": ""},
+                "param6": {
+                    "name": "",
+                    "value": ""},
+                "param7": {
+                    "name": "",
+                    "value": ""},
+                "param8": {
+                    "name": "",
+                    "value": ""},
+                "param9": {
+                    "name": "",
+                    "value": ""}
+                },
+            "params": {
+                "param1": {
+                    "name": "",
+                    "value": ""}
+            }
+        }
+    },
+    "vip issues": {
+        "uuid": "",
+        "create request": {
+            "data": {
+                "title": {"name": "", "value": ""},
+                "param1": {
+                    "name": "",
+                    "value": ""},
+                "param2": {
+                    "name": "",
+                    "value": ""},
+                "param3": {
+                    "name": "",
+                    "value": ""},
+                "param4": {
+                    "name": "",
+                    "value": ""},
+                "param5": {
+                    "name": "",
+                    "value": ""},
+                "param6": {
+                    "name": "",
+                    "value": ""},
+                "param7": {
+                    "name": "",
+                    "value": ""},
+                "param8": {
+                    "name": "",
+                    "value": ""},
+                "param9": {
+                    "name": "",
+                    "value": ""}
+                },
+            "params": {
+                "param1": {
+                    "name": "",
+                    "value": ""}
+            }
+        }
+    }
+}
