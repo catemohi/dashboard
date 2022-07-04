@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Sequence,Literal, Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from bs4 import BeautifulSoup, element
 from urllib import parse
 from re import findall
@@ -46,12 +46,12 @@ class Issue:
             step_time: время последнего шага .
             responsible: ответственный за последний шаг.
             last_edit_time: время последнего изменения.
-            vip_contractor: имеет ли клиент статус vip.
-            create_date: дата создания обращения.
+            vip_contragent: имеет ли клиент статус vip.
+            creation_date: дата создания обращения.
             uuid_service: уникалный идентификатор обьекта в CRM системе.
             name_service: название услуги.
-            uuid_contractor: уникалный идентификатор обьекта в CRM системе.
-            name_contractor: название контр агента.
+            uuid_contragent: уникалный идентификатор обьекта в CRM системе.
+            name_contragent: название контр агента.
             return_to_work_time: время возврата обращения в работу.
             description: описание обращения.
     """
@@ -63,12 +63,12 @@ class Issue:
     step_time: timedelta
     responsible: str
     last_edit_time: datetime
-    vip_contractor: bool
-    create_date: datetime
+    vip_contragent: bool
+    creation_date: datetime
     uuid_service: NaumenUUID
     name_service: str
-    uuid_contractor: NaumenUUID
-    name_contractor: str
+    uuid_contragent: NaumenUUID
+    name_contragent: str
     return_to_work_time: datetime
     description: str
    
@@ -179,6 +179,8 @@ def _get_url_param_value(url: str, needed_param: str):
     Raises:
 
     """    
+    if not url:
+        raise CantGetData
     param_value = parse.parse_qs(parse.urlparse(url).query)[needed_param][0]  
     return param_value
 
@@ -268,7 +270,7 @@ def _parse_issues_table(text: str) -> Sequence | Sequence[Literal['']]:
     category = _get_columns_name(soup)
     rows = soup.select(".supp tr")[7:-1]
     if len(rows) < 1:
-        raise CantGetData
+        return ('',)
     def parse_table_row(row: element.Tag, 
                         category: Iterable[str]) -> Issue:
         """Функция парсинга строки таблицы.
@@ -300,20 +302,138 @@ def _parse_issues_table(text: str) -> Sequence | Sequence[Literal['']]:
     return issues
 
 
-def _parse_card_issue(text: str) -> Sequence | Sequence[Literal['']]:
+def _get_contragent_params(soup: BeautifulSoup) -> Iterable[Literal]:
+    """Функция парсинга данных контрагента.
+    
+    Args:
+        soup: подготовленная для парсинга HTML страница.
+        
+    Returns:
+        Коллекцию с параметрами.
+        
+    Raises:
+
+    """
+    contragent_tag = soup.find('td',id='contragent')
+    if contragent_tag:
+        name = contragent_tag.text.replace('\n', '').strip()
+        _url = contragent_tag.find('a')['href']
+        try: uuid = _get_url_param_value(_url, 'uuid')
+        except CantGetData: uuid = ''
+        return (name, uuid)
+    return ('', '')
+
+def _get_description(soup: BeautifulSoup) -> str:
+    """Функция парсинга данных описания обращения.
+    
+    Args:
+        soup: подготовленная для парсинга HTML страница.
+        
+    Returns:
+        Строка описания запроса.
+        
+    Raises:
+    
+    """
+    description = soup.find('td', id="requestDescription")
+    if description:
+        description = description\
+                                .text\
+                                .replace('\r', '')\
+                                .replace('\t', '')\
+                                .replace('\n', '')\
+                                .strip()
+        if len(description) > 140:
+            description = description[:137] + '...'
+        return description
+    return ''
+
+
+def _get_creation_date(soup: BeautifulSoup) -> datetime:
+    """Функция парсинга даты создания обращения.
+    
+    Args:
+        soup: подготовленная для парсинга HTML страница.
+        
+    Returns:
+        Обьект даты.
+        
+    Raises:
+    
+    """
+    creation_date = soup.find('td', id="creationDate")
+    if creation_date:
+        str_datetime = creation_date.text.replace('\n', '').strip()
+        return datetime.strptime(str_datetime, '%d.%m.%Y %H:%M')
+    return datetime.now()
+        
+def _get_service_params(soup: BeautifulSoup) -> Iterable[Literal]:
+    """Функция парсинга данных услуги.
+    
+    Args:
+        soup: подготовленная для парсинга HTML страница.
+        
+    Returns:
+        Коллекцию с параметрами.
+        
+    Raises:
+
+    """
+    services = soup.find('td', id="services")
+    if services:
+        name = services.text.replace('\n', '').strip()
+        _url = services.find('a')['href']
+        try: uuid = _get_url_param_value(_url, 'uuid')
+        except CantGetData: uuid = ''
+        return (name, uuid)
+    return ('','')    
+
+
+def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
+    """Функция парсинга данных времени возврата в работу.
+    
+    Args:
+        soup: подготовленная для парсинга HTML страница.
+        
+    Returns:
+        Коллекцию с параметрами.
+        
+    Raises:
+
+    """
+    return_times = (soup.find('td', id="obrd"),soup.find('td', id="obrd1"),
+                    soup.find('td', id="obrd2"))
+    return_times = [
+        time.text.replace('\n', '').strip() for time in return_times if time]
+    if return_times:
+        times = [datetime.strptime(
+            time, '%d.%m.%Y %H:%M') for time in return_times]
+        if len(times) > 1:
+            times.sort()
+        return times[-1]
+    return datetime.now() + timedelta(days=365)
+        
+
+def _parse_card_issue(text: str, issue: Issue) -> Issue:
     """Функция парсинга картточки обращения.
     
     Args:
         text: сырой текст страницы.
+        issue: обращение, поля которого нужно дополнить.
         
     Returns:
-        Коллекцию с найденными элементами.
+        Модифицированный объект обращения.
         
     Raises:
-        CantGetData: Если не удалось найти данные.
+
     """
     soup = BeautifulSoup(text, "html.parser")
-    #TODO Логика парсинга.
+    issue.name_contragent, issue.uuid_contragent = _get_contragent_params(soup)
+    issue.description = _get_description(soup)
+    issue.creation_date = _get_creation_date(soup)
+    issue.name_service, issue.uuid_service = _get_service_params(soup)
+    issue.return_to_work_time = _get_return_to_work_time(soup)
+    return issue  
     
     
 def _parse_service_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
