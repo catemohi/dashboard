@@ -4,8 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from time import sleep
 
-
-from config import *
+from config import CONFIG, get_params_create_report
 from exceptions import ConnectionsFailed, CantGetData
 from parser import PageType, parse_naumen_page
 
@@ -56,7 +55,7 @@ class NaumenRequest:
             verify: верификация
     """
     url: str
-    header: Mapping
+    headers: Mapping
     params: Mapping
     data: Mapping
     verify: bool
@@ -94,7 +93,8 @@ def get_session(username: str, password: str,
         
     """
     session = Session()
-    url = f'{NAUMEN_MAIN_URL}{NAUMEN_LOGIN_URL}'
+    url = 'https://{main}{login}'.format(main=CONFIG['url']['main'],
+                                         login=CONFIG['url']['login'])
     data = {'login': username,
             'password': password,
             'domain': domain
@@ -161,9 +161,10 @@ def _create_report_in_crm(crm: ActiveConnect, report: TypeReport) -> None:
     if not isinstance(report, TypeReport):
         raise CantGetData
     
-    url = f'{NAUMEN_MAIN_URL}{NAUMEN_CREATE_REPORTS_URL}'
+    url = 'https://{main}{create}'.format(main=CONFIG['url']['main'],
+                                          create=CONFIG['url']['create'])
     verify = False
-    header = {}
+    headers = CONFIG['headers']
     
     request_creators = {
         TypeReport.ISSUES_FIRST_LINE: _create_request_issues_first_line,
@@ -175,7 +176,7 @@ def _create_report_in_crm(crm: ActiveConnect, report: TypeReport) -> None:
 
     try:
         request_creator = request_creators.get[report]
-        request, search_params = request_creator(url,header,verify)
+        request, search_params = request_creator(url,headers,verify)
     except KeyError:
         raise CantGetData
     
@@ -183,8 +184,7 @@ def _create_report_in_crm(crm: ActiveConnect, report: TypeReport) -> None:
     report_uuid = _find_report_uuid(crm, search_params)
     #TODO
 
-def _create_request_issues_first_line(url: str, header: Mapping,
-                                     verify: bool) -> tuple[
+def _create_request_issues_first_line() -> tuple[
                                          NaumenRequest, ReportSearchParams]:
     """Функция формирования запроса обращений первой линии.
     
@@ -199,13 +199,12 @@ def _create_request_issues_first_line(url: str, header: Mapping,
     Raises:
     
     """
-    #TODO строчка получения данных для запроса
-    params = {}
-    data = {}
-    name = ''
-    delay_attems = 1 
-    num_attems = 1
-    request = NaumenRequest(url, header, params, data, verify)
+    create_params = get_params_create_report('issues')
+    uuid, headers, params, data, verify, delay_attems, num_attems \
+                                                            = create_params
+    url = '' #TODO
+    name = '' #TODO
+    request = NaumenRequest(url, headers, params, data, verify)
     search_params = ReportSearchParams(*request,
                                        name, delay_attems, num_attems)
     return (request, search_params)
@@ -311,7 +310,7 @@ def _create_request_flr_lavel(url: str, header: Mapping,
     Raises:
     
     """
-    #TODO строчка получения данных для запроса
+    
     params = {}
     data = {}
     name = ''
