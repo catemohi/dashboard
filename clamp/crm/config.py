@@ -1,7 +1,8 @@
 from pathlib import Path
 from json import load
-from typing import Mapping
+from typing import Mapping, NamedTuple
 from dataclasses import dataclass
+
 
 CONFIG_FILE_PATH = Path('.') / 'config.json'
 with open(CONFIG_FILE_PATH) as file:
@@ -16,8 +17,7 @@ CONFIG.update({'auth': {'login': NAUMEN_LOGIN,
                         'password': NAUMEN_PASSWORD,
                         'domain': NAUMEN_DOMAIN}})
 
-@dataclass
-class CreateParams:
+class CreateParams(NamedTuple):
     
     """Класс данных для хранения сформированного запроса к CRM Naumen.
     
@@ -51,14 +51,15 @@ def get_params_create_report(report_name: str) -> CreateParams:
     reports_name = [key for key, val in CONFIG.items() if "create request" in val]
     if not report_name in reports_name:
         return data_create
-    data_create.uuid = CONFIG[report_name]['uuid']
-    data_create.headers = CONFIG['headers']
-    data_create.data = CONFIG[report_name]['create request']['data']
-    data_create.params = CONFIG[report_name]['create request']['params']
-    data_create.verify = CONFIG['verify']['value']
-    data_create.delay_attems = CONFIG[report_name]['delay attems']['value']
-    data_create.num_attems = CONFIG[report_name]['num attems']['value']
-    return data_create
+    uuid = CONFIG[report_name]['uuid']
+    headers = CONFIG['headers']
+    data = CONFIG[report_name]['create request']['data']
+    params = CONFIG[report_name]['create request']['params']
+    verify = CONFIG['verify']['value']
+    delay_attems = CONFIG[report_name]['delay attems']['value']
+    num_attems = CONFIG[report_name]['num attems']['value']
+    
+    return CreateParams(uuid,headers,params,data,verify,delay_attems,num_attems)
 
 
 if __name__ == "__main__":

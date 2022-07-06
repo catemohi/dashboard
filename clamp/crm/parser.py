@@ -1,14 +1,14 @@
 from datetime import datetime, timedelta
+from calendar import monthrange
 from enum import Enum
 from typing import Sequence,Literal, Iterable
 from dataclasses import dataclass, replace
 from bs4 import BeautifulSoup, element
 from urllib import parse
 from re import findall
-from django.utils.timezone import make_aware
 
 from exceptions import CantGetData
-from client import NaumenUUID
+
 
 
 class PageType(Enum):
@@ -55,7 +55,7 @@ class Issue:
             return_to_work_time: время возврата обращения в работу.
             description: описание обращения.
     """
-    uuid: NaumenUUID
+    uuid: str
     number: int
     name: str
     issue_type: str
@@ -65,9 +65,9 @@ class Issue:
     last_edit_time: datetime
     vip_contragent: bool
     creation_date: datetime
-    uuid_service: NaumenUUID
+    uuid_service: str
     name_service: str
-    uuid_contragent: NaumenUUID
+    uuid_contragent: str
     name_contragent: str
     return_to_work_time: datetime
     description: str
@@ -232,7 +232,7 @@ def  _get_issue_num(issue_name: str) -> str:
     number = findall(r'\d{7,10}', issue_name)[0]
     return number
 
-def _parse_reports_lits(text: str, name: str) -> Sequence[NaumenUUID] | \
+def _parse_reports_lits(text: str, name: str) -> Sequence[str] | \
                                                       Sequence[Literal['']]:
     """Функция парсинга страницы с отчётами и получение UUID отчёта.
     
@@ -250,7 +250,7 @@ def _parse_reports_lits(text: str, name: str) -> Sequence[NaumenUUID] | \
     report_tag = soup.select(f'[title="{name}"]')
     if report_tag:
         url = report_tag[0]['href']
-        return (NaumenUUID(_get_url_param_value(url, 'uuid')), ) 
+        return (str(_get_url_param_value(url, 'uuid')), ) 
     return ('',)
         
         
@@ -302,7 +302,7 @@ def _parse_issues_table(text: str) -> Sequence | Sequence[Literal['']]:
     return issues
 
 
-def _get_contragent_params(soup: BeautifulSoup) -> Iterable[Literal]:
+def _get_contragent_params(soup: BeautifulSoup) -> Iterable[str]:
     """Функция парсинга данных контрагента.
     
     Args:
@@ -367,7 +367,7 @@ def _get_creation_date(soup: BeautifulSoup) -> datetime:
         return datetime.strptime(str_datetime, '%d.%m.%Y %H:%M')
     return datetime.now()
         
-def _get_service_params(soup: BeautifulSoup) -> Iterable[Literal]:
+def _get_service_params(soup: BeautifulSoup) -> Iterable[str]:
     """Функция парсинга данных услуги.
     
     Args:
@@ -481,4 +481,18 @@ def _parse_flr_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
         CantGetData: Если не удалось найти данные.
     """
     soup = BeautifulSoup(text, "html.parser")
-    #TODO Логика парсинга.
+    category = _get_columns_name(soup)
+    rows = soup.select(".supp tr")[9:-1]
+    rows = [row.select('td') for row in rows]
+    rows = [[col.text.replace('\n', '').strip() for col in row] for row in rows]
+    rows[0].pop(0)
+    day_list = [dict(zip(category[1:], row)) for row in rows]
+    # days_in_mouth = monthrange(year,month)[1]
+    # mouth_group_flr_dict = {}
+    # for day in range(1,days_in_mouth + 1):
+    #     current_date = date(year,month,day)
+    #     [mouth_group_flr_dict.update({current_date: need_day}) for need_day in day_list if need_day['День'] == str(day)]
+    #     if current_date not in mouth_group_flr_dict:
+    #         mouth_group_flr_dict[current_date] = {'День': 'n/a', 'FLR по дн (в %)': '0.0', 'Закрыто ТП без др отд': '0', 'Количество первичных': '0'}
+    #     mouth_group_flr_dict[current_date]['День'] = current_date
+    # return mouth_group_flr_dict
