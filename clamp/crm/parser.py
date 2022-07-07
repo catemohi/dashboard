@@ -142,7 +142,7 @@ def parse_naumen_page(page: str, name_report: str,
         name_report: уникальное имя сформированное отчёта.
     
     Returns:
-        Результат парсинга страницы, коллекция распаршенных элементов
+        Sequence: Результат парсинга страницы, коллекция распаршенных элементов
         
     Raises:
         CantGetData: в неправильном сценарии работы функции.
@@ -166,7 +166,7 @@ def parse_naumen_page(page: str, name_report: str,
     #TODO return parsed_collections
     
     
-def _get_url_param_value(url: str, needed_param: str):
+def _get_url_param_value(url: str, needed_param: str) -> str:
     """Функция парсинга URL и получение значения необходимого GET параметра.
     
     Args:
@@ -174,10 +174,10 @@ def _get_url_param_value(url: str, needed_param: str):
         needed_param: ключ необходимого GET параметра. 
         
     Returns:
-        Значение необходимого GET параметра
+        str: Значение необходимого GET параметра
         
     Raises:
-
+        CantGetData: проблема с парсингом данных
     """    
     if not url:
         raise CantGetData
@@ -241,7 +241,7 @@ def _parse_reports_lits(text: str, name: str) -> Sequence[str] | \
         name: уникальное название отчета.
         
     Returns:
-        Коллекцию с найденными элементами.
+        Sequence | Sequence[Literal['']]: Коллекцию с найденными элементами.
         
     Raises:
 
@@ -254,14 +254,14 @@ def _parse_reports_lits(text: str, name: str) -> Sequence[str] | \
     return ('',)
         
         
-def _parse_issues_table(text: str) -> Sequence | Sequence[Literal['']]:
+def _parse_issues_table(text: str) -> Sequence[Issue] | Sequence[Literal['']]:
     """Функция парсинга страницы с обращениями на группе.
     
     Args:
         text: сырой текст страницы.
         
     Returns:
-        Коллекцию с найденными элементами.
+        Sequence | Sequence[Literal['']]: Коллекцию с найденными элементами.
         
     Raises:
         CantGetData: Если не удалось найти данные.
@@ -280,7 +280,7 @@ def _parse_issues_table(text: str) -> Sequence | Sequence[Literal['']]:
             category: названия столбцов, строки.
 
         Returns:
-            Issue: объект обращения.
+            Sequence[Issue] | Sequence[Literal['']: Коллекцию обращений.
             
         """
         issue = Issue()
@@ -309,7 +309,7 @@ def _get_contragent_params(soup: BeautifulSoup) -> Iterable[str]:
         soup: подготовленная для парсинга HTML страница.
         
     Returns:
-        Коллекцию с параметрами.
+        Iterable[str]: Коллекцию с параметрами контрагента.
         
     Raises:
 
@@ -330,7 +330,7 @@ def _get_description(soup: BeautifulSoup) -> str:
         soup: подготовленная для парсинга HTML страница.
         
     Returns:
-        Строка описания запроса.
+        str: Описание обращения.
         
     Raises:
     
@@ -356,7 +356,7 @@ def _get_creation_date(soup: BeautifulSoup) -> datetime:
         soup: подготовленная для парсинга HTML страница.
         
     Returns:
-        Обьект даты.
+        datetime: дата создания обращения.
         
     Raises:
     
@@ -374,7 +374,7 @@ def _get_service_params(soup: BeautifulSoup) -> Iterable[str]:
         soup: подготовленная для парсинга HTML страница.
         
     Returns:
-        Коллекцию с параметрами.
+        Iterable[str]: коллекцию с параметрами.
         
     Raises:
 
@@ -396,7 +396,7 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
         soup: подготовленная для парсинга HTML страница.
         
     Returns:
-        Коллекцию с параметрами.
+        datetime: время возврата в работу
         
     Raises:
 
@@ -422,7 +422,7 @@ def _parse_card_issue(text: str, issue: Issue) -> Issue:
         issue: обращение, поля которого нужно дополнить.
         
     Returns:
-        Модифицированный объект обращения.
+        Issue: Модифицированный объект обращения.
         
     Raises:
 
@@ -443,7 +443,7 @@ def _parse_service_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
         text: сырой текст страницы.
         
     Returns:
-        Коллекцию с найденными элементами.
+        Sequence | Sequence[Literal['']]: Коллекцию с найденными элементами.
         
     Raises:
         CantGetData: Если не удалось найти данные.
@@ -459,7 +459,7 @@ def _parse_mttr_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
         text: сырой текст страницы.
         
     Returns:
-        Коллекцию с найденными элементами.
+        Sequence | Sequence[Literal['']]: Коллекцию с найденными элементами.
         
     Raises:
         CantGetData: Если не удалось найти данные.
@@ -475,7 +475,7 @@ def _parse_flr_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
         text: сырой текст страницы.
         
     Returns:
-        Коллекцию с найденными элементами.
+        Sequence | Sequence[Literal['']]: Коллекцию с найденными элементами.
         
     Raises:
         CantGetData: Если не удалось найти данные.

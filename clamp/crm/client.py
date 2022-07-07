@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from random import randint
 from requests import Session
 from typing import Iterable, Literal, Mapping, Sequence, NamedTuple
@@ -41,6 +41,23 @@ class TypeReport(Enum):
     FLR_LEVEL = 5 
     
 
+
+class SearchOptions(NamedTuple):
+    
+    """Класс данных для хранения сформированного запроса к CRM Naumen.
+    
+        Attributes:
+            name: имя искомого отчета
+            delay_attems: задержка между попытками
+            num_attems: количество попыток поиска отчета
+            uuid: идентификатор обьекта в CRM Naumen
+    """
+    name: str
+    delay_attems: int
+    num_attems: int
+    uuid: str
+
+
 class NaumenRequest(NamedTuple):
     
     """Класс данных для хранения сформированного запроса к CRM Naumen.
@@ -57,7 +74,7 @@ class NaumenRequest(NamedTuple):
     params: Mapping
     data: Mapping
     verify: bool
-    
+
 
 def get_session(username: str, password: str,
                 domain: Literal['CORP.ERTELECOM.LOC', 'O.WESTCALL.SPB.RU']) -> ActiveConnect:
@@ -77,7 +94,7 @@ def get_session(username: str, password: str,
     """
     session = Session()
     url = 'https://{main}{login}'.format(main=CONFIG['url']['main'],
-                                         login=CONFIG['url']['login'])
+                                            login=CONFIG['url']['login'])
     data = {'login': username,
             'password': password,
             'domain': domain
@@ -163,93 +180,88 @@ def _create_report_in_crm(crm: ActiveConnect, report: TypeReport) -> None:
     report_uuid = _find_report_uuid(crm, search_params)
     #TODO
 
-def _create_request_issues_first_line() -> tuple[NaumenRequest, str, int, int]:
+
+def _create_request_issues_first_line() -> tuple[NaumenRequest, SearchOptions]:
     """Функция формирования запроса обращений первой линии.
     
     Args:
         
     Returns:
         NaumenRequest: сформированный запрос для CRM Naumen
-        name: уникальное имя отчета
-        delay_attems: задержка в секундах, между попытками
-        num_attems: количество попыток.
+        SearchOptions: параметры для поиска созданного отчета
     Raises:
     
     """
-    create_params = get_params_create_report('issues')
-    uuid, headers, params, data, verify, delay_attems, num_attems \
-                                                            = create_params
-    headers = CONFIG['headers']
-    url = 'https://{main}{create}'.format(main=CONFIG['url']['main'],
-                                          create=CONFIG['url']['create'])
-    name = f"ID{randint(1000000,9999999)}"
+    url, uuid, headers, params, data, verify, delay_attems, num_attems \
+        = get_params_create_report('issues')
+    name = _get_report_name()
     data['title']['value'] = name
-    params["param2"] = {'name': 'uuid', 'value': uuid}
     data = _params_erector(data)
     params = _params_erector(params)
+    
+    search_options = SearchOptions(name,delay_attems,num_attems,uuid)
     request = NaumenRequest(url, headers, params, data, verify)
-    return (*request, name, delay_attems, num_attems)
+    return (request, search_options)
 
 
-def _create_request_issues_vip_line() -> tuple[NaumenRequest, str, int, int]:
+def _create_request_issues_vip_line() -> tuple[NaumenRequest, SearchOptions]:
     """Функция формирования запроса обращений вип линии.
     
     Args:
 
     Returns:
         NaumenRequest: сформированный запрос для CRM Naumen
-        name: уникальное имя отчета
-        delay_attems: задержка в секундах, между попытками
-        num_attems: количество попыток.
+        SearchOptions: параметры для поиска созданного отчета
     Raises:
     
     """
-    create_params = get_params_create_report('vip issues')
-    uuid, headers, params, data, verify, delay_attems, num_attems \
-                                                            = create_params
-    headers = CONFIG['headers']
-    url = 'https://{main}{create}'.format(main=CONFIG['url']['main'],
-                                          create=CONFIG['url']['create'])
+    url, uuid, headers, params, data, verify, delay_attems, num_attems = \
+        get_params_create_report('vip issues')
     name = _get_report_name()
     data['title']['value'] = name
-    params["param2"] = {'name': 'uuid', 'value': uuid}
     data = _params_erector(data)
     params = _params_erector(params)
+    
+    search_options = SearchOptions(name,delay_attems,num_attems,uuid)
     request = NaumenRequest(url, headers, params, data, verify)
-    return (*request, name, delay_attems, num_attems)
+    return (request, search_options)
 
 
-def _create_request_service_lavel(url: str, header: Mapping,
-                                     verify: bool) -> tuple[
-                                         NaumenRequest, str, int, int]:
-    """Функция формирования запроса уровня SL.
+def _create_request_service_lavel(first_day:date, last_day:date, 
+                                    deadline:int) -> \
+                                    tuple[NaumenRequest, SearchOptions]:
+    """Функция формирования запроса уровня SL за промежуток дней.
     
     Args:
-        url: ссылка для запроса
-        header: header запроса
-        verify: verify запроса
+        first_day: первый день.
+        last_day: последний день.
+        deadline: необходима скорость обработки заявок
     
     Returns:
         NaumenRequest: сформированный запрос для CRM Naumen
-        name: уникальное имя отчета
-        delay_attems: задержка в секундах, между попытками
-        num_attems: количество попыток.
+        SearchOptions: параметры для поиска созданного отчета
+        
     Raises:
     
     """
-    #TODO строчка получения данных для запроса
-    params = {}
-    data = {}
+    url, uuid, headers, params, data, verify, delay_attems, num_attems = \
+        get_params_create_report('service level report')
     name = _get_report_name()
-    delay_attems = 1 
-    num_attems = 1
-    request = NaumenRequest(url, header, params, data, verify)
-    return (*request, name, delay_attems, num_attems)
+    data['title']['value'] = name
+    data['first day']['value'] = first_day.strftime("%d.%m.%Y")
+    data['last day']['value'] = last_day.strftime("%d.%m.%Y")
+    data['deadline']['value'] = str(deadline)
+    data = _params_erector(data)
+    params = _params_erector(params)
+    
+    search_options = SearchOptions(name,delay_attems,num_attems,uuid)
+    request = NaumenRequest(url, headers, params, data, verify)
+    return (request, search_options)
 
 
 def _create_request_mttr_lavel(url: str, header: Mapping,
-                                     verify: bool) -> tuple[
-                                         NaumenRequest, str, int, int]:
+                                    verify: bool) -> tuple[
+                                        NaumenRequest, str, int, int]:
     """Функция формирования запроса уровня MTTR.
     
     Args:
@@ -259,9 +271,9 @@ def _create_request_mttr_lavel(url: str, header: Mapping,
     
     Returns:
         NaumenRequest: сформированный запрос для CRM Naumen
-        name: уникальное имя отчета
-        delay_attems: задержка в секундах, между попытками
-        num_attems: количество попыток.
+        str: уникальное имя отчета
+        int: задержка в секундах, между попытками
+        int: количество попыток.
     Raises:
     
     """
@@ -276,8 +288,8 @@ def _create_request_mttr_lavel(url: str, header: Mapping,
 
 
 def _create_request_flr_lavel(url: str, header: Mapping,
-                                     verify: bool) -> tuple[
-                                         NaumenRequest, str, int, int]:
+                                    verify: bool) -> tuple[
+                                        NaumenRequest, str, int, int]:
     """Функция формирования запроса уровня FLR.
     
     Args:
@@ -287,9 +299,9 @@ def _create_request_flr_lavel(url: str, header: Mapping,
     
     Returns:
         NaumenRequest: сформированный запрос для CRM Naumen
-        name: уникальное имя отчета
-        delay_attems: задержка в секундах, между попытками
-        num_attems: количество попыток.
+        str: уникальное имя отчета
+        int: задержка в секундах, между попытками
+        int: количество попыток.
     Raises:
     
     """
@@ -301,8 +313,8 @@ def _create_request_flr_lavel(url: str, header: Mapping,
     num_attems = 1
     request = NaumenRequest(url, header, params, data, verify)
     return (*request, name, delay_attems, num_attems)
-    
- 
+
+
 def _find_report_uuid(crm: ActiveConnect,
                         params: tuple[NaumenRequest, str, int, int]) -> str:
     """Функция поиска сформированного отчета в CRM Naumen.
@@ -321,7 +333,7 @@ def _find_report_uuid(crm: ActiveConnect,
     *search_request, report_name, delay_attems, num_attems = params
     
     def _searching(num_attems: int, 
-                  search_request: NaumenRequest) -> Sequence[str]:
+                    search_request: NaumenRequest) -> Sequence[str]:
         """Рекурсивная функция поиска отчета в CRM системе.
         
         Args:
@@ -337,7 +349,7 @@ def _find_report_uuid(crm: ActiveConnect,
         sleep(delay_attems)
         page_text = _get_crm_response(crm,search_request)
         parsed_collection = parse_naumen_page(page_text,report_name,
-                                              PageType.REPORT_LIST_PAGE)
+                                                PageType.REPORT_LIST_PAGE)
         if not parsed_collection: 
             if num_attems >= 1:
                 return _searching(num_attems - 1, search_request)
