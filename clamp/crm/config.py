@@ -4,7 +4,7 @@ from typing import Mapping, NamedTuple
 from dataclasses import dataclass
 
 
-CONFIG_FILE_PATH = Path('.') / 'config.json'
+CONFIG_FILE_PATH = Path(__file__).with_name("config.json")
 with open(CONFIG_FILE_PATH) as file:
     CONFIG = load(file)
     

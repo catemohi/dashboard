@@ -1,14 +1,16 @@
 from datetime import date
 from random import randint
 from requests import Session
+from requests.packages import urllib3
 from typing import Literal, Mapping, Sequence, NamedTuple, Tuple, Callable
 from dataclasses import dataclass
 from enum import Enum
 from time import sleep
 
-from config import CONFIG, get_params_create_report
-from exceptions import ConnectionsFailed, CantGetData
-from parser import PageType, parse_naumen_page
+from .config import CONFIG, get_params_create_report
+from .exceptions import ConnectionsFailed, CantGetData
+from .parser import PageType, parse_naumen_page
+urllib3.disable_warnings()
 
 
 @dataclass(slots=True, frozen=True)
@@ -93,15 +95,15 @@ def get_session(username: str, password: str,
         ConnectionsFailed: если не удалось подключиться к CRM системе.
         
     """
+    if not all([username,password,domain]):
+        raise ConnectionsFailed
     session = Session()
-    url = 'https://{main}{login}'.format(main=CONFIG['url']['main'],
-                                            login=CONFIG['url']['login'])
+    url = CONFIG['url']['login']
     data = {'login': username,
             'password': password,
             'domain': domain
             }
     response = session.post(url=url, data=data, verify=False)
-    
     if response.status_code != 200: 
         raise ConnectionsFailed
     
@@ -124,6 +126,7 @@ def get_issues(crm: ActiveConnect, line: Literal['first', 'vip']) -> None:
     """
     pass
 
+
 def _get_crm_response(crm: ActiveConnect, request: NaumenRequest) -> str:
     """Функция для получения ответа из CRM системы.
     
@@ -140,13 +143,13 @@ def _get_crm_response(crm: ActiveConnect, request: NaumenRequest) -> str:
     """
     
     response = crm.session.post(url=request.url,
-                                headers=request.header,
+                                headers=request.headers,
                                 params=request.params, 
                                 data=request.data, verify=request.verify)
-    if response.status_code != 200 or not response.text: 
+    if response.status_code != 200 or not response.text:
         raise ConnectionsFailed
     
-    return response.text
+    return response
 
 
 def _create_request(report: TypeReport, *args, **kwargs) -> \
@@ -287,8 +290,7 @@ def _create_request_flr_lavel(first_day:date, last_day:date) -> \
     return _configure_params(report, data)
 
 
-def _find_report_uuid(crm: ActiveConnect,
-                        params: tuple[NaumenRequest, str, int, int]) -> str:
+def _find_report_uuid(crm: ActiveConnect, params: SearchOptions) -> str:
     """Функция поиска сформированного отчета в CRM Naumen.
     
     Args:
@@ -318,7 +320,7 @@ def _find_report_uuid(crm: ActiveConnect,
         Raises:
         
         """
-        sleep(delay_attems)
+        params.sleep(delay_attems)
         page_text = _get_crm_response(crm,search_request)
         parsed_collection = parse_naumen_page(page_text,report_name,
                                                 PageType.REPORT_LIST_PAGE)

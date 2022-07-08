@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup, element
 from urllib import parse
 from re import findall
 
-from exceptions import CantGetData
+from .exceptions import CantGetData
 
 
 
@@ -233,7 +233,7 @@ def  _get_issue_num(issue_name: str) -> str:
     return number
 
 def _parse_reports_lits(text: str, name: str) -> Sequence[str] | \
-                                                      Sequence[Literal['']]:
+                                                    Sequence[Literal['']]:
     """Функция парсинга страницы с отчётами и получение UUID отчёта.
     
     Args:
