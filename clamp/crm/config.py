@@ -1,7 +1,6 @@
 from pathlib import Path
 from json import load
 from typing import Mapping, NamedTuple
-from dataclasses import dataclass
 
 
 CONFIG_FILE_PATH = Path(__file__).with_name("config.json")
@@ -21,13 +20,13 @@ CONFIG.update({'auth': {'login': NAUMEN_LOGIN,
 
 class CreateParams(NamedTuple):
     
-    """Класс данных для хранения сформированного запроса к CRM Naumen.
+    """Класс данных для хранения данных для создания отчета в CRM Naumen.
     
         Attributes:
             url: ссылка для создания отчета
             uuid: идентификатор обьекта
-            header: header для запроса
-            parsms: параметры для запроса
+            headers: header для запроса
+            params: параметры для запроса
             data: данные запроса
             verify: верификация
     """
@@ -41,13 +40,33 @@ class CreateParams(NamedTuple):
     num_attems: int
 
 
+class FindParams(NamedTuple):
+    
+    """Класс данных для хранения сформированного запроса к CRM Naumen.
+    
+        Attributes:
+            url: ссылка
+            headers: headers для запроса
+            params: параметры для запроса
+            data: данные запроса
+            verify: верификация
+    """
+    url: str
+    headers: Mapping
+    params: Mapping
+    data: Mapping
+    verify: bool
+
+
 def get_params_create_report(report_name: str) -> CreateParams:
     """Функция которая достает необходимые параметры из конфигурационного файла.
     
     Args:
         report_name: название отчета
+        
     Returns:
         Коллекцию параметров.
+        
     Raises:
     
     """
@@ -67,6 +86,26 @@ def get_params_create_report(report_name: str) -> CreateParams:
     
     return CreateParams(url,uuid,headers,params,data,
                         verify,delay_attems,num_attems)
+
+
+def get_params_find() -> FindParams:
+    """Функция которая достает необходимые параметры из конфигурационного файла.
+    
+    Args:
+        report_name: название отчета
+        
+    Returns:
+        Коллекцию параметров.
+        
+    Raises:
+    
+    """
+    url = CONFIG['url']['open']
+    headers = CONFIG['headers']
+    data = {}
+    params = {}
+    verify = CONFIG['verify']['value']
+    return FindParams(url,headers,params,data,verify)
 
 
 if __name__ == "__main__":

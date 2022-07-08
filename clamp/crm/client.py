@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from enum import Enum
 from time import sleep
 
-from .config import CONFIG, get_params_create_report
+from .config import CONFIG, get_params_create_report, get_params_find
 from .exceptions import ConnectionsFailed, CantGetData
 from .parser import PageType, parse_naumen_page
 urllib3.disable_warnings()
@@ -110,23 +110,6 @@ def get_session(username: str, password: str,
     return ActiveConnect(session)
 
 
-def get_issues(crm: ActiveConnect, line: Literal['first', 'vip']) -> None:
-    """Получить все обращения на линию тех.поддержки.
-    
-    Args:
-        crm: сессия с CRM Naumen.
-        line: название линии обращения которой необходимо получить.
-        
-    Returns:
-        Ответ сервера CRM системы Naumen 
-        
-    Raises:
-        ConnectionsFailed: если не удалось подключиться к CRM системе.
-    
-    """
-    pass
-
-
 def _get_crm_response(crm: ActiveConnect, request: NaumenRequest) -> str:
     """Функция для получения ответа из CRM системы.
     
@@ -168,7 +151,7 @@ def _create_request(report: TypeReport, *args, **kwargs) -> \
         SearchOptions: параментры для поиска созданного отчёта.
         
     Raises:
-        CantGetData: в случае неверноой работы функции.
+        CantGetData: в случае неверной работы функции.
         
     """
     if not isinstance(report, TypeReport):
@@ -187,6 +170,57 @@ def _create_request(report: TypeReport, *args, **kwargs) -> \
         return request, search_params
     except (KeyError, TypeError):
         raise CantGetData
+
+
+def _find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
+    """Функция поиска сформированного отчета в CRM Naumen.
+    
+    Args:
+        crm:  активное соединение с CRM Naumen.
+        params: параметры для поиска отчета в CRM Naumen.
+        
+    Returns:
+        str: строчный идентификатор обьекта в CRM Naumen.
+        
+    Raises:
+        ConnectionsFailed: если не удалось подключиться к CRM системе.
+    
+    """
+    def _searching(num_attems: int, 
+                    search_request: NaumenRequest) -> Sequence[str]:
+        """Рекурсивная функция поиска отчета в CRM системе.
+        
+        Args:
+            num_attems: количество попыток поиска.
+            search_request: запрос для поиска отчета.
+            
+        Returns:
+            Sequence[str]: коллекцию внутри которой идентификатор в CRM Naumen.
+            
+        Raises:
+        
+        """
+        sleep(options.delay_attems)
+        response = _get_crm_response(crm,search_request)
+        page_text = response.text
+        parsed_collection = parse_naumen_page(page_text, options.name,
+                                                PageType.REPORT_LIST_PAGE)
+        print(parsed_collection)
+        if not parsed_collection: 
+            if num_attems >= 1:
+                return _searching(num_attems - 1, search_request)
+            raise CantGetData
+        return parsed_collection
+    
+    url, headers, params, data, verify = get_params_find()
+    params.update({'uuid': options.uuid})
+    search_request = NaumenRequest(url, headers, params, data, verify)
+    parsed_collection = _searching(options.num_attems, search_request)
+    
+    if len(parsed_collection) != 1:
+        raise CantGetData
+    
+    return str(parsed_collection[0])
 
 
 def _create_request_issues_first_line(*args, **kwargs) -> \
@@ -288,54 +322,6 @@ def _create_request_flr_lavel(first_day:date, last_day:date) -> \
     data['first day']['value'] = first_day.strftime("%d.%m.%Y")
     data['last day']['value'] = last_day.strftime("%d.%m.%Y")
     return _configure_params(report, data)
-
-
-def _find_report_uuid(crm: ActiveConnect, params: SearchOptions) -> str:
-    """Функция поиска сформированного отчета в CRM Naumen.
-    
-    Args:
-        crm:  активное соединение с CRM Naumen.
-        params: параметры для поиска отчета в CRM Naumen.
-        
-    Returns:
-        str: строчный идентификатор обьекта в CRM Naumen.
-        
-    Raises:
-        ConnectionsFailed: если не удалось подключиться к CRM системе.
-    
-    """
-    *search_request, report_name, delay_attems, num_attems = params
-    
-    def _searching(num_attems: int, 
-                    search_request: NaumenRequest) -> Sequence[str]:
-        """Рекурсивная функция поиска отчета в CRM системе.
-        
-        Args:
-            num_attems: количество попыток поиска.
-            search_request: запрос для поиска отчета.
-            
-        Returns:
-            Sequence[str]: коллекцию внутри которой идентификатор в CRM Naumen.
-            
-        Raises:
-        
-        """
-        params.sleep(delay_attems)
-        page_text = _get_crm_response(crm,search_request)
-        parsed_collection = parse_naumen_page(page_text,report_name,
-                                                PageType.REPORT_LIST_PAGE)
-        if not parsed_collection: 
-            if num_attems >= 1:
-                return _searching(num_attems - 1, search_request)
-            raise CantGetData
-
-        return parsed_collection
-    
-    parsed_collection = _searching(num_attems, search_request)
-    if len(parsed_collection) != 1:
-        raise CantGetData
-    
-    return str(parsed_collection[0])
 
 
 def _configure_params(report: TypeReport, mod_data: Mapping = {}) -> \
