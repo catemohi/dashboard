@@ -3,9 +3,10 @@ from datetime import date
 from enum import Enum
 from random import randint
 from time import sleep
-from typing import Callable, Literal, Mapping, NamedTuple, Sequence, Tuple
+from typing import Callable, Iterable, Literal, Mapping, NamedTuple
+from typing import Sequence, Tuple
 
-from requests import Session
+from requests import Session, Response
 from requests.packages import urllib3
 
 from .config import CONFIG, get_params_create_report, get_params_find
@@ -42,6 +43,22 @@ class TypeReport(Enum):
     SERVICE_LEVEL = "service level report"
     MTTR_LEVEL = "mttr report"
     FLR_LEVEL = "flr report"
+
+    def __init__(self, value):
+        self.page = self._get_page()
+
+    def _get_page(self):
+        page_dict = {
+            'ISSUES_FIRST_LINE': PageType.ISSUES_TABLE_PAGE,
+            'ISSUES_VIP_LINE': PageType.ISSUES_TABLE_PAGE,
+            'SERVICE_LEVEL': PageType.SERVICE_LEVEL_REPORT_PAGE,
+            'MTTR_LEVEL': PageType.MMTR_LEVEL_REPORT_PAGE,
+            'FLR_LEVEL': PageType.FLR_LEVEL_REPORT_PAGE,
+        }
+        try:
+            return page_dict[self.name]
+        except (KeyError, TypeError):
+            raise CantGetData
 
 
 class SearchOptions(NamedTuple):
@@ -110,7 +127,7 @@ def get_session(username: str, password: str,
     return ActiveConnect(session)
 
 
-def _get_crm_response(crm: ActiveConnect, request: NaumenRequest) -> str:
+def _get_crm_response(crm: ActiveConnect, rq: NaumenRequest) -> Response:
     """Функция для получения ответа из CRM системы.
 
     Args:
@@ -125,14 +142,14 @@ def _get_crm_response(crm: ActiveConnect, request: NaumenRequest) -> str:
 
     """
 
-    response = crm.session.post(url=request.url,
-                                headers=request.headers,
-                                params=request.params,
-                                data=request.data, verify=request.verify)
-    if response.status_code != 200 or not response.text:
+    _response = crm.session.post(url=rq.url,
+                                 headers=rq.headers,
+                                 params=rq.params,
+                                 data=rq.data, verify=rq.verify)
+    if _response.status_code != 200 or not _response.text:
         raise ConnectionsFailed
 
-    return response
+    return _response
 
 
 def _create_request(report: TypeReport, *args, **kwargs) -> \
@@ -206,7 +223,6 @@ def _find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
         page_text = response.text
         parsed_collection = parse_naumen_page(page_text, options.name,
                                               PageType.REPORT_LIST_PAGE)
-        print(parsed_collection)
         if not parsed_collection:
             if num_attems >= 1:
                 return _searching(num_attems - 1, search_request)
@@ -222,6 +238,38 @@ def _find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
         raise CantGetData
 
     return str(parsed_collection[0])
+
+
+def _get_report(crm: ActiveConnect,
+                report: TypeReport, *args, **kwargs) -> Iterable:
+    """Функция для получения отчёта из CRM.
+
+    Args:
+        crm: активное соединение с CRM.
+        report: отчёт, который необходимо получить.
+
+    Returns:
+        Itrrable: коллекция обьектов необходимого отчёта.
+    Raises:
+        CantGetData: в случае невозможности вернуть коллекцию.
+    """
+    naumen_rq, search_opt = _create_request(report, *args, **kwargs)
+    print('Создан запрос в наумен и опции поиска')
+    naumen_resp = _get_crm_response(crm, naumen_rq)
+    if not naumen_resp:
+        raise CantGetData
+    print('Запрос обработан CRM')
+    naumen_uuid = _find_report_uuid(crm, search_opt)
+    print(f'Найден UUID отчёта: {naumen_uuid}')
+    url, headers, params, data, verify = get_params_find()
+    params.update({'uuid': naumen_uuid})
+    search_request = NaumenRequest(url, headers, params, data, verify)
+    naumen_resp = _get_crm_response(crm, search_request)
+    if not naumen_resp:
+        raise CantGetData
+    page_text = naumen_resp.text
+    collect = parse_naumen_page(page_text, search_opt.name, report.page)
+    print(collect)
 
 
 def _create_request_issues_first_line(*args, **kwargs) -> \

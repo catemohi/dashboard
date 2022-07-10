@@ -55,22 +55,22 @@ class Issue:
             return_to_work_time: время возврата обращения в работу.
             description: описание обращения.
     """
-    uuid: str
-    number: int
-    name: str
-    issue_type: str
-    step: str
-    step_time: timedelta
-    responsible: str
-    last_edit_time: datetime
-    vip_contragent: bool
-    creation_date: datetime
-    uuid_service: str
-    name_service: str
-    uuid_contragent: str
-    name_contragent: str
-    return_to_work_time: datetime
-    description: str
+    uuid: str = ''
+    number: int = 0
+    name: str = ''
+    issue_type: str = ''
+    step: str = ''
+    step_time: timedelta = timedelta(0, 0)
+    responsible: str = ''
+    last_edit_time: datetime = datetime.now()
+    vip_contragent: bool = False
+    creation_date: datetime = datetime.now()
+    uuid_service: str = ''
+    name_service: str = ''
+    uuid_contragent: str = ''
+    name_contragent: str = ''
+    return_to_work_time: datetime = datetime.now()
+    description: str = ''
 
 
 @dataclass(slots=True, frozen=True)
@@ -213,8 +213,9 @@ def _get_step_duration(raw_duration: str) -> timedelta:
 
     """
     duration = dict(zip(('days', 'h', 'min'), findall(r'\d+', raw_duration)))
-    duration = timedelta(days=duration['days'],
-                         hours=duration['h'], minutes=duration['min'])
+    duration = timedelta(days=int(duration['days']),
+                         hours=int(duration['h']),
+                         minutes=int(duration['min']))
     return duration
 
 
@@ -256,7 +257,8 @@ def _parse_reports_lits(text: str, name: str) -> Sequence[str] | \
     return ('',)
 
 
-def _parse_issues_table(text: str) -> Sequence[Issue] | Sequence[Literal['']]:
+def _parse_issues_table(text: str, *args, **kwargs) \
+                        -> Sequence[Issue] | Sequence[Literal['']]:
     """Функция парсинга страницы с обращениями на группе.
 
     Args:
@@ -443,7 +445,8 @@ def _parse_card_issue(text: str, issue: Issue) -> Issue:
     return issue
 
 
-def _parse_service_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
+def _parse_service_lavel_report(text: str, *args, **kwargs) -> \
+                                Sequence | Sequence[Literal['']]:
     """Функция парсинга картточки обращения.
 
     Args:
@@ -456,10 +459,13 @@ def _parse_service_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
         CantGetData: Если не удалось найти данные.
     """
     # soup = BeautifulSoup(text, "html.parser")
+    print('Парсинг SL')
     # TODO Логика парсинга.
+    return ('',)
 
 
-def _parse_mttr_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
+def _parse_mttr_lavel_report(text: str, *args, **kwargs) -> \
+                             Sequence | Sequence[Literal['']]:
     """Функция парсинга картточки обращения.
 
     Args:
@@ -472,10 +478,13 @@ def _parse_mttr_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
         CantGetData: Если не удалось найти данные.
     """
     # soup = BeautifulSoup(text, "html.parser")
+    print('Парсинг MTTR')
     # TODO Логика парсинга.
+    return ('',)
 
 
-def _parse_flr_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
+def _parse_flr_lavel_report(text: str, *args, **kwargs) -> \
+                            Sequence | Sequence[Literal['']]:
     """Функция парсинга картточки обращения.
 
     Args:
@@ -487,22 +496,8 @@ def _parse_flr_lavel_report(text: str) -> Sequence | Sequence[Literal['']]:
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    soup = BeautifulSoup(text, "html.parser")
-    category = _get_columns_name(soup)
-    rows = soup.select(".supp tr")[9:-1]
-    rows = [row.select('td') for row in rows]
-    rows = [
-        [
-            col.text.replace('\n', '').strip() for col in row] for row in rows
-        ]
-    rows[0].pop(0)
-    # day_list = [dict(zip(category[1:], row)) for row in rows]
-    # days_in_mouth = monthrange(year,month)[1]
-    # mouth_group_flr_dict = {}
-    # for day in range(1,days_in_mouth + 1):
-    #     current_date = date(year,month,day)
-    #     [mouth_group_flr_dict.update({current_date: need_day}) for need_day in day_list if need_day['День'] == str(day)]
-    #     if current_date not in mouth_group_flr_dict:
-    #         mouth_group_flr_dict[current_date] = {'День': 'n/a', 'FLR по дн (в %)': '0.0', 'Закрыто ТП без др отд': '0', 'Количество первичных': '0'}
-    #     mouth_group_flr_dict[current_date]['День'] = current_date
-    # return mouth_group_flr_dict
+    # soup = BeautifulSoup(text, "html.parser")
+    # category = _get_columns_name(soup)
+    print('Парсинг FLR')
+    # TODO Логика парсинга.
+    return ('',)
