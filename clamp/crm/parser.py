@@ -87,7 +87,7 @@ class ServiceLevel:
             num_issues_after_deadline: кол-во принятых после срока обращений.
             service_level: уровень servece level в процентах.
     """
-    date: datetime
+    day: int
     group: str
     total_issues: int
     total_primary_issues: int
@@ -424,7 +424,7 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
 
 
 def _parse_card_issue(text: str, issue: Issue) -> Issue:
-    """Функция парсинга картточки обращения.
+    """Функция парсинга карточки обращения.
 
     Args:
         text: сырой текст страницы.
@@ -445,6 +445,29 @@ def _parse_card_issue(text: str, issue: Issue) -> Issue:
     return issue
 
 
+def _parse_date_report(soup: BeautifulSoup) -> Mapping:
+    """Функция парсинга параметров отчёта.
+
+    Args:
+        soup: сырой текст страницы.
+
+    Returns:
+        Mapping: Выходной словарь параметров
+
+    Raises:
+
+    """
+    print("Парсинг параметров отчёта.")
+    options_table = soup.find('table', id="stdViewpart0.legendTableList")
+    options_tag = options_table.find_all('td', attrs={'style': 'width:100%;'})
+    name_tag = options_table.find_all('td',
+                                      attrs={'style': 'white-space:nowrap;'})
+    name = [name.text.strip().replace(':', '') for name in name_tag]
+    options = [option.text.strip() for option in options_tag]
+    report_options = dict(zip(name, options))
+    return report_options
+
+
 def _parse_service_lavel_report(text: str, *args, **kwargs) -> \
                                 Sequence | Sequence[Literal['']]:
     """Функция парсинга картточки обращения.
@@ -458,10 +481,114 @@ def _parse_service_lavel_report(text: str, *args, **kwargs) -> \
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    # soup = BeautifulSoup(text, "html.parser")
     print('Парсинг SL')
-    # TODO Логика парсинга.
-    return ('',)
+    soup = BeautifulSoup(text, "html.parser")
+    report_options = _parse_date_report(soup)
+    first_day = report_options.get('Дата перевода, с', None)
+    last_day = report_options.get('Дата перевода, по', None)
+    if not all([first_day, last_day]):
+        raise CantGetData
+    print(f'Получены даты отчета с {first_day} по {last_day}')
+    label = _get_columns_name(soup)
+    if not label:
+        raise CantGetData
+    print(f'Получены названия столбцов {label}')
+    data_table = soup.find('table', id='stdViewpart0.part0_TableList')
+    data_table = data_table.find_all('tr')[3:-1]
+    day_collection = []
+    for num, elem in enumerate(data_table):
+        elem = [_.text.strip() for _ in elem.find_all('td')]
+        if not elem[0].isdigit():
+            elem.insert(0, day_collection[num-1][0])
+        day_collection.append(elem)
+    day_collection = [dict(zip(label, day)) for day in day_collection]
+    from_num = datetime.strptime(first_day, '%d.%m.%Y').day
+    to_num = ((datetime.strptime(last_day, '%d.%m.%Y') -
+              datetime.strptime(first_day, '%d.%m.%Y')).days + 1)
+    days = {}
+    for day in range(from_num, to_num):
+        days[day] = [_ for _ in day_collection if _['День'] == str(day)]
+    group = set([_['Группа'] for _ in day_collection])
+    if len(group) != 2:
+        raise CantGetData
+    days = _service_lavel_data_completion(days, group, label)
+    collection = _formating_service_level_data(days)
+    return collection
+
+
+def _service_lavel_data_completion(days: dict, groups: Sequence,
+                                   lable: Sequence) -> Mapping[int, Sequence]:
+    """Функция для дополнения данных отчёта  Service Level.
+        т.к Naumen отдает не все необходимые данные, необходимо их дополнить.
+        Заполнить пропуски групп за прошедшие дни: SL будет 100%
+        Заполнить пропуски за не наступившие дни: SL будет 0%
+
+    Args:
+        days: словарь дней, где ключ номер дня
+        groups: название групп в crm Naumen
+        lable: название категорий
+
+    Returns:
+        Mapping: дополненый словарь.
+    """
+    today = datetime.now().day
+    for day, content in days.items():
+        sl = '0.0'
+        if today > day:
+            sl = '100.0'
+        if len(content) == 0:
+            days[day] = [dict(
+                zip(lable,
+                    (str(day), group, '0', '0', '0', '0', sl))
+                ) for group in groups]
+        elif len(content) != 2:
+            day_groups = [_['Группа'] for _ in days[day]]
+            for group in groups:
+                if group not in day_groups:
+                    days[day].append(
+                        dict(
+                            zip(lable,
+                                (str(day), group, '0', '0', '0', '0', sl))
+                            )
+                        )
+    return days
+
+
+def _formating_service_level_data(days: Mapping[int, Sequence]) \
+                                 -> Sequence[ServiceLevel]:
+    collection = []
+    for day, group_data in days.items():
+        day_collection = []
+        gen_total_issues = 0
+        gen_total_primary_issues = 0
+        gen_num_issues_before_deadline = 0
+        gen_num_issues_after_deadline = 0
+        gen_service_level = 0.0
+        for data in group_data:
+            day = data['День']
+            group = data['Группа']
+            total_issues = int(data['Поступило в ТП'])
+            total_primary_issues = int(data['Количество первичных'])
+            num_issues_before_deadline = int(data['Принято за 15 минут'])
+            num_issues_after_deadline = int(data['В очереди более 15 мин'])
+            service_level = float(data['Service Level (%)'])
+            gen_total_issues += total_issues
+            gen_total_primary_issues += total_primary_issues
+            gen_num_issues_before_deadline += num_issues_before_deadline
+            gen_num_issues_after_deadline += num_issues_after_deadline
+            gen_service_level += service_level
+            sl = ServiceLevel(day, group, total_issues, total_primary_issues,
+                              num_issues_before_deadline,
+                              num_issues_after_deadline, service_level)
+            day_collection.append(sl)
+        group = 'Итог'
+        sl = ServiceLevel(day, group, gen_total_issues,
+                          gen_total_primary_issues,
+                          gen_num_issues_before_deadline,
+                          gen_num_issues_after_deadline, gen_service_level)
+        day_collection.append(sl)
+        collection.append(day_collection)
+    return collection
 
 
 def _parse_mttr_lavel_report(text: str, *args, **kwargs) -> \

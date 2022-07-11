@@ -269,7 +269,8 @@ def _get_report(crm: ActiveConnect,
         raise CantGetData
     page_text = naumen_resp.text
     collect = parse_naumen_page(page_text, search_opt.name, report.page)
-    print(collect)
+    for line in collect:
+        print(line)
 
 
 def _create_request_issues_first_line(*args, **kwargs) -> \
