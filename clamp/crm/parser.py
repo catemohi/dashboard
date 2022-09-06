@@ -611,9 +611,37 @@ def _parse_mttr_lavel_report(text: str, *args, **kwargs) -> \
     print(day_collection)
     date_range = _get_date_range(first_day, last_day)
     days = _forming_days_dict(date_range, day_collection)
+    days = _mttr_data_completion(days, label)
     print(days)
-    # group = set([_['Группа'] for _ in day_collection])
+    #TODO _formating_mttr_data
     return ('',)
+
+
+#TODO def _formating_mttr_data(days: Mapping[int, Sequence])
+
+
+def _mttr_data_completion(days: dict, lable: Sequence) -> \
+                          Mapping[int, Sequence]:
+    """Функция для дополнения данных отчёта MTTR.
+        т.к Naumen отдает не все необходимые данные, необходимо их дополнить.
+        Заполнить пропуски за не наступившие дни: MTTR будет 0%
+
+    Args:
+        days: словарь дней, где ключ номер дня
+        lable: название категорий
+
+    Returns:
+        Mapping: дополненый словарь.
+    """
+    avg_mttr = '0.0'
+    mttr = '0.0'
+    issues_count = '0'
+    for day, content in days.items():
+        if len(content) == 0:
+            days[day] = [
+                dict(zip(lable, (str(day), issues_count, avg_mttr, mttr))),
+                ]
+    return days
 
 
 def _parse_flr_lavel_report(text: str, *args, **kwargs) -> \
@@ -680,7 +708,7 @@ def _forming_days_dict(date_range: Sequence[datetime],
     return days
 
 
-def _forming_days_collecion(data_table: Sequence, label: Iterable) -> Sequence:
+def _forming_days_collecion(data_table: Sequence, label: Sequence) -> Sequence:
     """Функция для преобразование сырых данных bs4 в коллекцию словарей.
 
     Args:

@@ -15,6 +15,9 @@ from .parser import PageType, parse_naumen_page
 urllib3.disable_warnings()
 
 
+DOMAIN = Literal['CORP.ERTELECOM.LOC', 'O.WESTCALL.SPB.RU']
+
+
 @dataclass(slots=True, frozen=True)
 class ActiveConnect:
 
@@ -96,7 +99,7 @@ class NaumenRequest(NamedTuple):
 
 
 def get_session(username: str, password: str,
-                domain: Literal['CORP.ERTELECOM.LOC', 'O.WESTCALL.SPB.RU']) \
+                domain: DOMAIN) \
                 -> ActiveConnect:
     """Функция для создания сессии с CRM системой.
 
