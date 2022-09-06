@@ -542,7 +542,7 @@ def _service_lavel_data_completion(days: dict, groups: Sequence,
         if len(content) == 0:
             days[day] = [dict(
                 zip(lable,
-                    (str(day), group, '0', '0', '0', '0', sl))
+                    (str(day), group, '0', '0', '0', '0', sl)),
                 ) for group in groups]
         elif len(content) != 2:
             day_groups = [_['Группа'] for _ in days[day]]
@@ -551,8 +551,8 @@ def _service_lavel_data_completion(days: dict, groups: Sequence,
                     days[day].append(
                         dict(
                             zip(lable,
-                                (str(day), group, '0', '0', '0', '0', sl))
-                            )
+                                (str(day), group, '0', '0', '0', '0', sl)),
+                            ),
                         )
     return days
 
