@@ -6,7 +6,7 @@ from time import sleep
 from typing import Callable, Iterable, Literal, Mapping, NamedTuple
 from typing import Sequence, Tuple
 
-from requests import Session, Response
+from requests import Response, Session
 from requests.packages import urllib3
 
 from .config import CONFIG, get_params_create_report, get_params_find
@@ -271,6 +271,31 @@ def _get_report(crm: ActiveConnect,
     collect = parse_naumen_page(page_text, search_opt.name, report.page)
     for line in collect:
         print(line)
+
+
+#TODO переделать закрытые функции  _create_request_issues_first_line и т.п
+#TODO в открытые функции create_issues_first_line для того что бы было
+#TODO понятно какие аргументы надо отдавать для создания отчёта
+
+
+def get_issues_first_line(crm: ActiveConnect, *args, **kwargs) -> Iterable:
+
+    """Функция для получения отчёта о проблемах первой линии.
+
+    Args:
+        crm: активное соединение с CRM.
+        *args: другие позиционные аргументы.
+        **kwargs: другие именнованные аргументы.
+
+    Returns:
+        Itrrable: коллекция обьектов необходимого отчёта.
+    Raises:
+        CantGetData: в случае невозможности вернуть коллекцию.
+    """
+
+    report = TypeReport.ISSUES_FIRST_LINE
+    params = _configure_params(report)
+    _get_report(crm, report, params)
 
 
 def _create_request_issues_first_line(*args, **kwargs) -> \
