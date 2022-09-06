@@ -79,7 +79,7 @@ class ServiceLevel:
     """Класс данных для хранения данных отчета Service Level.
 
         Attributes:
-            date: дата отсчёта.
+            day: день отсчёта.
             group: группа отчёта.
             total_issues: всего обращений.
             total_primary_issues: всего первичных обращений.
@@ -102,16 +102,16 @@ class Mttr:
     """Класс данных для хранения данных отчета MTTR.
 
         Attributes:
-            date: дата отсчёта.
+            day: день отсчёта.
             total_issues: всего обращений.
             average_mttr: cредний МТТР.
             average_mttr_tech_support: cредний МТТР тех.поддержки.
 
     """
-    date: datetime
+    day: int
     total_issues: int
-    average_mttr: timedelta
-    average_mttr_tech_support: timedelta
+    average_mttr: float
+    average_mttr_tech_support: float
 
 
 @dataclass(slots=True, frozen=True)
@@ -613,11 +613,22 @@ def _parse_mttr_lavel_report(text: str, *args, **kwargs) -> \
     days = _forming_days_dict(date_range, day_collection)
     days = _mttr_data_completion(days, label)
     print(days)
-    #TODO _formating_mttr_data
-    return ('',)
+    collection = _formating_mttr_data(days)
+    return collection
 
 
-#TODO def _formating_mttr_data(days: Mapping[int, Sequence])
+def _formating_mttr_data(days: Mapping[int, Sequence]) \
+                                 -> Sequence[Mttr]:
+    collection = []
+    for day, data in days.items():
+        day = ''
+        total_issues = ''
+        average_mttr = ''
+        average_mttr_tech_support = ''
+        mttr = Mttr(day, total_issues, average_mttr, average_mttr_tech_support)
+        collection.append(mttr)
+
+    return collection
 
 
 def _mttr_data_completion(days: dict, lable: Sequence) -> \
