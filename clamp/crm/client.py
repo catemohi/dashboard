@@ -1,16 +1,16 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from enum import Enum
 from random import randint
 from time import sleep
-from typing import Callable, Iterable, Literal, Mapping, NamedTuple
+from typing import Iterable, Literal, Mapping, NamedTuple
 from typing import Sequence, Tuple
 
 from requests import Response, Session
 from requests.packages import urllib3
 
 from .config import CONFIG, get_params_create_report, get_params_find
-from .exceptions import CantGetData, ConnectionsFailed
+from .exceptions import CantGetData, ConnectionsFailed, InvalidDate
 from .parser import PageType, parse_naumen_page
 urllib3.disable_warnings()
 
@@ -152,44 +152,6 @@ def _get_crm_response(crm: ActiveConnect, rq: NaumenRequest) -> Response:
     return _response
 
 
-def _create_request(report: TypeReport, *args, **kwargs) -> \
-                                        Tuple[NaumenRequest, SearchOptions]:
-    """Функция создания запроса для создания отчета и сбора параметров для
-        поиска созданного отчета.
-
-    Args:
-        report: тип отчета для которого надо создать запрос.
-        *args: параметры необходимые для создания отчета.
-
-    Kwargs:
-        **kwargs: именнованные параметры необходимы для создания отчета.
-
-    Returns:
-        NaumenRequest: готовый запрос да создания отчёта.
-        SearchOptions: параментры для поиска созданного отчёта.
-
-    Raises:
-        CantGetData: в случае неверной работы функции.
-
-    """
-    if not isinstance(report, TypeReport):
-        raise CantGetData
-
-    request_creators: Mapping[TypeReport, Callable] = {
-        TypeReport.ISSUES_FIRST_LINE: _create_request_issues_first_line,
-        TypeReport.ISSUES_VIP_LINE: _create_request_issues_vip_line,
-        TypeReport.SERVICE_LEVEL: _create_request_service_lavel,
-        TypeReport.MTTR_LEVEL: _create_request_mttr_lavel,
-        TypeReport.FLR_LEVEL: _create_request_flr_lavel,
-        }
-    try:
-        request_creator = request_creators[report]
-        request, search_params = request_creator(*args, **kwargs)
-        return request, search_params
-    except (KeyError, TypeError):
-        raise CantGetData
-
-
 def _find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
     """Функция поиска сформированного отчета в CRM Naumen.
 
@@ -240,8 +202,10 @@ def _find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
     return str(parsed_collection[0])
 
 
-def _get_report(crm: ActiveConnect,
-                report: TypeReport, *args, **kwargs) -> Iterable:
+def _get_report(crm: ActiveConnect, report: TypeReport,
+                naumen_reqest: NaumenRequest,
+                params_for_serarch_report: SearchOptions, *args, **kwargs) \
+                                                                -> Iterable:
     """Функция для получения отчёта из CRM.
 
     Args:
@@ -253,13 +217,11 @@ def _get_report(crm: ActiveConnect,
     Raises:
         CantGetData: в случае невозможности вернуть коллекцию.
     """
-    naumen_rq, search_opt = _create_request(report, *args, **kwargs)
-    print('Создан запрос в наумен и опции поиска')
-    naumen_resp = _get_crm_response(crm, naumen_rq)
+    naumen_resp = _get_crm_response(crm, naumen_reqest)
     if not naumen_resp:
         raise CantGetData
     print('Запрос обработан CRM')
-    naumen_uuid = _find_report_uuid(crm, search_opt)
+    naumen_uuid = _find_report_uuid(crm, params_for_serarch_report)
     print(f'Найден UUID отчёта: {naumen_uuid}')
     url, headers, params, data, verify = get_params_find()
     params.update({'uuid': naumen_uuid})
@@ -268,22 +230,20 @@ def _get_report(crm: ActiveConnect,
     if not naumen_resp:
         raise CantGetData
     page_text = naumen_resp.text
-    collect = parse_naumen_page(page_text, search_opt.name, report.page)
+    collect = parse_naumen_page(
+        page_text, params_for_serarch_report.name, report.page)
     for line in collect:
         print(line)
 
 
-#TODO переделать закрытые функции  _create_request_issues_first_line и т.п
-#TODO в открытые функции create_issues_first_line для того что бы было
-#TODO понятно какие аргументы надо отдавать для создания отчёта
+def get_issues(crm: ActiveConnect, is_vip: bool = False, *args, **kwargs) \
+                                                                -> Iterable:
 
-
-def get_issues_first_line(crm: ActiveConnect, *args, **kwargs) -> Iterable:
-
-    """Функция для получения отчёта о проблемах первой линии.
+    """Функция для получения отчёта о проблемах на линии ТП.
 
     Args:
         crm: активное соединение с CRM.
+        is_vip: флаг указывающий на то, тикеты какой линии получить.
         *args: другие позиционные аргументы.
         **kwargs: другие именнованные аргументы.
 
@@ -292,50 +252,19 @@ def get_issues_first_line(crm: ActiveConnect, *args, **kwargs) -> Iterable:
     Raises:
         CantGetData: в случае невозможности вернуть коллекцию.
     """
-
-    report = TypeReport.ISSUES_FIRST_LINE
-    params = _configure_params(report)
-    _get_report(crm, report, params)
-
-
-def _create_request_issues_first_line(*args, **kwargs) -> \
-                                        Tuple[NaumenRequest, SearchOptions]:
-    """Функция формирования запроса обращений первой линии.
-
-    Args:
-
-    Returns:
-        NaumenRequest: сформированный запрос для CRM Naumen
-        SearchOptions: параметры для поиска созданного отчета
-    Raises:
-
-    """
-    report = TypeReport.ISSUES_FIRST_LINE
-    return _configure_params(report)
+    report = TypeReport.ISSUES_VIP_LINE if is_vip \
+        else TypeReport.ISSUES_FIRST_LINE
+    request, search_options = _configure_params(report)
+    print('Создан запрос в наумен и опции поиска')
+    _get_report(crm, report, request, search_options)
 
 
-def _create_request_issues_vip_line(*args, **kwargs) -> \
-                                        Tuple[NaumenRequest, SearchOptions]:
-    """Функция формирования запроса обращений вип линии.
+def get_service_lavel(crm: ActiveConnect, first_day: str, last_day: str,
+                      deadline: int) -> Tuple[NaumenRequest, SearchOptions]:
+    """Функция для получения отчёта уровня SL за промежуток дней.
 
     Args:
-
-    Returns:
-        NaumenRequest: сформированный запрос для CRM Naumen
-        SearchOptions: параметры для поиска созданного отчета
-    Raises:
-
-    """
-    report = TypeReport.ISSUES_VIP_LINE
-    return _configure_params(report)
-
-
-def _create_request_service_lavel(first_day: date, last_day: date,
-                                  deadline: int) -> \
-                                  Tuple[NaumenRequest, SearchOptions]:
-    """Функция формирования запроса уровня SL за промежуток дней.
-
-    Args:
+        crm: активное соединение с CRM.
         first_day: первый день.
         last_day: последний день.
         deadline: необходима скорость обработки заявок
@@ -345,21 +274,28 @@ def _create_request_service_lavel(first_day: date, last_day: date,
         SearchOptions: параметры для поиска созданного отчета
 
     Raises:
+        CantGetData: в случае невозможности вернуть коллекцию.
 
     """
     report = TypeReport.SERVICE_LEVEL
     data = CONFIG[report.value]['create request']['data']
-    data['first day']['value'] = first_day.strftime("%d.%m.%Y")
-    data['last day']['value'] = last_day.strftime("%d.%m.%Y")
+    try:
+        data['first day']['value'], data['last day']['value'] = \
+            _validate_date(first_day, last_day)
+    except InvalidDate:
+        raise CantGetData
     data['deadline']['value'] = str(deadline)
-    return _configure_params(report, data)
+    request, search_options = _configure_params(report)
+    print('Создан запрос в наумен и опции поиска')
+    _get_report(crm, report, request, search_options)
 
 
-def _create_request_mttr_lavel(first_day: date, last_day: date) -> \
+def get_mttr_lavel(crm: ActiveConnect, first_day: str, last_day: str) -> \
                                         Tuple[NaumenRequest, SearchOptions]:
-    """Функция формирования запроса уровня MTTR.
+    """Функция для получения отчёта уровня MTTR за промежуток дней.
 
     Args:
+        crm: активное соединение с CRM.
         first_day: первый день.
         last_day: последний день.
 
@@ -368,20 +304,27 @@ def _create_request_mttr_lavel(first_day: date, last_day: date) -> \
         SearchOptions: параметры для поиска созданного отчета
 
     Raises:
+        CantGetData: в случае невозможности вернуть коллекцию.
 
     """
     report = TypeReport.MTTR_LEVEL
     data = CONFIG[report.value]['create request']['data']
-    data['first day']['value'] = first_day.strftime("%d.%m.%Y")
-    data['last day']['value'] = last_day.strftime("%d.%m.%Y")
-    return _configure_params(report, data)
+    try:
+        data['first day']['value'], data['last day']['value'] = \
+            _validate_date(first_day, last_day)
+    except InvalidDate:
+        raise CantGetData
+    request, search_options = _configure_params(report)
+    print('Создан запрос в наумен и опции поиска')
+    _get_report(crm, report, request, search_options)
 
 
-def _create_request_flr_lavel(first_day: date, last_day: date) -> \
-                                Tuple[NaumenRequest, SearchOptions]:
-    """Функция формирования запроса уровня FLR.
+def get_flr_lavel(crm: ActiveConnect, first_day: str,
+                  last_day: str) -> Tuple[NaumenRequest, SearchOptions]:
+    """Функция для получения отчёта уровня FLR за промежуток дней.
 
     Args:
+        crm: активное соединение с CRM.
         first_day: первый день.
         last_day: последний день.
 
@@ -390,13 +333,46 @@ def _create_request_flr_lavel(first_day: date, last_day: date) -> \
         SearchOptions: параметры для поиска созданного отчета
 
     Raises:
+        CantGetData: в случае невозможности вернуть коллекцию.
 
     """
     report = TypeReport.FLR_LEVEL
     data = CONFIG[report.value]['create request']['data']
-    data['first day']['value'] = first_day.strftime("%d.%m.%Y")
-    data['last day']['value'] = last_day.strftime("%d.%m.%Y")
-    return _configure_params(report, data)
+    try:
+        data['first day']['value'], data['last day']['value'] = \
+            _validate_date(first_day, last_day)
+    except InvalidDate:
+        raise CantGetData
+    request, search_options = _configure_params(report)
+    print('Создан запрос в наумен и опции поиска')
+    _get_report(crm, report, request, search_options)
+
+
+def _validate_date(first_date: str, second_date: str) -> Tuple[date, date]:
+    """Функция проверки формата даты и её конвертации в обьект datetime.
+
+    Args:
+        first_date: первая дата, format '%d.%m.%Y'
+        second_date: последняя дата, format '%d.%m.%Y'
+
+    Returns:
+        date: обьекты дат.
+
+    Raises:
+        CantGetData: проверить или конвертировть дату.
+
+    """
+
+    try:
+        first_date = datetime\
+            .strptime(first_date, '%d.%m.%Y')\
+            .strftime("%d.%m.%Y")
+        second_date = datetime\
+            .strptime(second_date, '%d.%m.%Y')\
+            .strftime("%d.%m.%Y")
+        return first_date, second_date
+    except ValueError:
+        raise InvalidDate
 
 
 def _configure_params(report: TypeReport, mod_data: Mapping = ()) -> \
