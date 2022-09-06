@@ -502,9 +502,12 @@ def _parse_service_lavel_report(text: str, *args, **kwargs) -> \
             elem.insert(0, day_collection[num-1][0])
         day_collection.append(elem)
     day_collection = [dict(zip(label, day)) for day in day_collection]
-    from_num = datetime.strptime(first_day, '%d.%m.%Y').day
-    to_num = ((datetime.strptime(last_day, '%d.%m.%Y') -
-              datetime.strptime(first_day, '%d.%m.%Y')).days + 1)
+    first_day = datetime.strptime(first_day, '%d.%m.%Y')
+    last_day = datetime.strptime(last_day, '%d.%m.%Y')
+    from_num = first_day.day
+    to_num = last_day.day
+    if first_day.month != last_day.month:
+        to_num = (last_day - first_day).days + 1
     days = {}
     for day in range(from_num, to_num):
         days[day] = [_ for _ in day_collection if _['День'] == str(day)]
@@ -585,7 +588,7 @@ def _formating_service_level_data(days: Mapping[int, Sequence]) \
         sl = ServiceLevel(day, group, gen_total_issues,
                           gen_total_primary_issues,
                           gen_num_issues_before_deadline,
-                          gen_num_issues_after_deadline, gen_service_level)
+                          gen_num_issues_after_deadline, gen_service_level/2)
         day_collection.append(sl)
         collection.append(day_collection)
     return collection
