@@ -495,22 +495,10 @@ def _parse_service_lavel_report(text: str, *args, **kwargs) -> \
     print(f'Получены названия столбцов {label}')
     data_table = soup.find('table', id='stdViewpart0.part0_TableList')
     data_table = data_table.find_all('tr')[3:-1]
-    day_collection = []
-    for num, elem in enumerate(data_table):
-        elem = [_.text.strip() for _ in elem.find_all('td')]
-        if not elem[0].isdigit():
-            elem.insert(0, day_collection[num-1][0])
-        day_collection.append(elem)
-    day_collection = [dict(zip(label, day)) for day in day_collection]
-    first_day = datetime.strptime(first_day, '%d.%m.%Y')
-    last_day = datetime.strptime(last_day, '%d.%m.%Y')
-    from_num = first_day.day
-    to_num = last_day.day
-    if first_day.month != last_day.month:
-        to_num = (last_day - first_day).days + 1
-    days = {}
-    for day in range(from_num, to_num):
-        days[day] = [_ for _ in day_collection if _['День'] == str(day)]
+    day_collection = _forming_days_collecion(data_table, label)
+    print(day_collection)
+    date_range = _get_date_range(first_day, last_day)
+    days = _forming_days_dict(date_range, day_collection)
     group = set([_['Группа'] for _ in day_collection])
     if len(group) != 2:
         raise CantGetData
@@ -607,9 +595,24 @@ def _parse_mttr_lavel_report(text: str, *args, **kwargs) -> \
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    # soup = BeautifulSoup(text, "html.parser")
     print('Парсинг MTTR')
-    # TODO Логика парсинга.
+    soup = BeautifulSoup(text, "html.parser")
+    report_options = _parse_date_report(soup)
+    first_day = report_options.get('Дата регистр, с', None)
+    last_day = report_options.get('Дата регистр, по', None)
+    if not all([first_day, last_day]):
+        raise CantGetData
+    print(f'Получены даты отчета с {first_day} по {last_day}')
+    label = _get_columns_name(soup)
+    print(f'Получены названия столбцов {label}')
+    data_table = soup.find('table', id='stdViewpart0.part0_TableList')
+    data_table = data_table.find_all('tr')[3:]
+    day_collection = _forming_days_collecion(data_table, label)
+    print(day_collection)
+    date_range = _get_date_range(first_day, last_day)
+    days = _forming_days_dict(date_range, day_collection)
+    print(days)
+    # group = set([_['Группа'] for _ in day_collection])
     return ('',)
 
 
@@ -631,3 +634,66 @@ def _parse_flr_lavel_report(text: str, *args, **kwargs) -> \
     print('Парсинг FLR')
     # TODO Логика парсинга.
     return ('',)
+
+
+def _get_date_range(date_first: str, date_second: str) -> Sequence[datetime]:
+
+    """Функция для создания коллекции чисел.
+
+    Args:
+        date_first: первая дата.
+        date_second: вторая дата
+
+    Returns:
+        Sequence[datetime]: Коллекцию дат.
+
+    Raises:
+
+    """
+    date_first = datetime.strptime(date_first, '%d.%m.%Y')
+    date_second = datetime.strptime(date_second, '%d.%m.%Y')
+    first_date = min(date_first, date_second)
+    last_date = max(date_first, date_second)
+    date_range = []
+    while first_date < last_date:
+        date_range.append(first_date)
+        first_date += timedelta(days=1)
+    return date_range
+
+
+def _forming_days_dict(date_range: Sequence[datetime],
+                       day_collection: Sequence) -> Mapping:
+    """Функция для преобразование сырых спаршенных данных к словарю с
+    ключем по дню.
+
+    Args:
+        date_range (Sequence[datetime]): последовательность дней.
+        day_collection (Sequence): сырые данные из CRM.
+
+    Returns:
+        Mapping: словарю с ключем по дню.
+    """
+    days = {}
+    for day in date_range:
+        days[day.day] = [
+            _ for _ in day_collection if _['День'] == str(day.day)]
+    return days
+
+
+def _forming_days_collecion(data_table: Sequence, label: Iterable) -> Sequence:
+    """Функция для преобразование сырых данных bs4 в коллекцию словарей.
+
+    Args:
+        data_table: данных таблицы bs4.
+        label: название столбцов таблицы.
+    Returns:
+        Mapping: коллекцию словарей дней.
+    """
+    day_collection = list()
+    for num, elem in enumerate(data_table):
+        elem = [_.text.strip() for _ in elem.find_all('td')]
+        if not elem[0].isdigit():
+            elem.insert(0, day_collection[num-1][0])
+        day_collection.append(elem)
+    day_collection = [dict(zip(label, day)) for day in day_collection]
+    return day_collection
