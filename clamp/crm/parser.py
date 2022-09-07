@@ -1,4 +1,4 @@
-from calendar import monthrange
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
@@ -6,9 +6,13 @@ from re import findall
 from typing import Callable, Iterable, Literal, Mapping, Sequence
 from urllib import parse
 
+
 from bs4 import BeautifulSoup, element
 
 from .exceptions import CantGetData
+
+
+log = logging.getLogger(__name__)
 
 
 class PageType(Enum):
@@ -126,7 +130,7 @@ class Flr:
             total_primary_issues: всего первичных обращений.
 
     """
-    date: datetime
+    date: str
     flr_level: float
     num_issues_closed_independently: int
     total_primary_issues: int
@@ -148,7 +152,11 @@ def parse_naumen_page(page: str, name_report: str,
         CantGetData: в неправильном сценарии работы функции.
 
     """
+    log.debug('Запущена функция парсинга страницы.'
+              f'Имя необходимого отчета: {name_report}.'
+              f'Тип отчёта: {type_page}')
     if not isinstance(type_page, PageType):
+        log.error(f'Не зарегистрированный тип страницы: {type_page}')
         raise CantGetData
 
     page_parsers: Mapping[PageType, Callable] = {
@@ -161,6 +169,7 @@ def parse_naumen_page(page: str, name_report: str,
     }
 
     parser = page_parsers[type_page]
+    log.debug(f'Получен парсер: {parser.__name__} для страницы: {type_page}')
     parsed_collections = parser(page, name_report)
     return parsed_collections
 
@@ -178,7 +187,9 @@ def _get_url_param_value(url: str, needed_param: str) -> str:
     Raises:
         CantGetData: проблема с парсингом данных
     """
+    log.debug(f'Получение параметра: {needed_param} из URL: {url}')
     if not url:
+        log.error(f'Передан несуществующий URL: {url}')
         raise CantGetData
     param_value = parse.parse_qs(parse.urlparse(url).query)[needed_param][0]
     return param_value
@@ -196,8 +207,13 @@ def _get_columns_name(soup: BeautifulSoup) -> Iterable[str]:
     Raises:
 
     """
-    column_name = [tag.text.strip() for tag in soup.select(".supp tr th b")]
-    return tuple(column_name)
+    css_selector = ".supp tr th b"
+    log.debug(f'Поиск столбцов таблицы по селектору: {css_selector}')
+    column_name = [tag.text.strip() for tag in soup.select(css_selector)]
+    if column_name:
+        return tuple(column_name)
+    log.error(f'Не удалось найти данные по селектору: {css_selector} в soup.')
+    raise CantGetData
 
 
 def _get_step_duration(raw_duration: str) -> timedelta:
@@ -235,8 +251,7 @@ def _get_issue_num(issue_name: str) -> str:
     return number
 
 
-def _parse_reports_lits(text: str, name: str) -> Sequence[str] | \
-                                                    Sequence[Literal['']]:
+def _parse_reports_lits(text: str, name: str) -> Sequence[str] | None:
     """Функция парсинга страницы с отчётами и получение UUID отчёта.
 
     Args:
@@ -249,12 +264,15 @@ def _parse_reports_lits(text: str, name: str) -> Sequence[str] | \
     Raises:
 
     """
+    log.debug(f'Поиск отчета с именем: {name}')
     soup = BeautifulSoup(text, "html.parser")
     report_tag = soup.select(f'[title="{name}"]')
     if report_tag:
+        log.debug(f'Отчет с именем {name} найден.')
         url = report_tag[0]['href']
         return (str(_get_url_param_value(url, 'uuid')), )
-    return ('',)
+    log.debug(f'Отчет с именем {name} не найден.')
+    return None
 
 
 def _parse_issues_table(text: str, *args, **kwargs) \
@@ -445,11 +463,14 @@ def _parse_card_issue(text: str, issue: Issue) -> Issue:
     return issue
 
 
-def _parse_date_report(soup: BeautifulSoup) -> Mapping:
-    """Функция парсинга параметров отчёта.
+def _parse_date_report(soup: BeautifulSoup, name_first_date: str,
+                       name_second_date: str) -> Iterable[str]:
+    """Функция парсинга дат отчёта, со страницы отчёта.
 
     Args:
         soup: сырой текст страницы.
+        name_first_date: название первой даты.
+        name_second_date: название второй даты.
 
     Returns:
         Mapping: Выходной словарь параметров
@@ -457,7 +478,7 @@ def _parse_date_report(soup: BeautifulSoup) -> Mapping:
     Raises:
 
     """
-    print("Парсинг параметров отчёта.")
+    log.debug("Парсинг параметров отчёта.")
     options_table = soup.find('table', id="stdViewpart0.legendTableList")
     options_tag = options_table.find_all('td', attrs={'style': 'width:100%;'})
     name_tag = options_table.find_all('td',
@@ -465,7 +486,11 @@ def _parse_date_report(soup: BeautifulSoup) -> Mapping:
     name = [name.text.strip().replace(':', '') for name in name_tag]
     options = [option.text.strip() for option in options_tag]
     report_options = dict(zip(name, options))
-    return report_options
+    first_day = report_options.get(name_first_date, None)
+    last_day = report_options.get(name_second_date, None)
+    if not all([first_day, last_day]):
+        raise CantGetData
+    return first_day, last_day
 
 
 def _parse_service_lavel_report(text: str, *args, **kwargs) -> \
@@ -481,29 +506,29 @@ def _parse_service_lavel_report(text: str, *args, **kwargs) -> \
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    print('Парсинг SL')
+    support_group_count = 2
+    log.debug('Запуск парсинг отчёта SL')
     soup = BeautifulSoup(text, "html.parser")
-    report_options = _parse_date_report(soup)
-    first_day = report_options.get('Дата перевода, с', None)
-    last_day = report_options.get('Дата перевода, по', None)
-    if not all([first_day, last_day]):
-        raise CantGetData
-    print(f'Получены даты отчета с {first_day} по {last_day}')
+    first_day, last_day = _parse_date_report(
+        soup, 'Дата перевода, с', 'Дата перевода, по')
+    log.debug(f'Получены даты отчета с {first_day} по {last_day}')
     label = _get_columns_name(soup)
-    if not label:
-        raise CantGetData
-    print(f'Получены названия столбцов {label}')
+    log.debug(f'Получены названия столбцов {label}')
     data_table = soup.find('table', id='stdViewpart0.part0_TableList')
     data_table = data_table.find_all('tr')[3:-1]
-    day_collection = _forming_days_collecion(data_table, label)
-    print(day_collection)
+    day_collection = _forming_days_collecion(
+        data_table, label, PageType.SERVICE_LEVEL_REPORT_PAGE)
     date_range = _get_date_range(first_day, last_day)
-    days = _forming_days_dict(date_range, day_collection)
+    days = _forming_days_dict(
+        date_range, day_collection, PageType.SERVICE_LEVEL_REPORT_PAGE)
     group = set([_['Группа'] for _ in day_collection])
-    if len(group) != 2:
+    if len(group) != support_group_count:
+        log.error(f'Количество групп ТП не равно {support_group_count}')
         raise CantGetData
     days = _service_lavel_data_completion(days, group, label)
     collection = _formating_service_level_data(days)
+    log.debug(f'Парсинг завершился успешно. Колекция отчетов SL '
+              f'с {first_day} по {last_day} содержит {len(collection)} элем.')
     return collection
 
 
@@ -595,36 +620,36 @@ def _parse_mttr_lavel_report(text: str, *args, **kwargs) -> \
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    print('Парсинг MTTR')
+    log.debug('Запуск парсинг отчёта MTTR')
     soup = BeautifulSoup(text, "html.parser")
-    report_options = _parse_date_report(soup)
-    first_day = report_options.get('Дата регистр, с', None)
-    last_day = report_options.get('Дата регистр, по', None)
-    if not all([first_day, last_day]):
-        raise CantGetData
-    print(f'Получены даты отчета с {first_day} по {last_day}')
+    first_day, last_day = _parse_date_report(
+        soup, 'Дата регистр, с', 'Дата регистр, по')
+    log.debug(f'Получены даты отчета с {first_day} по {last_day}')
     label = _get_columns_name(soup)
-    print(f'Получены названия столбцов {label}')
+    log.debug(f'Получены названия столбцов {label}')
     data_table = soup.find('table', id='stdViewpart0.part0_TableList')
     data_table = data_table.find_all('tr')[3:]
-    day_collection = _forming_days_collecion(data_table, label)
-    print(day_collection)
+    day_collection = _forming_days_collecion(
+        data_table, label, PageType.MMTR_LEVEL_REPORT_PAGE)
     date_range = _get_date_range(first_day, last_day)
-    days = _forming_days_dict(date_range, day_collection)
+    days = _forming_days_dict(
+        date_range, day_collection, PageType.MMTR_LEVEL_REPORT_PAGE)
     days = _mttr_data_completion(days, label)
-    print(days)
     collection = _formating_mttr_data(days)
+    log.debug(f'Парсинг завершился успешно. Колекция отчетов MTTR '
+              f'с {first_day} по {last_day} содержит {len(collection)} элем.')
     return collection
 
 
 def _formating_mttr_data(days: Mapping[int, Sequence]) \
                                  -> Sequence[Mttr]:
     collection = []
-    for day, data in days.items():
-        day = ''
-        total_issues = ''
-        average_mttr = ''
-        average_mttr_tech_support = ''
+    for day, day_content in days.items():
+        day_content = day_content[0]
+        day = day_content['День']
+        total_issues = day_content['Всего ТТ']
+        average_mttr = day_content['Средн МТТР']
+        average_mttr_tech_support = day_content['Средн МТТР ТП']
         mttr = Mttr(day, total_issues, average_mttr, average_mttr_tech_support)
         collection.append(mttr)
 
@@ -657,7 +682,7 @@ def _mttr_data_completion(days: dict, lable: Sequence) -> \
 
 def _parse_flr_lavel_report(text: str, *args, **kwargs) -> \
                             Sequence | Sequence[Literal['']]:
-    """Функция парсинга картточки обращения.
+    """Функция парсинга карточки обращения.
 
     Args:
         text: сырой текст страницы.
@@ -668,11 +693,76 @@ def _parse_flr_lavel_report(text: str, *args, **kwargs) -> \
     Raises:
         CantGetData: Если не удалось найти данные.
     """
-    # soup = BeautifulSoup(text, "html.parser")
-    # category = _get_columns_name(soup)
-    print('Парсинг FLR')
-    # TODO Логика парсинга.
-    return ('',)
+    log.debug('Запуск парсинг отчёта FLR')
+    soup = BeautifulSoup(text, "html.parser")
+    first_day, last_day = _parse_date_report(
+        soup, 'Дата перевода, с', 'Дата перевода, по')
+    log.debug(f'Получены даты отчета с {first_day} по {last_day}')
+    label = _get_columns_name(soup)
+    log.debug(f'Получены названия столбцов {label}')
+    data_table = soup.find('table', id='stdViewpart0.part0_TableList')
+    data_table = data_table.find_all('tr')[3:-1]
+    day_collection = _forming_days_collecion(
+        data_table, label, PageType.FLR_LEVEL_REPORT_PAGE)
+    date_range = _get_date_range(first_day, last_day)
+    days = _forming_days_dict(
+        date_range, day_collection, PageType.FLR_LEVEL_REPORT_PAGE)
+    days = _flr_data_completion(days, label)
+    collection = _formating_flr_data(days)
+    log.debug(f'Парсинг завершился успешно. Колекция отчетов FLR '
+              f'с {first_day} по {last_day} содержит {len(collection)} элем.')
+    return collection
+
+
+def _flr_data_completion(days: dict, lable: Sequence) -> \
+                          Mapping[int, Sequence]:
+    """Функция для дополнения данных отчёта FLR.
+        т.к Naumen отдает не все необходимые данные, необходимо их дополнить.
+        Заполнить пропуски за не наступившие дни:FLR будет 0%
+
+    Args:
+        days: словарь дней, где ключ номер дня
+        lable: название категорий
+
+    Returns:
+        Mapping: дополненый словарь.
+    """
+    flr_level = '0'
+    num_issues_closed_independently = '0'
+    total_primary_issues = '0'
+    for day, content in days.items():
+        if len(content) == 0:
+            obj_day = datetime.strptime(day, '%d.%m.%Y')
+            days[day] = [
+                dict(zip(
+                    lable,
+                    (str(obj_day.month),
+                     str(obj_day.day),
+                     flr_level,
+                     num_issues_closed_independently,
+                     total_primary_issues),
+                    )),
+                ]
+    return days
+
+
+def _formating_flr_data(days: Mapping[int, Sequence]) \
+                                 -> Sequence[Mttr]:
+    collection = []
+    for day, day_content in days.items():
+        day_content = day_content[0]
+        date = day
+        flr_level = day_content['FLR по дн (в %)']
+        num_issues_closed_independently = day_content['Закрыто ТП без др отд']
+        total_primary_issues = day_content['Количество первичных']
+        flr = Flr(
+            date, flr_level,
+            num_issues_closed_independently,
+            total_primary_issues,
+            )
+        collection.append(flr)
+
+    return collection
 
 
 def _get_date_range(date_first: str, date_second: str) -> Sequence[datetime]:
@@ -689,10 +779,13 @@ def _get_date_range(date_first: str, date_second: str) -> Sequence[datetime]:
     Raises:
 
     """
+    log.debug(f'Формирование списка дат между {date_first} и {date_second}')
     date_first = datetime.strptime(date_first, '%d.%m.%Y')
     date_second = datetime.strptime(date_second, '%d.%m.%Y')
     first_date = min(date_first, date_second)
     last_date = max(date_first, date_second)
+    log.debug(f'Минимальная дата: {first_date}')
+    log.debug(f'Максимальная дата: {last_date}')
     date_range = []
     while first_date < last_date:
         date_range.append(first_date)
@@ -701,7 +794,8 @@ def _get_date_range(date_first: str, date_second: str) -> Sequence[datetime]:
 
 
 def _forming_days_dict(date_range: Sequence[datetime],
-                       day_collection: Sequence) -> Mapping:
+                       day_collection: Sequence,
+                       report_type: PageType) -> Mapping:
     """Функция для преобразование сырых спаршенных данных к словарю с
     ключем по дню.
 
@@ -713,26 +807,51 @@ def _forming_days_dict(date_range: Sequence[datetime],
         Mapping: словарю с ключем по дню.
     """
     days = {}
+    if report_type == PageType.FLR_LEVEL_REPORT_PAGE:
+
+        for day in date_range:
+            days[day.strftime("%d.%m.%Y")] = [
+                _ for _ in day_collection
+                if _['День'] == str(day.day)
+                and _['Месяц'] == str(day.month)
+            ]
+        return days
+
     for day in date_range:
         days[day.day] = [
             _ for _ in day_collection if _['День'] == str(day.day)]
     return days
 
 
-def _forming_days_collecion(data_table: Sequence, label: Sequence) -> Sequence:
+def _forming_days_collecion(data_table: Sequence, label: Sequence,
+                            report_type: PageType) -> Sequence:
     """Функция для преобразование сырых данных bs4 в коллекцию словарей.
 
     Args:
         data_table: данных таблицы bs4.
         label: название столбцов таблицы.
+        report_type: тип отчета
     Returns:
         Mapping: коллекцию словарей дней.
     """
     day_collection = list()
     for num, elem in enumerate(data_table):
         elem = [_.text.strip() for _ in elem.find_all('td')]
-        if not elem[0].isdigit():
+
+        if all(
+            [
+                report_type == PageType.SERVICE_LEVEL_REPORT_PAGE,
+                not elem[0].isdigit(),
+                ]):
             elem.insert(0, day_collection[num-1][0])
+
+        elif all(
+            [
+                report_type == PageType.FLR_LEVEL_REPORT_PAGE,
+                len(elem) < 5,
+                ]):
+            elem.insert(0, day_collection[num-1][0])
+
         day_collection.append(elem)
     day_collection = [dict(zip(label, day)) for day in day_collection]
     return day_collection

@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum
@@ -15,6 +16,7 @@ from .parser import PageType, parse_naumen_page
 urllib3.disable_warnings()
 
 
+log = logging.getLogger(__name__)
 DOMAIN = Literal['CORP.ERTELECOM.LOC', 'O.WESTCALL.SPB.RU']
 
 
@@ -183,14 +185,18 @@ def _find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
         Raises:
 
         """
+        log.debug(f'Поиск свормированного отчета: {options.name}.'
+                  f'Осталось попыток: {num_attems}')
+        log.debug(f'Сформированный запрос: {search_request}')
         sleep(options.delay_attems)
         response = _get_crm_response(crm, search_request)
         page_text = response.text
         parsed_collection = parse_naumen_page(page_text, options.name,
                                               PageType.REPORT_LIST_PAGE)
-        if not parsed_collection:
+        if parsed_collection is None:
             if num_attems >= 1:
                 return _searching(num_attems - 1, search_request)
+            log.error(f'Не удалось найти отчёт: {options.name}')
             raise CantGetData
         return parsed_collection
 
@@ -223,9 +229,9 @@ def _get_report(crm: ActiveConnect, report: TypeReport,
     naumen_resp = _get_crm_response(crm, naumen_reqest)
     if not naumen_resp:
         raise CantGetData
-    print('Запрос обработан CRM')
+    log.debug('Запрос на создание отчёта обработан CRM')
     naumen_uuid = _find_report_uuid(crm, params_for_serarch_report)
-    print(f'Найден UUID отчёта: {naumen_uuid}')
+    log.debug(f'Найден UUID сформированного отчёта : {naumen_uuid}')
     url, headers, params, data, verify = get_params_find()
     params.update({'uuid': naumen_uuid})
     search_request = NaumenRequest(url, headers, params, data, verify)
@@ -258,7 +264,6 @@ def get_issues(crm: ActiveConnect, is_vip: bool = False, *args, **kwargs) \
     report = TypeReport.ISSUES_VIP_LINE if is_vip \
         else TypeReport.ISSUES_FIRST_LINE
     request, search_options = _configure_params(report)
-    print('Создан запрос в наумен и опции поиска')
     _get_report(crm, report, request, search_options)
 
 
@@ -289,7 +294,6 @@ def get_service_lavel(crm: ActiveConnect, first_day: str, last_day: str,
         raise CantGetData
     data['deadline']['value'] = str(deadline)
     request, search_options = _configure_params(report)
-    print('Создан запрос в наумен и опции поиска')
     _get_report(crm, report, request, search_options)
 
 
@@ -318,7 +322,6 @@ def get_mttr_lavel(crm: ActiveConnect, first_day: str, last_day: str) -> \
     except InvalidDate:
         raise CantGetData
     request, search_options = _configure_params(report)
-    print('Создан запрос в наумен и опции поиска')
     _get_report(crm, report, request, search_options)
 
 
@@ -347,7 +350,6 @@ def get_flr_lavel(crm: ActiveConnect, first_day: str,
     except InvalidDate:
         raise CantGetData
     request, search_options = _configure_params(report)
-    print('Создан запрос в наумен и опции поиска')
     _get_report(crm, report, request, search_options)
 
 
