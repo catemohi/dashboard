@@ -158,6 +158,102 @@ def _get_crm_response(crm: ActiveConnect, rq: NaumenRequest) -> Response:
     return _response
 
 
+def _get_report(crm: ActiveConnect, report: TypeReport, *args, **kwargs) \
+                                                                -> Iterable:
+    """Функция для получения отчёта из CRM.
+
+    Args:
+        crm: активное соединение с CRM.
+        report: отчёт, который необходимо получить.
+
+    Returns:
+        Itrrable: коллекция обьектов необходимого отчёта.
+    Raises:
+        CantGetData: в случае невозможности вернуть коллекцию.
+    """
+    naumen_reuqest, params_for_serarch_report = \
+        _create_request(report, *args, **kwargs)
+    naumen_reuqest = _get_crm_response(crm, naumen_reuqest)
+    if not naumen_reuqest:
+        raise CantGetData
+    log.debug('Запрос на создание отчёта обработан CRM')
+    naumen_uuid = _find_report_uuid(crm, params_for_serarch_report)
+    log.debug(f'Найден UUID сформированного отчёта : {naumen_uuid}')
+    url, headers, params, data, verify = get_params_find()
+    params.update({'uuid': naumen_uuid})
+    search_request = NaumenRequest(url, headers, params, data, verify)
+    naumen_resp = _get_crm_response(crm, search_request)
+    if not naumen_resp:
+        raise CantGetData
+    page_text = naumen_resp.text
+    collect = parse_naumen_page(
+        page_text, params_for_serarch_report.name, report.page)
+    for line in collect:
+        print(line)
+
+
+def _create_request(report: TypeReport, *args, **kwargs) -> \
+                                        Tuple[NaumenRequest, SearchOptions]:
+    """Функция создания запроса для создания отчета и сбора параметров для
+        поиска созданного отчета.
+
+    Args:
+        report: тип отчета для которого надо создать запрос.
+        *args: параметры необходимые для создания отчета.
+
+    Kwargs:
+        **kwargs: именнованные параметры необходимы для создания отчета.
+
+    Returns:
+        NaumenRequest: готовый запрос да создания отчёта.
+        SearchOptions: параментры для поиска созданного отчёта.
+
+    Raises:
+        CantGetData: в случае неверной работы функции.
+
+    """
+    if not isinstance(report, TypeReport):
+        raise CantGetData
+    data = CONFIG[report.value]['create request']['data'].copy()
+
+    if not kwargs:
+        return _configure_params(report)
+
+    date_name_keys = ('start_data', 'final_date')
+    for name, value in kwargs.items():
+        if name in date_name_keys:
+            value = _validate_date(value)
+        data[name]['value'] = value
+
+    return _configure_params(report, tuple(data.items()))
+
+
+def _configure_params(report: TypeReport, mod_data: Iterable = ()) -> \
+                                        Tuple[NaumenRequest, SearchOptions]:
+    """Функция для создания, даты или параметров запроса.
+
+    Args:
+        report: тип запрашиваемого отчета.
+        mod_data: параметры даты которые необходимо модифицировать
+
+    Returns:
+        NaumenRequest: сформированный запрос для CRM Naumen
+        SearchOptions: параметры для поиска созданного отчета
+    """
+    url, uuid, headers, params, data, verify, delay_attems, num_attems = \
+        get_params_create_report(report.value)
+    if mod_data:
+        data.update(mod_data)
+    name = _get_report_name()
+    data['title']['value'] = name
+    data = _params_erector(data)
+    params = _params_erector(params)
+
+    search_options = SearchOptions(name, delay_attems, num_attems, uuid)
+    request = NaumenRequest(url, headers, params, data, verify)
+    return (request, search_options)
+
+
 def _find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
     """Функция поиска сформированного отчета в CRM Naumen.
 
@@ -212,199 +308,24 @@ def _find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
     return str(parsed_collection[0])
 
 
-def _get_report(crm: ActiveConnect, report: TypeReport,
-                naumen_reqest: NaumenRequest,
-                params_for_serarch_report: SearchOptions, *args, **kwargs) \
-                                                                -> Iterable:
-    """Функция для получения отчёта из CRM.
-
-    Args:
-        crm: активное соединение с CRM.
-        report: отчёт, который необходимо получить.
-
-    Returns:
-        Itrrable: коллекция обьектов необходимого отчёта.
-    Raises:
-        CantGetData: в случае невозможности вернуть коллекцию.
-    """
-    naumen_resp = _get_crm_response(crm, naumen_reqest)
-    if not naumen_resp:
-        raise CantGetData
-    log.debug('Запрос на создание отчёта обработан CRM')
-    naumen_uuid = _find_report_uuid(crm, params_for_serarch_report)
-    log.debug(f'Найден UUID сформированного отчёта : {naumen_uuid}')
-    url, headers, params, data, verify = get_params_find()
-    params.update({'uuid': naumen_uuid})
-    search_request = NaumenRequest(url, headers, params, data, verify)
-    naumen_resp = _get_crm_response(crm, search_request)
-    if not naumen_resp:
-        raise CantGetData
-    page_text = naumen_resp.text
-    collect = parse_naumen_page(
-        page_text, params_for_serarch_report.name, report.page)
-    for line in collect:
-        print(line)
-
-
-def get_issues(crm: ActiveConnect, is_vip: bool = False, *args, **kwargs) \
-                                                                -> Iterable:
-
-    """Функция для получения отчёта о проблемах на линии ТП.
-
-    Args:
-        crm: активное соединение с CRM.
-        is_vip: флаг указывающий на то, тикеты какой линии получить.
-        *args: другие позиционные аргументы.
-        **kwargs: другие именнованные аргументы.
-
-    Returns:
-        Itrrable: коллекция обьектов необходимого отчёта.
-    Raises:
-        CantGetData: в случае невозможности вернуть коллекцию.
-    """
-    report = TypeReport.ISSUES_VIP_LINE if is_vip \
-        else TypeReport.ISSUES_FIRST_LINE
-    request, search_options = _configure_params(report)
-    _get_report(crm, report, request, search_options)
-
-
-def get_service_lavel(crm: ActiveConnect, first_day: str, last_day: str,
-                      deadline: int) -> Tuple[NaumenRequest, SearchOptions]:
-    """Функция для получения отчёта уровня SL за промежуток дней.
-
-    Args:
-        crm: активное соединение с CRM.
-        first_day: первый день.
-        last_day: последний день.
-        deadline: необходима скорость обработки заявок
-
-    Returns:
-        NaumenRequest: сформированный запрос для CRM Naumen
-        SearchOptions: параметры для поиска созданного отчета
-
-    Raises:
-        CantGetData: в случае невозможности вернуть коллекцию.
-
-    """
-    report = TypeReport.SERVICE_LEVEL
-    data = CONFIG[report.value]['create request']['data']
-    try:
-        data['first day']['value'], data['last day']['value'] = \
-            _validate_date(first_day, last_day)
-    except InvalidDate:
-        raise CantGetData
-    data['deadline']['value'] = str(deadline)
-    request, search_options = _configure_params(report)
-    _get_report(crm, report, request, search_options)
-
-
-def get_mttr_lavel(crm: ActiveConnect, first_day: str, last_day: str) -> \
-                                        Tuple[NaumenRequest, SearchOptions]:
-    """Функция для получения отчёта уровня MTTR за промежуток дней.
-
-    Args:
-        crm: активное соединение с CRM.
-        first_day: первый день.
-        last_day: последний день.
-
-    Returns:
-        NaumenRequest: сформированный запрос для CRM Naumen
-        SearchOptions: параметры для поиска созданного отчета
-
-    Raises:
-        CantGetData: в случае невозможности вернуть коллекцию.
-
-    """
-    report = TypeReport.MTTR_LEVEL
-    data = CONFIG[report.value]['create request']['data']
-    try:
-        data['first day']['value'], data['last day']['value'] = \
-            _validate_date(first_day, last_day)
-    except InvalidDate:
-        raise CantGetData
-    request, search_options = _configure_params(report)
-    _get_report(crm, report, request, search_options)
-
-
-def get_flr_lavel(crm: ActiveConnect, first_day: str,
-                  last_day: str) -> Tuple[NaumenRequest, SearchOptions]:
-    """Функция для получения отчёта уровня FLR за промежуток дней.
-
-    Args:
-        crm: активное соединение с CRM.
-        first_day: первый день.
-        last_day: последний день.
-
-    Returns:
-        NaumenRequest: сформированный запрос для CRM Naumen
-        SearchOptions: параметры для поиска созданного отчета
-
-    Raises:
-        CantGetData: в случае невозможности вернуть коллекцию.
-
-    """
-    report = TypeReport.FLR_LEVEL
-    data = CONFIG[report.value]['create request']['data']
-    try:
-        data['first day']['value'], data['last day']['value'] = \
-            _validate_date(first_day, last_day)
-    except InvalidDate:
-        raise CantGetData
-    request, search_options = _configure_params(report)
-    _get_report(crm, report, request, search_options)
-
-
-def _validate_date(first_date: str, second_date: str) -> Tuple[date, date]:
-    """Функция проверки формата даты и её конвертации в обьект datetime.
+def _validate_date(first_date: str) -> str:
+    """Функция проверки формата даты.
 
     Args:
         first_date: первая дата, format '%d.%m.%Y'
-        second_date: последняя дата, format '%d.%m.%Y'
 
     Returns:
-        date: обьекты дат.
+        date: строка даты необходимого формата.
 
     Raises:
-        CantGetData: проверить или конвертировть дату.
+        InvalidDate: при неудачной проверке или конвертиртации даты.
 
     """
 
     try:
-        first_date = datetime\
-            .strptime(first_date, '%d.%m.%Y')\
-            .strftime("%d.%m.%Y")
-        second_date = datetime\
-            .strptime(second_date, '%d.%m.%Y')\
-            .strftime("%d.%m.%Y")
-        return first_date, second_date
+        return datetime.strptime(date, '%d.%m.%Y').strftime("%d.%m.%Y")
     except ValueError:
         raise InvalidDate
-
-
-def _configure_params(report: TypeReport, mod_data: Mapping = ()) -> \
-                                        Tuple[NaumenRequest, SearchOptions]:
-    """Функция для создания, даты или параметров запроса.
-
-    Args:
-        report: тип запрашиваемого отчета.
-        mod_data: параметры даты которые необходимо модифицировать
-
-    Returns:
-        NaumenRequest: сформированный запрос для CRM Naumen
-        SearchOptions: параметры для поиска созданного отчета
-    """
-    url, uuid, headers, params, data, verify, delay_attems, num_attems = \
-        get_params_create_report(report.value)
-    if mod_data:
-        data.update(mod_data)
-    name = _get_report_name()
-    data['title']['value'] = name
-    data = _params_erector(data)
-    params = _params_erector(params)
-
-    search_options = SearchOptions(name, delay_attems, num_attems, uuid)
-    request = NaumenRequest(url, headers, params, data, verify)
-    return (request, search_options)
 
 
 def _params_erector(params: Mapping[str,
