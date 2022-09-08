@@ -10,7 +10,7 @@ from typing import Sequence, Tuple
 from requests import Response, Session
 from requests.packages import urllib3
 
-from .config import CONFIG, get_params_create_report, get_params_find
+from .config.config import CONFIG, get_params_create_report, get_params_find
 from .exceptions import CantGetData, ConnectionsFailed, InvalidDate
 from .parser.parser import parse_naumen_page
 from .parser.parser_base import PageType
