@@ -12,7 +12,8 @@ from requests.packages import urllib3
 
 from .config import CONFIG, get_params_create_report, get_params_find
 from .exceptions import CantGetData, ConnectionsFailed, InvalidDate
-from .parser import PageType, parse_naumen_page
+from .parser.parser import parse_naumen_page
+from .parser.parser_base import PageType
 urllib3.disable_warnings()
 
 
