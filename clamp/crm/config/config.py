@@ -72,18 +72,18 @@ def get_params_create_report(report_name: str) -> CreateParams:
     """
     data_create = CreateParams('', '', {}, {}, {}, False, 0, 0)
     reports_name = [
-        key for key, val in CONFIG.items() if "create request" in val
+        key for key, val in CONFIG.items() if "create_request" in val
         ]
     if report_name not in reports_name:
         return data_create
     url = CONFIG['url']['create']
     uuid = CONFIG[report_name]['uuid']
     headers = CONFIG['headers']
-    data = CONFIG[report_name]['create request']['data']
-    params = CONFIG[report_name]['create request']['params']
+    data = CONFIG[report_name]['create_request']['data']
+    params = CONFIG[report_name]['create_request']['params']
     verify = CONFIG['verify']['value']
-    delay_attems = CONFIG[report_name]['delay attems']['value']
-    num_attems = CONFIG[report_name]['num attems']['value']
+    delay_attems = CONFIG[report_name]['delay_attems']['value']
+    num_attems = CONFIG[report_name]['num_attems']['value']
     params["param2"] = {'name': 'uuid', 'value': uuid}
 
     return CreateParams(url, uuid, headers, params, data,

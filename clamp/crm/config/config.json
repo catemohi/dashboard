@@ -1,193 +1,208 @@
 {
     "url": {
-        "main": "",
-        "login": "",
-        "create": "",
-        "delete": "",
-        "open": ""
+        "main": "https://crm.o.westcall.spb.ru",
+        "login": "https://crm.o.westcall.spb.ru/fx/$bk/ru.naumen.core.ui.login_jsp",
+        "create": "https://crm.o.westcall.spb.ru/fx/$guic/ru.naumen.guic.components.forms.form_jsp",
+        "delete": "https://crm.o.westcall.spb.ru/fx/$guic/ru.naumen.guic.components.actions.buttonPressed_jsp",
+        "open": "https://crm.o.westcall.spb.ru/fx/$crm/ru.naumen.crm2.published_jsp"
     },
+    "headers": {
+       "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36", 
+       "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+       "Connection": "keep-alive", 
+       "Cache-Control": "max-age=0", 
+       "Upgrade-Insecure-Requests": "1"
+    },
+    "verify": {"value": false},
     "service level report": {
-        "uuid": "",
-        "create request": {
+        "delay_attems": {"value": 30},
+        "num_attems": {"value": 3},
+        "uuid": "adciwrcorebo18058200000mrbvo9lotsr1g9s;pstcim18058200000mqgtn0sjnjeevmo",
+        "create_request": {
             "data": {
-                "title": {"name": "", "value": ""},
+                "title": {"name": "title", "value": ""},
                 "param1": {
-                    "name": "",
-                    "value": ""},
-                "deadline": {
-                    "name": "",
-                    "value": ""},
-                "param4": {
-                    "name": "",
-                    "value": ""},
+                    "name": "UIFormBackgroundBAFrontendTimer",
+                    "value": "18058200000nldm7pfs5hjp1to"},
+                "param2": {
+                    "name": "first_load",
+                    "value": true},
                 "param5": {
-                    "name": "",
-                    "value": ""},
+                    "name": "__form_id",
+                    "value": "Reports.AdHocReportsList.AdHocReportsListActionContainer.ObjectListReport.tableListAndButtons.AdHocReportsList.AddReportInstance"},
+                "param6": {
+                    "name": "hidden_add",
+                    "value": 1},
+                "deadline": {
+                    "name": "param_aduipl18058200000mqgtn0sh3c7131c",
+                    "value": ""},                    
                 "start_data": {
-                    "name": "",
+                    "name": "param_aduipl18058200000mqgtn0shpt9r0sc",
                     "value": ""},
                 "final_date": {
-                    "name": "",
+                    "name": "param_aduipl18058200000mqgtn0shpt9r0s8",
                     "value": ""}
                 },
             "params": {
                 "param1": {
-                    "name": "",
-                    "value": "':'" }
+                    "name": "activeComponent",
+                    "value": "Reports.AdHocReportsList.AdHocReportsListActionContainer.ObjectListReport.tableListAndButtons.AdHocReportsList.AddReportInstance"}
             }
         }
     },
     "flr report": {
-        "uuid": "",
-        "create request": {
+        "delay_attems": {"value": 60},
+        "num_attems": {"value": 10},
+        "uuid": "adciwrcorebo18058200000mrbvo9lotsr1g9s;pstcim18058200000nhastir8p86ked8",
+        "create_request": {
             "data": {
-                "title": {"name": "", "value": ""},
+                "title": {"name": "title", "value": ""},
                 "param1": {
-                    "name": "",
-                    "value": ""},
+                    "name": "UIFormBackgroundBAFrontendTimer",
+                    "value": "18058200000nlng6pslho4kjeg"},
                 "param2": {
-                    "name": "",
-                    "value": ""},
+                    "name": "%PRESENTATION%__exists",
+                    "value": "1"},
                 "param3": {
-                    "name": "",
-                    "value": ""},
+                    "name": "%PRESENTATION%",
+                    "value": "part0"},
                 "param4": {
-                    "name": "",
-                    "value": ""},
+                    "name": "%isPagedList%__exists",
+                    "value": "1"},
                 "param7": {
-                    "name": "",
-                    "value": ""},
+                    "name": "hidden_add",
+                    "value": "1"},
                 "param8": {
-                    "name": "",
-                    "value": ""},
+                    "name": "__form_id",
+                    "value": "Reports.AdHocReportsList.AdHocReportsListActionContainer.ObjectListReport.tableListAndButtons.AdHocReportsList.AddReportInstance"},
+                "param9": {
+                    "name": "first_load",
+                    "value": false},                  
                 "start_data": {
-                    "name": "",
+                    "name": "param_aduipl18058200000nhastir6o61s6i8",
                     "value": ""},
                 "final_date": {
-                    "name": "",
+                    "name": "param_aduipl18058200000nhastir5uhrpsjs",
                     "value": ""}
                 },
             "params": {
                 "param1": {
-                    "name": "",
-                    "value": "':'" }
+                    "name": "activeComponent",
+                    "value": "Reports.AdHocReportsList.AdHocReportsListActionContainer.ObjectListReport.tableListAndButtons.AdHocReportsList.AddReportInstance"}
             }
         }
     },
     "mttr report": {
-        "uuid": "",
-        "create request": {
+        "delay_attems": {"value": 30},
+        "num_attems": {"value": 5},        
+        "uuid": "adciwrcorebo18058200000mrbvo9lotsr1g9s;pstcim18058200000na0ricm98a01qqo",
+        "create_request": {
             "data": {
-                "title": {"name": "", "value": ""},
+                "title": {"name": "title", "value": ""},
                 "param1": {
-                    "name": "",
-                    "value": ""},
+                    "name": "UIFormBackgroundBAFrontendTimer",
+                    "value": "18058200000nljuk89giuvf5m0"},
                 "param2": {
-                    "name": "",
-                    "value": ""},
+                    "name": "%PRESENTATION%__exists",
+                    "value": "1"},
                 "param3": {
-                    "name": "",
-                    "value": ""},
+                    "name": "%PRESENTATION%",
+                    "value": "part1"},
                 "param4": {
-                    "name": "",
-                    "value": ""},
+                    "name": "%isPagedList%__exists",
+                    "value": "1"},
                 "param7": {
-                    "name": "",
-                    "value": ""},
+                    "name": "hidden_add",
+                    "value": "1"},
                 "param8": {
-                    "name": "",
-                    "value": ""},
+                    "name": "__form_id",
+                    "value": "Reports.AdHocReportsList.AdHocReportsListActionContainer.ObjectListReport.tableListAndButtons.AdHocReportsList.AddReportInstance"},
+                "param9": {
+                    "name": "first_load",
+                    "value": "false"},                
                 "start_data": {
-                    "name": "",
+                    "name": "param_aduipl18058200000na0ricm7qsp3mm8",
                     "value": ""},
                 "final_date": {
-                    "name": "",
+                    "name": "param_aduipl18058200000na0ricm6rceer60",
                     "value": ""}
                 },
             "params": {
                 "param1": {
-                    "name": "",
-                    "value": "':'" }
+                    "name": "activeComponent",
+                    "value": "Reports.AdHocReportsList.AdHocReportsListActionContainer.ObjectListReport.tableListAndButtons.AdHocReportsList.AddReportInstance" }
             }
         }
     },
     "issues": {
-        "uuid": "",
-        "create request": {
+        "delay_attems": {"value": 15},
+        "num_attems": {"value": 5},        
+        "uuid": "adciwrcorebo18058200000mrbvo9lotsr1g9s;pstcim18058200000lriqe4q4qco3kk4",
+        "create_request": {
             "data": {
-                "title": {"name": "", "value": ""},
+                "title": {"name": "title", "value": ""},
                 "param1": {
-                    "name": "",
-                    "value": ""},
+                    "name": "UIFormBackgroundBAFrontendTimer",
+                    "value": "18058200000npf0ha5ruagmia8"},
                 "param2": {
-                    "name": "",
-                    "value": ""},
+                    "name": "%PRESENTATION%__exists",
+                    "value": "1"},
                 "param3": {
-                    "name": "",
-                    "value": ""},
+                    "name": "%PRESENTATION%",
+                    "value": "part0"},
                 "param4": {
-                    "name": "",
-                    "value": ""},
+                    "name": "%isPagedList%__exists",
+                    "value": "1"},
                 "param5": {
-                    "name": "",
-                    "value": ""},
+                    "name": "hidden_add",
+                    "value": "1"},
                 "param6": {
-                    "name": "",
-                    "value": ""},
+                    "name": "__form_id",
+                    "value": "Reports.AdHocReportsList.AdHocReportsListActionContainer.ObjectListReport.tableListAndButtons.AdHocReportsList.AddReportInstance"},
                 "param7": {
-                    "name": "",
-                    "value": ""},
-                "param8": {
-                    "name": "",
-                    "value": ""},
-                "param9": {
-                    "name": "",
-                    "value": ""}
+                    "name": "first_load",
+                    "value": "true"}                    
                 },
             "params": {
                 "param1": {
-                    "name": "",
-                    "value": ""}
+                    "name": "activeComponent",
+                    "value": "Reports.AdHocReportsList.AdHocReportsListActionContainer.ObjectListReport.tableListAndButtons.AdHocReportsList.AddReportInstance" }
             }
         }
     },
     "vip issues": {
-        "uuid": "",
-        "create request": {
+        "delay_attems": {"value": 15},
+        "num_attems": {"value": 5},        
+        "uuid": "adciwrcorebo18058200000mrbvo9mqb8j7glk;pstcim18058200000lriqe4q4qco3kk4",
+        "create_request": {
             "data": {
-                "title": {"name": "", "value": ""},
+                "title": {"name": "title", "value": ""},
                 "param1": {
-                    "name": "",
-                    "value": ""},
+                    "name": "UIFormBackgroundBAFrontendTimer",
+                    "value": "18058200000o68e2tsh7atlo00"},
                 "param2": {
-                    "name": "",
-                    "value": ""},
+                    "name": "%PRESENTATION%__exists",
+                    "value": "1"},
                 "param3": {
-                    "name": "",
-                    "value": ""},
+                    "name": "%PRESENTATION%",
+                    "value": "part0"},
                 "param4": {
-                    "name": "",
-                    "value": ""},
+                    "name": "%isPagedList%__exists",
+                    "value": "1"},
                 "param5": {
-                    "name": "",
-                    "value": ""},
+                    "name": "hidden_add",
+                    "value": "1"},
                 "param6": {
-                    "name": "",
-                    "value": ""},
+                    "name": "__form_id",
+                    "value": "Reports.AdHocReportsList.AdHocReportsListActionContainer.ObjectListReport.tableListAndButtons.AdHocReportsList.AddReportInstance"},
                 "param7": {
-                    "name": "",
-                    "value": ""},
-                "param8": {
-                    "name": "",
-                    "value": ""},
-                "param9": {
-                    "name": "",
-                    "value": ""}
+                    "name": "first_load",
+                    "value": "true"}                    
                 },
             "params": {
                 "param1": {
-                    "name": "",
-                    "value": ""}
+                    "name": "activeComponent",
+                    "value": "Reports.AdHocReportsList.AdHocReportsListActionContainer.ObjectListReport.tableListAndButtons.AdHocReportsList.AddReportInstance" }
             }
         }
     }

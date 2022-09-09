@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import datetime
 from enum import Enum
 from random import randint
 from time import sleep
@@ -158,7 +158,7 @@ def _get_crm_response(crm: ActiveConnect, rq: NaumenRequest) -> Response:
     return _response
 
 
-def _get_report(crm: ActiveConnect, report: TypeReport, *args, **kwargs) \
+def get_report(crm: ActiveConnect, report: TypeReport, *args, **kwargs) \
                                                                 -> Iterable:
     """Функция для получения отчёта из CRM.
 
@@ -173,6 +173,7 @@ def _get_report(crm: ActiveConnect, report: TypeReport, *args, **kwargs) \
     """
     naumen_reuqest, params_for_serarch_report = \
         _create_request(report, *args, **kwargs)
+    log.debug(f'Запрос на создание отчета {report}: {naumen_reuqest}')
     naumen_reuqest = _get_crm_response(crm, naumen_reuqest)
     if not naumen_reuqest:
         raise CantGetData
@@ -214,12 +215,13 @@ def _create_request(report: TypeReport, *args, **kwargs) -> \
     """
     if not isinstance(report, TypeReport):
         raise CantGetData
-    data = CONFIG[report.value]['create request']['data'].copy()
+    data = CONFIG[report.value]['create_request']['data'].copy()
 
     if not kwargs:
         return _configure_params(report)
 
     date_name_keys = ('start_data', 'final_date')
+    log.debug(f'Получены именнованные аргументы: {kwargs}')
     for name, value in kwargs.items():
         if name in date_name_keys:
             value = _validate_date(value)
@@ -308,7 +310,7 @@ def _find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
     return str(parsed_collection[0])
 
 
-def _validate_date(first_date: str) -> str:
+def _validate_date(check_date: str) -> str:
     """Функция проверки формата даты.
 
     Args:
@@ -323,7 +325,7 @@ def _validate_date(first_date: str) -> str:
     """
 
     try:
-        return datetime.strptime(date, '%d.%m.%Y').strftime("%d.%m.%Y")
+        return datetime.strptime(check_date, '%d.%m.%Y').strftime("%d.%m.%Y")
     except ValueError:
         raise InvalidDate
 
