@@ -1,4 +1,4 @@
-from typing import Iterable, Mapping, NamedTuple
+from typing import Iterable
 
 from .client import DOMAIN, TypeReport
 from .client import get_report, get_session
@@ -16,9 +16,9 @@ class Client:
     def __init__(self, *, username: str = '',
                  password: str = '', domain: DOMAIN = '') -> None:
 
-        """Инициализация клиента api.
+        """Инициализация клиента api. Принимает именнованные аргументы.
 
-        Args:
+        Kwargs:
             username (str): Логин в системе. По умолчанию ''.
             password (str): Пароль в системе. По умолчанию ''.
             domain (DOMAIN): Домен. По умолчанию ''.
@@ -35,8 +35,9 @@ class Client:
                 password: str = '', domain: DOMAIN = '') -> None:
 
         """Метод для соединение с системой Naumen.
+           Принимает именнованные аргументы.
 
-        Args:
+        Kwargs:
             username (str, optional): Логин в системе. По умолчанию ''.
             password (str, optional): Пароль в системе. По умолчанию ''.
             domain (DOMAIN, optional): Домен. По умолчанию ''.
@@ -46,9 +47,9 @@ class Client:
         """
         local_credentials = all([username, password, domain])
         self_credentials = all([self.username, self.password, self.domain])
+        error_response = ResponseTemplate(StatusType._UNAUTHORIZED, ())
 
         if not any([local_credentials, self_credentials]):
-            error_response = ResponseTemplate(StatusType._UNAUTHORIZED, ())
             return make_response(error_response, JSONResponseFormatter)
         if local_credentials:
             self.username = username

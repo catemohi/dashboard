@@ -118,10 +118,11 @@ def get_session(username: str, password: str,
         ConnectionsFailed: если не удалось подключиться к CRM системе.
 
     """
-    if not all([username, password, domain]):
+    url = CONFIG['url']['login']
+    if not all([username, password, domain, url]):
         raise ConnectionsFailed
     session = Session()
-    url = CONFIG['url']['login']
+        
     data = {'login': username,
             'password': password,
             'domain': domain,
@@ -250,6 +251,8 @@ def _configure_params(report: TypeReport, mod_data: Iterable = ()) -> \
     data['title']['value'] = name
     data = _params_erector(data)
     params = _params_erector(params)
+    if not url:
+        raise CantGetData
 
     search_options = SearchOptions(name, delay_attems, num_attems, uuid)
     request = NaumenRequest(url, headers, params, data, verify)

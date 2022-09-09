@@ -25,8 +25,9 @@ class StatusType(Enum):
                     }
     _UNAUTHORIZED = {'code': 401,
                      'message': 'Unauthorized',
-                     'description': 'Failed to create a connection.'
-                     'Please check the data and route to the system.',
+                     'description': 'Failed to create a connection. '
+                     'Please check the data and route to the system '
+                     'or config.json settings.',
                      }
     _GATEWAY_TIMEOUT = {'code': 504,
                         'message': 'Naumen Does Not Answer',
