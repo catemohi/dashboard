@@ -99,8 +99,8 @@ def parse(text: str, *args, **kwargs) \
         issue.step = issues_dict['Состояние']
         issue.responsible = issues_dict['Ответственный']
         return issue
-    issues = [parse_table_row(row, category) for row in rows]
-    return issues
+    collection = [parse_table_row(row, category) for row in rows]
+    return tuple(collection)
 
 
 def _get_contragent_params(soup: BeautifulSoup) -> Iterable[str]:

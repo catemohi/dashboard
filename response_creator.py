@@ -1,6 +1,8 @@
 import json
 from enum import Enum
 from typing import Iterable, Mapping, NamedTuple
+from dataclasses import is_dataclass, asdict
+from datetime import datetime,timedelta
 
 
 class StatusType(Enum):
@@ -21,7 +23,7 @@ class StatusType(Enum):
                 }
     _BAD_REQUEST = {'code': 400,
                     'message': 'Bad Request',
-                    'description': '',
+                    'description': 'Wrong, incorrect request.',
                     }
     _UNAUTHORIZED = {'code': 401,
                      'message': 'Unauthorized',
@@ -31,7 +33,8 @@ class StatusType(Enum):
                      }
     _GATEWAY_TIMEOUT = {'code': 504,
                         'message': 'Naumen Does Not Answer',
-                        'description': '',
+                        'description': 'Remote end closed '
+                        'connection without response',
                         }
 
     def __init__(self, status_content: Mapping):
@@ -82,8 +85,21 @@ class JSONResponseFormatter(ResponseFormatter):
         dict_for_json.update({'description': api_response.status.description})
         dict_for_json.update({'content': tuple()})
         if api_response.content:
-            dict_for_json.update({'content': ''})
-        return json.dumps(dict_for_json)
+            _ = list()
+            for line in api_response.content:
+                if is_dataclass(line):
+                    dataclass_dict = asdict(line)
+                    for name, value in dataclass_dict.items():
+                        if isinstance(value, datetime):
+                            dataclass_dict[name] = datetime.strftime(value, '%d.%m.%Y %H:%M:%S')
+                        elif isinstance(value, timedelta):
+                            dataclass_dict[name] = value.total_seconds()
+                    _.append(dataclass_dict)
+            dict_for_json.update({'content': _})
+        return json.dumps(dict_for_json,
+                          sort_keys=False,
+                          ensure_ascii=False,
+                          separators=(',', ': '))
 
 
 def make_response(api_response: ResponseTemplate,

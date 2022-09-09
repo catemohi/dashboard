@@ -62,7 +62,7 @@ def parse(text: str, *args, **kwargs) -> \
     collection = _formating_flr_data(days)
     log.debug(f'Парсинг завершился успешно. Колекция отчетов FLR '
               f'с {first_day} по {last_day} содержит {len(collection)} элем.')
-    return collection
+    return tuple(collection)
 
 
 def _flr_data_completion(days: dict, lable: Sequence) -> \

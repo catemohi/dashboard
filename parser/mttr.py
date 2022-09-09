@@ -61,7 +61,7 @@ def parse(text: str, *args, **kwargs) -> \
     collection = _formating_mttr_data(days)
     log.debug(f'Парсинг завершился успешно. Колекция отчетов MTTR '
               f'с {first_day} по {last_day} содержит {len(collection)} элем.')
-    return collection
+    return tuple(collection)
 
 
 def _formating_mttr_data(days: Mapping[int, Sequence]) \
@@ -76,7 +76,7 @@ def _formating_mttr_data(days: Mapping[int, Sequence]) \
         mttr = Mttr(day, total_issues, average_mttr, average_mttr_tech_support)
         collection.append(mttr)
 
-    return collection
+    return tuple(collection)
 
 
 def _mttr_data_completion(days: dict, lable: Sequence) -> \

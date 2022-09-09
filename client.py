@@ -8,6 +8,7 @@ from typing import Iterable, Literal, Mapping, NamedTuple
 from typing import Sequence, Tuple
 
 from requests import Response, Session
+from requests.adapters import HTTPAdapter, Retry
 from requests.packages import urllib3
 
 from .config.config import CONFIG, get_params_create_report, get_params_find
@@ -122,7 +123,10 @@ def get_session(username: str, password: str,
     if not all([username, password, domain, url]):
         raise ConnectionsFailed
     session = Session()
-        
+    retries = Retry(total=5, backoff_factor=0.5)
+    session.mount('https://', HTTPAdapter(max_retries=retries))
+    session.mount('http://', HTTPAdapter(max_retries=retries))
+
     data = {'login': username,
             'password': password,
             'domain': domain,
@@ -134,12 +138,15 @@ def get_session(username: str, password: str,
     return ActiveConnect(session)
 
 
-def _get_crm_response(crm: ActiveConnect, rq: NaumenRequest) -> Response:
+def _get_crm_response(crm: ActiveConnect,
+                      rq: NaumenRequest,
+                      method: Literal['GET', 'POST'] = 'POST') -> Response:
     """Функция для получения ответа из CRM системы.
 
     Args:
         crm: сессия с CRM Naumen.
         request: запрос в CRM Naumen.
+        method: HTTP метод.
 
     Returns:
         Ответ сервера CRM системы Naumen
@@ -148,12 +155,16 @@ def _get_crm_response(crm: ActiveConnect, rq: NaumenRequest) -> Response:
         ConnectionsFailed: если не удалось подключиться к CRM системе.
 
     """
-
-    _response = crm.session.post(url=rq.url,
-                                 headers=rq.headers,
-                                 params=rq.params,
-                                 data=rq.data, verify=rq.verify)
-    if _response.status_code != 200 or not _response.text:
+    if method == 'POST':
+        _response = crm.session.post(url=rq.url, headers=rq.headers,
+                                     params=rq.params,
+                                     data=rq.data, verify=rq.verify)
+    else:
+        _response = crm.session.get(url=rq.url,
+                                    headers=rq.headers,
+                                    params=rq.params,
+                                    verify=rq.verify)
+    if _response.status_code != 200:
         raise ConnectionsFailed
 
     return _response
@@ -190,8 +201,7 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args, **kwargs) \
     page_text = naumen_resp.text
     collect = parse_naumen_page(
         page_text, params_for_serarch_report.name, report.page)
-    for line in collect:
-        print(line)
+    return collect
 
 
 def _create_request(report: TypeReport, *args, **kwargs) -> \
@@ -291,7 +301,7 @@ def _find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
                   f'Осталось попыток: {num_attems}')
         log.debug(f'Сформированный запрос: {search_request}')
         sleep(options.delay_attems)
-        response = _get_crm_response(crm, search_request)
+        response = _get_crm_response(crm, search_request, 'GET')
         page_text = response.text
         parsed_collection = parse_naumen_page(page_text, options.name,
                                               PageType.REPORT_LIST_PAGE)

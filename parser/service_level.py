@@ -73,7 +73,7 @@ def parse(text: str, *args, **kwargs) -> \
     collection = _formating_service_level_data(days)
     log.debug(f'Парсинг завершился успешно. Колекция отчетов SL '
               f'с {first_day} по {last_day} содержит {len(collection)} элем.')
-    return collection
+    return tuple(collection)
 
 
 def _service_lavel_data_completion(days: dict, groups: Sequence,
@@ -148,4 +148,4 @@ def _formating_service_level_data(days: Mapping[int, Sequence]) \
                           gen_num_issues_after_deadline, gen_service_level/2)
         day_collection.append(sl)
         collection.append(day_collection)
-    return collection
+    return tuple(collection)

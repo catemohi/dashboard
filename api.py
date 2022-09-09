@@ -1,10 +1,10 @@
-from typing import Iterable
+from requests import exceptions
 
 from .client import DOMAIN, TypeReport
 from .client import get_report, get_session
 from .response_creator import JSONResponseFormatter, make_response
-from .response_creator import StatusType, ResponseTemplate
-from .exceptions import ConnectionsFailed
+from .response_creator import StatusType, ResponseTemplate, ResponseFormatter
+from .exceptions import ConnectionsFailed, CantGetData
 
 
 class Client:
@@ -62,7 +62,8 @@ class Client:
         except ConnectionsFailed:
             return make_response(error_response, JSONResponseFormatter)
 
-    def get_issues(self, is_vip: bool = False, *args, **kwargs) -> Iterable:
+    def get_issues(self, is_vip: bool = False, *args, **kwargs) -> \
+            ResponseFormatter.FORMATTED_RESPONSE:
 
         """Функция для получения отчёта о проблемах на линии ТП.
 
@@ -73,13 +74,26 @@ class Client:
             **kwargs: другие именнованные аргументы.
 
         Returns:
-            Itrrable: коллекция обьектов необходимого отчёта.
+            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
 
         Raises:
-            CantGetData: в случае невозможности вернуть коллекцию.
+
         """
 
-        #TODO requests.exceptions.ConnectionError:
         report = TypeReport.ISSUES_VIP_LINE if is_vip \
             else TypeReport.ISSUES_FIRST_LINE
-        get_report(self._sesson, report)
+
+        try:
+            content = get_report(self._sesson, report)
+            api_response = ResponseTemplate(StatusType._SUCCESS, content)
+            return make_response(api_response, JSONResponseFormatter)
+
+        except exceptions.ConnectionError:
+            error_response = ResponseTemplate(StatusType._GATEWAY_TIMEOUT, ())
+            return make_response(error_response, JSONResponseFormatter)
+        except CantGetData:
+            error_response = ResponseTemplate(StatusType._BAD_REQUEST, ())
+            return make_response(error_response, JSONResponseFormatter)
+        except ConnectionsFailed:
+            error_response = ResponseTemplate(StatusType._UNAUTHORIZED, ())
+            return make_response(error_response, JSONResponseFormatter)
