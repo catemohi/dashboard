@@ -14,14 +14,29 @@ class StatusType(Enum):
             _GATEWAY_TIMEOUT: при проблемах с Naumen
 
     """
-    _SUCCESS = {'code': 200, 'message': 'OK'}
-    _BAD_REQUEST = {'code': 400, 'message': 'Bad Request'}
-    _UNAUTHORIZED = {'code': 401, 'message': 'Unauthorized'}
-    _GATEWAY_TIMEOUT = {'code': 504, 'message': 'Naumen Does Not Answer'}
+
+    _SUCCESS = {'code': 200,
+                'message': 'OK',
+                'description': '',
+                }
+    _BAD_REQUEST = {'code': 400,
+                    'message': 'Bad Request',
+                    'description': '',
+                    }
+    _UNAUTHORIZED = {'code': 401,
+                     'message': 'Unauthorized',
+                     'description': 'Failed to create a connection.'
+                     'Please check the data and route to the system.',
+                     }
+    _GATEWAY_TIMEOUT = {'code': 504,
+                        'message': 'Naumen Does Not Answer',
+                        'description': '',
+                        }
 
     def __init__(self, status_content: Mapping):
         self.code = status_content['code']
         self.message = status_content['message']
+        self.description = status_content['description']
 
 
 class ResponseTemplate(NamedTuple):
@@ -30,11 +45,9 @@ class ResponseTemplate(NamedTuple):
 
         Attributes:
             status: состояние ответа
-            description: описание ответа.
             content: содержание ответа
     """
     status: StatusType
-    description: str
     content: Iterable
 
 
@@ -65,7 +78,7 @@ class JSONResponseFormatter(ResponseFormatter):
         dict_for_json = dict()
         dict_for_json.update({'status_code': api_response.status.code})
         dict_for_json.update({'status_message': api_response.status.message})
-        dict_for_json.update({'description': api_response.description})
+        dict_for_json.update({'description': api_response.status.description})
         dict_for_json.update({'content': tuple()})
         if api_response.content:
             dict_for_json.update({'content': ''})

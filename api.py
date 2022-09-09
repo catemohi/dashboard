@@ -4,41 +4,62 @@ from .client import DOMAIN, TypeReport
 from .client import get_report, get_session
 from .response_creator import JSONResponseFormatter, make_response
 from .response_creator import StatusType, ResponseTemplate
+from .exceptions import ConnectionsFailed
 
 
 class Client:
 
-    """_summary_
+    """Класс для взаимодействия с системой Naumen.
+        Возвращает ответы JSON строками.
     """
 
-    def __init__(self, username: str, password: str, domain: DOMAIN) -> None:
-        """_summary_
+    def __init__(self, *, username: str = '',
+                 password: str = '', domain: DOMAIN = '') -> None:
+
+        """Инициализация клиента api.
 
         Args:
-            username (str): _description_
-            password (str): _description_
-            domain (DOMAIN): _description_
+            username (str): Логин в системе. По умолчанию ''.
+            password (str): Пароль в системе. По умолчанию ''.
+            domain (DOMAIN): Домен. По умолчанию ''.
         """
 
         self.username = username
         self.password = password
         self.domain = DOMAIN
+        self._sesson = None
+        if all([self.username, self.password, self.domain]):
+            self.connect()
 
     def connect(self, *, username: str = '',
                 password: str = '', domain: DOMAIN = '') -> None:
+
+        """Метод для соединение с системой Naumen.
+
+        Args:
+            username (str, optional): Логин в системе. По умолчанию ''.
+            password (str, optional): Пароль в системе. По умолчанию ''.
+            domain (DOMAIN, optional): Домен. По умолчанию ''.
+
+        Returns:
+            None:
+        """
         local_credentials = all([username, password, domain])
         self_credentials = all([self.username, self.password, self.domain])
+
         if not any([local_credentials, self_credentials]):
-
-            error_response = ResponseTemplate(
-                StatusType._UNAUTHORIZED,
-                'Failed to create a connection.'
-                'Please check the data and route to the system.', (),
-                )
-
+            error_response = ResponseTemplate(StatusType._UNAUTHORIZED, ())
             return make_response(error_response, JSONResponseFormatter)
-
-        self._sesson = get_session(username, password, domain)
+        if local_credentials:
+            self.username = username
+            self.password = password
+            self.domain = domain
+        try:
+            self._sesson = get_session(self.username,
+                                       self.password,
+                                       self.domain)
+        except ConnectionsFailed:
+            return make_response(error_response, JSONResponseFormatter)
 
     def get_issues(self, is_vip: bool = False, *args, **kwargs) -> Iterable:
 
