@@ -7,6 +7,12 @@ class ConnectionsFailed(Exception):
 
     """
 
+    def __init__(self,
+                 message="Неудалось создать подключение используя "
+                 "переданные данные. Проверьте данные и маршрут до системы."):
+        self.message = message
+        super().__init__(self.message)
+
 
 class CantGetData(Exception):
 
@@ -29,3 +35,4 @@ class InvalidDate(Exception):
                  message="Формат даты неверный. Необходимый формат %d.%m.%Y"):
         self.message = message
         super().__init__(self.message)
+
