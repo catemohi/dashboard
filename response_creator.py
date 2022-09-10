@@ -1,8 +1,8 @@
 import json
+from dataclasses import asdict, is_dataclass
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Iterable, Mapping, NamedTuple
-from dataclasses import is_dataclass, asdict
-from datetime import datetime,timedelta
 
 
 class StatusType(Enum):
@@ -65,8 +65,19 @@ class ResponseFormatter:
 
     FORMATTED_RESPONSE = str
 
-    def make(self, api_response: ResponseTemplate) -> \
-            FORMATTED_RESPONSE:
+    def make(self, api_response: ResponseTemplate) -> FORMATTED_RESPONSE:
+
+        """Метод, который вызывается для формирования отчета.
+
+        Args:
+            api_response (ResponseTemplate): сырой ответ от API.
+
+        Raises:
+            NotImplementedError: не реализован.
+
+        Returns:
+            FORMATTED_RESPONSE: форматированный ответ.
+        """
         raise NotImplementedError
 
 
@@ -76,30 +87,59 @@ class JSONResponseFormatter(ResponseFormatter):
 
     FORMATTED_RESPONSE = 'str'
 
-    @staticmethod
-    def make(api_response: ResponseTemplate) -> \
+    def make(self, api_response: ResponseTemplate) -> \
             FORMATTED_RESPONSE:
+        """Метод для форматирования ответа.
+
+        Args:
+            api_response: сырой ответ от API,
+            который требуется отфармотировать.
+
+        Returns:
+            FORMATTED_RESPONSE: отформатированный ответ.
+
+        """
         dict_for_json = dict()
         dict_for_json.update({'status_code': api_response.status.code})
         dict_for_json.update({'status_message': api_response.status.message})
         dict_for_json.update({'description': api_response.status.description})
         dict_for_json.update({'content': tuple()})
-        if api_response.content:
-            _ = list()
-            for line in api_response.content:
-                if is_dataclass(line):
-                    dataclass_dict = asdict(line)
-                    for name, value in dataclass_dict.items():
-                        if isinstance(value, datetime):
-                            dataclass_dict[name] = datetime.strftime(value, '%d.%m.%Y %H:%M:%S')
-                        elif isinstance(value, timedelta):
-                            dataclass_dict[name] = value.total_seconds()
-                    _.append(dataclass_dict)
-            dict_for_json.update({'content': _})
-        return json.dumps(dict_for_json,
-                          sort_keys=False,
-                          ensure_ascii=False,
-                          separators=(',', ': '))
+        if not api_response.content:
+            json_string = json.dumps(dict_for_json, sort_keys=False,
+                                     ensure_ascii=False,
+                                     separators=(',', ': '))
+            return json_string
+
+        dataclass_items = [self.date_obj_to_string(asdict(line))
+                           for line in api_response.content
+                           if is_dataclass(line)]
+
+        dict_for_json.update({'content': dataclass_items})
+        json_string = json.dumps(dict_for_json, sort_keys=False,
+                                 ensure_ascii=False, separators=(',', ': '))
+        return json_string
+
+    def date_obj_to_string(self, content: Mapping,
+                           datetime_string_format: str = '%d.%m.%Y %H:%M:%S')\
+            -> Mapping:
+
+        """Метод для конвертации datetime полей словаря в строки.
+
+        Args:
+            content (Mapping): словарь с параметрами
+            datetime_string_format: формат времени.
+
+        Returns:
+            Mapping: словарь с модифицированными параметрами.
+        """
+
+        for name, value in content.items():
+            if isinstance(value, datetime):
+                content[name] = datetime.strftime(value,
+                                                  datetime_string_format)
+            elif isinstance(value, timedelta):
+                content[name] = value.total_seconds()
+        return content
 
 
 def make_response(api_response: ResponseTemplate,
