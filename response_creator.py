@@ -65,7 +65,8 @@ class ResponseFormatter:
 
     FORMATTED_RESPONSE = str
 
-    def make(self, api_response: ResponseTemplate) -> FORMATTED_RESPONSE:
+    @classmethod
+    def make(cls, api_response: ResponseTemplate) -> FORMATTED_RESPONSE:
 
         """Метод, который вызывается для формирования отчета.
 
@@ -87,8 +88,10 @@ class JSONResponseFormatter(ResponseFormatter):
 
     FORMATTED_RESPONSE = 'str'
 
-    def make(self, api_response: ResponseTemplate) -> \
+    @classmethod
+    def make(cls, api_response: ResponseTemplate) -> \
             FORMATTED_RESPONSE:
+
         """Метод для форматирования ответа.
 
         Args:
@@ -99,6 +102,7 @@ class JSONResponseFormatter(ResponseFormatter):
             FORMATTED_RESPONSE: отформатированный ответ.
 
         """
+
         dict_for_json = dict()
         dict_for_json.update({'status_code': api_response.status.code})
         dict_for_json.update({'status_message': api_response.status.message})
@@ -110,7 +114,7 @@ class JSONResponseFormatter(ResponseFormatter):
                                      separators=(',', ': '))
             return json_string
 
-        dataclass_items = [self.date_obj_to_string(asdict(line))
+        dataclass_items = [cls.date_obj_to_string(asdict(line))
                            for line in api_response.content
                            if is_dataclass(line)]
 
@@ -119,7 +123,8 @@ class JSONResponseFormatter(ResponseFormatter):
                                  ensure_ascii=False, separators=(',', ': '))
         return json_string
 
-    def date_obj_to_string(self, content: Mapping,
+    @classmethod
+    def date_obj_to_string(cls, content: Mapping,
                            datetime_string_format: str = '%d.%m.%Y %H:%M:%S')\
             -> Mapping:
 
@@ -145,6 +150,7 @@ class JSONResponseFormatter(ResponseFormatter):
 def make_response(api_response: ResponseTemplate,
                   formatter: ResponseFormatter) -> \
                                         ResponseFormatter.FORMATTED_RESPONSE:
+
     """Функция форматорования ответа.
 
     Args:
