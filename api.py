@@ -4,7 +4,7 @@ from requests import exceptions
 
 from .client import DOMAIN, TypeReport
 from .client import get_report, get_session
-from .exceptions import CantGetData, ConnectionsFailed
+from .exceptions import CantGetData, ConnectionsFailed, InvalidDate
 from .response_creator import JSONResponseFormatter, make_response
 from .response_creator import ResponseFormatter, ResponseTemplate, StatusType
 
@@ -85,11 +85,11 @@ class Client:
     def get_issues(self, is_vip: bool = False, *args, **kwargs) -> \
             ResponseFormatter.FORMATTED_RESPONSE:
 
-        """Функция для получения отчёта о проблемах на линии ТП.
+        """Метод для получения отчёта о проблемах на линии ТП.
 
         Args:
             is_vip: флаг указывающий на то, тикеты какой линии получить.
-            *args: другие позиционные аргументы.
+            *args: не используются и не пробрасываются.
             **kwargs: другие именнованные аргументы.
 
         Returns:
@@ -105,6 +105,54 @@ class Client:
         log.debug('Запрос открытых проблем техподдержки.')
         log.debug(f'Параметр is_vip: {is_vip}')
         return self._get_response(report)
+
+    def get_sl_report(self, start_date: str, end_date: str,
+                      deadline: int = 15,
+                      *args, **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
+
+        """Метод для получения отчёта о Service Level за период.
+           Метод возвращает дни, без привязки к месяцу.
+           Если передать период с 01.05.2022 по 01.07.2022
+           вернется отчет за 31 день, процент дня будет средним
+           за два месяца.
+
+        Args:
+            start_date: дата начала периода.
+            end_date: дата конца периода.
+            deadline: количество минут относительно которых
+            считать service level
+            *args: не используются и не пробрасываются.
+            **kwargs: другие именнованные аргументы.
+
+        Returns:
+            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+
+        Raises:
+
+        """
+
+        log.debug('Запрос service level техподдержки.')
+        try:
+            deadline = int(deadline)
+        except (ValueError, TypeError):
+            logging.exception(f'Deadline не int и не валидный литерал: '
+                              f'{deadline}')
+            error_response = ResponseTemplate(StatusType._BAD_REQUEST, ())
+            error_response.status.description = (f'Invalid deadline value: '
+                                                 f'{deadline}')
+            return make_response(error_response, self.formatter)
+
+        log.debug(f'Параметр start_date: {start_date}; '
+                  f'Параметр end_date: {end_date}; '
+                  f'Параметр deadline: {deadline}; ')
+
+        report_kwargs = {
+            'start_data': start_date,
+            'final_date': end_date,
+            'deadline': deadline,
+            **kwargs,
+        }
+        return self._get_response(TypeReport.SERVICE_LEVEL, **report_kwargs)
 
     def _get_response(self, report: TypeReport, *args, **kwargs) -> \
             ResponseFormatter.FORMATTED_RESPONSE:
@@ -124,7 +172,8 @@ class Client:
         """
 
         try:
-            content = get_report(self._session, report, args, kwargs)
+            content = get_report(self._session, report, *args, **kwargs)
+            log.debug(content)
             api_response = ResponseTemplate(StatusType._SUCCESS, content)
             log.info('Ответ на запрос проблем техподдержки получен.')
             return make_response(api_response, self.formatter)
@@ -137,6 +186,14 @@ class Client:
         except CantGetData:
             logging.exception('Ошибка получения данных из CRM NAUMEN.')
             error_response = ResponseTemplate(StatusType._BAD_REQUEST, ())
+            return make_response(error_response, self.formatter)
+
+        except InvalidDate:
+            logging.exception('Передан не верный формат дыты из CRM NAUMEN.')
+            error_response = ResponseTemplate(StatusType._BAD_REQUEST, ())
+            error_response.status.description = ('Invalid date format. '
+                                                 'Allowed date format: '
+                                                 '%d.%m.%Y')
             return make_response(error_response, self.formatter)
 
         except ConnectionsFailed:

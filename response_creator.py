@@ -89,8 +89,7 @@ class JSONResponseFormatter(ResponseFormatter):
     FORMATTED_RESPONSE = 'str'
 
     @classmethod
-    def make(cls, api_response: ResponseTemplate) -> \
-            FORMATTED_RESPONSE:
+    def make(cls, api_response: ResponseTemplate) -> FORMATTED_RESPONSE:
 
         """Метод для форматирования ответа.
 
@@ -103,48 +102,29 @@ class JSONResponseFormatter(ResponseFormatter):
 
         """
 
-        dict_for_json = dict()
-        dict_for_json.update({'status_code': api_response.status.code})
-        dict_for_json.update({'status_message': api_response.status.message})
-        dict_for_json.update({'description': api_response.status.description})
-        dict_for_json.update({'content': tuple()})
-        if not api_response.content:
-            json_string = json.dumps(dict_for_json, sort_keys=False,
-                                     ensure_ascii=False,
-                                     separators=(',', ': '))
-            return json_string
-
-        dataclass_items = [cls.date_obj_to_string(asdict(line))
-                           for line in api_response.content
-                           if is_dataclass(line)]
-
-        dict_for_json.update({'content': dataclass_items})
-        json_string = json.dumps(dict_for_json, sort_keys=False,
-                                 ensure_ascii=False, separators=(',', ': '))
+        dict_for_json = {
+            'status_code': api_response.status.code,
+            'status_message': api_response.status.message,
+            'description': api_response.status.description,
+            'content': api_response.content,
+            }
+        json_string = json.dumps(
+            dict_for_json, sort_keys=False, ensure_ascii=False,
+            separators=(',', ': '), cls=EnhancedJSONEncoder,
+            )
         return json_string
 
-    @classmethod
-    def date_obj_to_string(cls, content: Mapping,
-                           datetime_string_format: str = '%d.%m.%Y %H:%M:%S')\
-            -> Mapping:
 
-        """Метод для конвертации datetime полей словаря в строки.
+class EnhancedJSONEncoder(json.JSONEncoder):
 
-        Args:
-            content (Mapping): словарь с параметрами
-            datetime_string_format: формат времени.
-
-        Returns:
-            Mapping: словарь с модифицированными параметрами.
-        """
-
-        for name, value in content.items():
-            if isinstance(value, datetime):
-                content[name] = datetime.strftime(value,
-                                                  datetime_string_format)
-            elif isinstance(value, timedelta):
-                content[name] = value.total_seconds()
-        return content
+    def default(self, encoding_object):
+        if is_dataclass(encoding_object):
+            return asdict(encoding_object)
+        if isinstance(encoding_object, datetime):
+            return datetime.strftime(encoding_object, '%d.%m.%Y %H:%M:%S')
+        if isinstance(encoding_object, timedelta):
+            return encoding_object.total_seconds()
+        return super().default(encoding_object)
 
 
 def make_response(api_response: ResponseTemplate,

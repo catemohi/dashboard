@@ -183,9 +183,13 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args, **kwargs) \
     Raises:
         CantGetData: в случае невозможности вернуть коллекцию.
     """
+
+    log.debug(f'Запуск создания отчета: {report}')
+    log.debug(f'Переданы параметры args: {args}')
+    log.debug(f'Переданы параметры kwargs: {kwargs}')
     naumen_reuqest, params_for_serarch_report = \
         _create_request(report, *args, **kwargs)
-    log.debug(f'Запрос на создание отчета {report}: {naumen_reuqest}')
+    log.debug(f'Запрос к CRM: {naumen_reuqest}')
     naumen_reuqest = _get_crm_response(crm, naumen_reuqest)
     if not naumen_reuqest:
         raise CantGetData
@@ -224,6 +228,9 @@ def _create_request(report: TypeReport, *args, **kwargs) -> \
         CantGetData: в случае неверной работы функции.
 
     """
+    log.debug(f'Запуск создания запроса для отчета: {report}')
+    log.debug(f'Переданы параметры args: {args}')
+    log.debug(f'Переданы параметры kwargs: {kwargs}')
     if not isinstance(report, TypeReport):
         raise CantGetData
     data = CONFIG[report.value]['create_request']['data'].copy()
