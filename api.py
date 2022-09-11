@@ -18,8 +18,9 @@ class Client:
         Возвращает ответы JSON строками.
     """
 
-    def __init__(self, *, username: str = '',
-                 password: str = '', domain: DOMAIN = '') -> None:
+    def __init__(self, *, username: str = '', password: str = '',
+                 domain: DOMAIN = '',
+                 formatter: ResponseFormatter = JSONResponseFormatter) -> None:
 
         """Инициализация клиента api. Принимает именнованные аргументы.
 
@@ -34,6 +35,7 @@ class Client:
         self.username = username
         self.password = password
         self.domain = domain
+        self.formatter = formatter
         self._session = None
 
     def connect(self, *, username: str = '',
@@ -62,7 +64,7 @@ class Client:
 
         if not any([local_credentials, self_credentials]):
             log.error('Не передано данных для соединения с CRM NAUMEN.')
-            return make_response(error_response, JSONResponseFormatter)
+            return make_response(error_response, self.formatter)
 
         if local_credentials:
             self.username = username
@@ -74,11 +76,11 @@ class Client:
                                         self.domain)
             log.info('Соединение с CRM NAUMEN успешно установлено.')
             success_response = ResponseTemplate(StatusType._SUCCESS, ())
-            return make_response(success_response, JSONResponseFormatter)
+            return make_response(success_response, self.formatter)
 
         except ConnectionsFailed:
             logging.exception('Ошибка соединения с CRM NAUMEN.')
-            return make_response(error_response, JSONResponseFormatter)
+            return make_response(error_response, self.formatter)
 
     def get_issues(self, is_vip: bool = False, *args, **kwargs) -> \
             ResponseFormatter.FORMATTED_RESPONSE:
@@ -86,7 +88,6 @@ class Client:
         """Функция для получения отчёта о проблемах на линии ТП.
 
         Args:
-            crm: активное соединение с CRM.
             is_vip: флаг указывающий на то, тикеты какой линии получить.
             *args: другие позиционные аргументы.
             **kwargs: другие именнованные аргументы.
@@ -101,17 +102,44 @@ class Client:
         report = TypeReport.ISSUES_VIP_LINE if is_vip \
             else TypeReport.ISSUES_FIRST_LINE
 
+        log.debug('Запрос открытых проблем техподдержки.')
+        log.debug(f'Параметр is_vip: {is_vip}')
+        return self._get_response(report)
+
+    def _get_response(self, report: TypeReport, *args, **kwargs) -> \
+            ResponseFormatter.FORMATTED_RESPONSE:
+
+        """Шаблонный метод для получения ответа от CRM NAUMEN.
+
+            Args:
+                report: необходимый отчёт.
+                *args: прокинутые позиционные аргументы.
+                **kwargs: прокинутые именнованные аргументы.
+
+            Returns:
+                ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+
+            Raises:
+
+        """
+
         try:
-            content = get_report(self._session, report)
+            content = get_report(self._session, report, args, kwargs)
             api_response = ResponseTemplate(StatusType._SUCCESS, content)
-            return make_response(api_response, JSONResponseFormatter)
+            log.info('Ответ на запрос проблем техподдержки получен.')
+            return make_response(api_response, self.formatter)
 
         except exceptions.ConnectionError:
+            logging.exception('Ошибка соединения с CRM NAUMEN.')
             error_response = ResponseTemplate(StatusType._GATEWAY_TIMEOUT, ())
-            return make_response(error_response, JSONResponseFormatter)
+            return make_response(error_response, self.formatter)
+
         except CantGetData:
+            logging.exception('Ошибка получения данных из CRM NAUMEN.')
             error_response = ResponseTemplate(StatusType._BAD_REQUEST, ())
-            return make_response(error_response, JSONResponseFormatter)
+            return make_response(error_response, self.formatter)
+
         except ConnectionsFailed:
+            logging.exception('Ошибка соединения с CRM NAUMEN.')
             error_response = ResponseTemplate(StatusType._UNAUTHORIZED, ())
-            return make_response(error_response, JSONResponseFormatter)
+            return make_response(error_response, self.formatter)
