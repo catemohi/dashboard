@@ -155,6 +155,67 @@ class Client:
         }
         return self._get_response(TypeReport.SERVICE_LEVEL, **report_kwargs)
 
+    def get_mttr_report(self, start_date: str, end_date: str, *args,
+                        **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
+
+        """Метод для получения отчёта о Mttr за период.
+           Метод возвращает дни, без привязки к месяцу.
+           Если передать период с 01.05.2022 по 01.07.2022
+           вернется отчет за 31 день, процент дня будет средним
+           за два месяца.
+
+        Args:
+            start_date: дата начала периода.
+            end_date: дата конца периода.
+            *args: не используются и не пробрасываются.
+            **kwargs: другие именнованные аргументы.
+
+        Returns:
+            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+
+        Raises:
+
+        """
+
+        log.debug(f'Параметр start_date: {start_date}; '
+                  f'Параметр end_date: {end_date}; ')
+
+        report_kwargs = {
+            'start_date': start_date,
+            'end_date': end_date,
+            **kwargs,
+        }
+        return self._get_response(TypeReport.MTTR_LEVEL, **report_kwargs)
+
+    def get_flr_report(self, start_date: str, end_date: str, *args,
+                       **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
+
+        """Метод для получения отчёта о Flr за период.
+           Метод возвращает дни, c привязкой к месяцу.
+
+        Args:
+            start_date: дата начала периода.
+            end_date: дата конца периода.
+            *args: не используются и не пробрасываются.
+            **kwargs: другие именнованные аргументы.
+
+        Returns:
+            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+
+        Raises:
+
+        """
+
+        log.debug(f'Параметр start_date: {start_date}; '
+                  f'Параметр end_date: {end_date}; ')
+
+        report_kwargs = {
+            'start_date': start_date,
+            'end_date': end_date,
+            **kwargs,
+        }
+        return self._get_response(TypeReport.FLR_LEVEL, **report_kwargs)
+
     def _get_response(self, report: TypeReport, *args, **kwargs) -> \
             ResponseFormatter.FORMATTED_RESPONSE:
 
