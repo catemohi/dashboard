@@ -59,12 +59,15 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
         time.text.replace('\n', '').strip() for time in return_times if time]
     log.debug(f'Из CRM собраны следующие данные: {return_times}.')
 
-    if not return_times:
+    def _return_defalut_time():        
         return_to_work_time = datetime.now() + timedelta(days=365)
         log.warning('Дата возврата в работу не обнаружена, '
                     'поставлено значение по умолчанию: '
                     f'{return_to_work_time}')
         return return_to_work_time
+
+    if not return_times:
+        return _return_defalut_time()
 
     def _string_to_time(string_time: str):
         try:
@@ -74,6 +77,10 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
                         'в обьект datetime, по шаблону %d.%m.%Y %H:%M')
     needed_time_string_count = 1
     times = [_string_to_time(time) for time in return_times if time]
+
+    if not times:
+        return _return_defalut_time()
+
     if len(times) > needed_time_string_count:
         log.warning(f'Получено больше {needed_time_string_count} '
                     'значений даты. Возвращаем последнюю.')
