@@ -141,38 +141,6 @@ def get_session(username: str, password: str,
     return ActiveConnect(session)
 
 
-def _get_crm_response(crm: ActiveConnect,
-                      rq: NaumenRequest,
-                      method: Literal['GET', 'POST'] = 'POST') -> Response:
-    """Функция для получения ответа из CRM системы.
-
-    Args:
-        crm: сессия с CRM Naumen.
-        request: запрос в CRM Naumen.
-        method: HTTP метод.
-
-    Returns:
-        Ответ сервера CRM системы Naumen
-
-    Raises:
-        ConnectionsFailed: если не удалось подключиться к CRM системе.
-
-    """
-    if method == 'POST':
-        _response = crm.session.post(url=rq.url, headers=rq.headers,
-                                     params=rq.params,
-                                     data=rq.data, verify=rq.verify)
-    else:
-        _response = crm.session.get(url=rq.url,
-                                    headers=rq.headers,
-                                    params=rq.params,
-                                    verify=rq.verify)
-    if _response.status_code != 200:
-        raise CantGetData
-
-    return _response
-
-
 def get_report(crm: ActiveConnect, report: TypeReport, *args, **kwargs) \
                                                                 -> Iterable:
     """Функция для получения отчёта из CRM.
@@ -188,7 +156,10 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args, **kwargs) \
     Raises:
         CantGetData: в случае невозможности вернуть коллекцию.
     """
-    if 'naumen_uuid' in kwargs:
+
+    report_exists = True if 'naumen_uuid' in kwargs else False
+
+    if report_exists:
         naumen_uuid = kwargs['naumen_uuid']
         name_report = ''
     else:
@@ -278,6 +249,38 @@ def _create_request(report: TypeReport, *args, **kwargs) -> \
         data[name]['value'] = value
 
     return _configure_params(report, tuple(data.items()))
+
+
+def _get_crm_response(crm: ActiveConnect,
+                      rq: NaumenRequest,
+                      method: Literal['GET', 'POST'] = 'POST') -> Response:
+    """Функция для получения ответа из CRM системы.
+
+    Args:
+        crm: сессия с CRM Naumen.
+        request: запрос в CRM Naumen.
+        method: HTTP метод.
+
+    Returns:
+        Ответ сервера CRM системы Naumen
+
+    Raises:
+        CantGetData: если не удалось получить ответ.
+
+    """
+    if method == 'POST':
+        _response = crm.session.post(url=rq.url, headers=rq.headers,
+                                     params=rq.params,
+                                     data=rq.data, verify=rq.verify)
+    else:
+        _response = crm.session.get(url=rq.url,
+                                    headers=rq.headers,
+                                    params=rq.params,
+                                    verify=rq.verify)
+    if _response.status_code != 200:
+        raise CantGetData
+
+    return _response
 
 
 def _configure_params(report: TypeReport, mod_data: Iterable = ()) -> \
