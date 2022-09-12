@@ -59,6 +59,7 @@ class FindParams(NamedTuple):
 
 
 def get_params_create_report(report_name: str) -> CreateParams:
+
     """Функция которая достает необходимые параметры из конфигурационного файла.
 
     Args:
@@ -70,6 +71,7 @@ def get_params_create_report(report_name: str) -> CreateParams:
     Raises:
 
     """
+
     data_create = CreateParams('', '', {}, {}, {}, False, 0, 0)
     reports_name = [
         key for key, val in CONFIG.items() if "create_request" in val
@@ -91,6 +93,7 @@ def get_params_create_report(report_name: str) -> CreateParams:
 
 
 def get_params_find() -> FindParams:
+
     """Функция которая достает необходимые параметры из конфигурационного файла.
 
     Args:
@@ -102,6 +105,7 @@ def get_params_find() -> FindParams:
     Raises:
 
     """
+
     url = CONFIG['url']['open']
     headers = CONFIG['headers']
     data = {}

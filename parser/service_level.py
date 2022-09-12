@@ -28,6 +28,7 @@ class ServiceLevel:
             num_issues_after_deadline: кол-во принятых после срока обращений.
             service_level: уровень servece level в процентах.
     """
+
     day: int
     group: str
     total_issues: int
@@ -39,6 +40,7 @@ class ServiceLevel:
 
 def parse(text: str, *args, **kwargs) -> \
                                 Sequence | Sequence[Literal['']]:
+
     """Функция парсинга картточки обращения.
 
     Args:
@@ -50,19 +52,20 @@ def parse(text: str, *args, **kwargs) -> \
     Raises:
         CantGetData: Если не удалось найти данные.
     """
+
     support_group_count = 2
     log.debug('Запуск парсинг отчёта SL')
     soup = BeautifulSoup(text, "html.parser")
-    first_day, last_day = _parse_date_report(
+    start_date, end_date = _parse_date_report(
         soup, 'Дата перевода, с', 'Дата перевода, по')
-    log.debug(f'Получены даты отчета с {first_day} по {last_day}')
+    log.debug(f'Получены даты отчета с {start_date} по {end_date}')
     label = _get_columns_name(soup)
     log.debug(f'Получены названия столбцов {label}')
     data_table = soup.find('table', id='stdViewpart0.part0_TableList')
     data_table = data_table.find_all('tr')[3:-1]
     day_collection = _forming_days_collecion(
         data_table, label, PageType.SERVICE_LEVEL_REPORT_PAGE)
-    date_range = _get_date_range(first_day, last_day)
+    date_range = _get_date_range(start_date, end_date)
     days = _forming_days_dict(
         date_range, day_collection, PageType.SERVICE_LEVEL_REPORT_PAGE)
     group = set([_['Группа'] for _ in day_collection])
@@ -72,12 +75,13 @@ def parse(text: str, *args, **kwargs) -> \
     days = _service_lavel_data_completion(days, group, label)
     collection = _formating_service_level_data(days)
     log.debug(f'Парсинг завершился успешно. Колекция отчетов SL '
-              f'с {first_day} по {last_day} содержит {len(collection)} элем.')
+              f'с {start_date} по {end_date} содержит {len(collection)} элем.')
     return tuple(collection)
 
 
 def _service_lavel_data_completion(days: dict, groups: Sequence,
                                    lable: Sequence) -> Mapping[int, Sequence]:
+
     """Функция для дополнения данных отчёта  Service Level.
         т.к Naumen отдает не все необходимые данные, необходимо их дополнить.
         Заполнить пропуски групп за прошедшие дни: SL будет 100%
@@ -91,6 +95,7 @@ def _service_lavel_data_completion(days: dict, groups: Sequence,
     Returns:
         Mapping: дополненый словарь.
     """
+
     today = datetime.now().day
     for day, content in days.items():
         sl = '0.0'
@@ -116,6 +121,16 @@ def _service_lavel_data_completion(days: dict, groups: Sequence,
 
 def _formating_service_level_data(days: Mapping[int, Sequence]) \
                                  -> Sequence[ServiceLevel]:
+
+    """Формирование итоговой коллекции обьектов отчёта Service Level.
+
+    Args:
+        days: словарь дней, где ключ номер дня.
+
+    Returns:
+        Sequence[ServiceLevel]: коллекция с отчётами Service Level.
+    """
+
     collection = []
     for day, group_data in days.items():
         day_collection = []

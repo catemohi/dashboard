@@ -228,6 +228,7 @@ def _create_request(report: TypeReport, *args, **kwargs) -> \
         CantGetData: в случае неверной работы функции.
 
     """
+
     log.debug(f'Запуск создания запроса для отчета: {report}')
     log.debug(f'Переданы параметры args: {args}')
     log.debug(f'Переданы параметры kwargs: {kwargs}')
@@ -238,7 +239,7 @@ def _create_request(report: TypeReport, *args, **kwargs) -> \
     if not kwargs:
         return _configure_params(report)
 
-    date_name_keys = ('start_data', 'final_date')
+    date_name_keys = ('start_date', 'end_date')
     log.debug(f'Получены именнованные аргументы: {kwargs}')
     for name, value in kwargs.items():
         if name in date_name_keys:
@@ -260,6 +261,7 @@ def _configure_params(report: TypeReport, mod_data: Iterable = ()) -> \
         NaumenRequest: сформированный запрос для CRM Naumen
         SearchOptions: параметры для поиска созданного отчета
     """
+
     url, uuid, headers, params, data, verify, delay_attems, num_attems = \
         get_params_create_report(report.value)
     if mod_data:
@@ -290,6 +292,7 @@ def _find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
         ConnectionsFailed: если не удалось подключиться к CRM системе.
 
     """
+
     def _searching(num_attems: int,
                    search_request: NaumenRequest) -> Sequence[str]:
         """Рекурсивная функция поиска отчета в CRM системе.
@@ -304,6 +307,7 @@ def _find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
         Raises:
 
         """
+
         log.debug(f'Поиск свормированного отчета: {options.name}.'
                   f'Осталось попыток: {num_attems}')
         log.debug(f'Сформированный запрос: {search_request}')
@@ -361,6 +365,7 @@ def _params_erector(params: Mapping[str,
     Returns:
         Mapping: Готовый словарь для запроса.
     """
+
     return dict([[val for _, val in root_val.items()
                   ] for _, root_val in params.items()])
 
@@ -373,4 +378,5 @@ def _get_report_name() -> str:
     Returns:
         Строку названия.
     """
+
     return f"ID{randint(1000000,9999999)}"

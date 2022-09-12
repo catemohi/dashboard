@@ -120,7 +120,7 @@ class Client:
             start_date: дата начала периода.
             end_date: дата конца периода.
             deadline: количество минут относительно которых
-            считать service level
+            считать service level.
             *args: не используются и не пробрасываются.
             **kwargs: другие именнованные аргументы.
 
@@ -135,7 +135,8 @@ class Client:
         try:
             deadline = int(deadline)
         except (ValueError, TypeError):
-            logging.exception(f'Deadline не int и не валидный литерал: '
+            logging.exception(f'Аргумент deadline не int и'
+                              f'не валидный литерал: '
                               f'{deadline}')
             error_response = ResponseTemplate(StatusType._BAD_REQUEST, ())
             error_response.status.description = (f'Invalid deadline value: '
@@ -147,8 +148,8 @@ class Client:
                   f'Параметр deadline: {deadline}; ')
 
         report_kwargs = {
-            'start_data': start_date,
-            'final_date': end_date,
+            'start_date': start_date,
+            'end_date': end_date,
             'deadline': deadline,
             **kwargs,
         }

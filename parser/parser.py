@@ -11,6 +11,7 @@ log = logging.getLogger(__name__)
 
 def parse_naumen_page(page: str, name_report: str,
                       type_page: PageType) -> Sequence:
+
     """Функция парсинга страниц из crm Naumen, входной интерфейс подмодуля.
 
     Args:
@@ -25,6 +26,7 @@ def parse_naumen_page(page: str, name_report: str,
         CantGetData: в неправильном сценарии работы функции.
 
     """
+
     log.debug('Запущена функция парсинга страницы.'
               f'Имя необходимого отчета: {name_report}.'
               f'Тип отчёта: {type_page}')

@@ -35,4 +35,3 @@ class InvalidDate(Exception):
                  message="Формат даты неверный. Необходимый формат %d.%m.%Y"):
         self.message = message
         super().__init__(self.message)
-

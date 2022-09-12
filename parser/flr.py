@@ -25,6 +25,7 @@ class Flr:
             total_primary_issues: всего первичных обращений.
 
     """
+
     date: str
     flr_level: float
     num_issues_closed_independently: int
@@ -33,6 +34,7 @@ class Flr:
 
 def parse(text: str, *args, **kwargs) -> \
                             Sequence | Sequence[Literal['']]:
+
     """Функция парсинга карточки обращения.
 
     Args:
@@ -44,29 +46,31 @@ def parse(text: str, *args, **kwargs) -> \
     Raises:
         CantGetData: Если не удалось найти данные.
     """
+
     log.debug('Запуск парсинг отчёта FLR')
     soup = BeautifulSoup(text, "html.parser")
-    first_day, last_day = _parse_date_report(
+    start_date, end_date = _parse_date_report(
         soup, 'Дата перевода, с', 'Дата перевода, по')
-    log.debug(f'Получены даты отчета с {first_day} по {last_day}')
+    log.debug(f'Получены даты отчета с {start_date} по {end_date}')
     label = _get_columns_name(soup)
     log.debug(f'Получены названия столбцов {label}')
     data_table = soup.find('table', id='stdViewpart0.part0_TableList')
     data_table = data_table.find_all('tr')[3:-1]
     day_collection = _forming_days_collecion(
         data_table, label, PageType.FLR_LEVEL_REPORT_PAGE)
-    date_range = _get_date_range(first_day, last_day)
+    date_range = _get_date_range(start_date, end_date)
     days = _forming_days_dict(
         date_range, day_collection, PageType.FLR_LEVEL_REPORT_PAGE)
     days = _flr_data_completion(days, label)
     collection = _formating_flr_data(days)
     log.debug(f'Парсинг завершился успешно. Колекция отчетов FLR '
-              f'с {first_day} по {last_day} содержит {len(collection)} элем.')
+              f'с {start_date} по {end_date} содержит {len(collection)} элем.')
     return tuple(collection)
 
 
 def _flr_data_completion(days: dict, lable: Sequence) -> \
                           Mapping[int, Sequence]:
+
     """Функция для дополнения данных отчёта FLR.
         т.к Naumen отдает не все необходимые данные, необходимо их дополнить.
         Заполнить пропуски за не наступившие дни:FLR будет 0%
@@ -78,6 +82,7 @@ def _flr_data_completion(days: dict, lable: Sequence) -> \
     Returns:
         Mapping: дополненый словарь.
     """
+
     flr_level = '0'
     num_issues_closed_independently = '0'
     total_primary_issues = '0'
@@ -99,6 +104,16 @@ def _flr_data_completion(days: dict, lable: Sequence) -> \
 
 def _formating_flr_data(days: Mapping[int, Sequence]) \
                                  -> Sequence[Flr]:
+
+    """Формирование итоговой коллекции обьектов отчёта FLR.
+
+    Args:
+        days: словарь дней, где ключ номер дня.
+
+    Returns:
+        Sequence[Flr]: коллекция с отчётами Flr.
+    """
+
     collection = []
     for day, day_content in days.items():
         day_content = day_content[0]

@@ -37,6 +37,7 @@ class Issue:
             return_to_work_time: время возврата обращения в работу.
             description: описание обращения.
     """
+
     uuid: str = ''
     number: int = 0
     name: str = ''
@@ -57,6 +58,7 @@ class Issue:
 
 def parse(text: str, *args, **kwargs) \
                         -> Sequence[Issue] | Sequence[Literal['']]:
+
     """Функция парсинга страницы с обращениями на группе.
 
     Args:
@@ -68,12 +70,14 @@ def parse(text: str, *args, **kwargs) \
     Raises:
         CantGetData: Если не удалось найти данные.
     """
+
     soup = BeautifulSoup(text, "html.parser")
     category = _get_columns_name(soup)
     rows = soup.select(".supp tr")[7:-1]
     if len(rows) < 1:
         return ('',)
     def parse_table_row(row: element.Tag,
+
                         category: Iterable[str]) -> Issue:
         """Функция парсинга строки таблицы.
 
@@ -85,6 +89,7 @@ def parse(text: str, *args, **kwargs) \
             Sequence[Issue] | Sequence[Literal['']: Коллекцию обращений.
 
         """
+
         issue = Issue()
         issus_params = [
             col.text.replace('\n', '').strip() for col in row.select('td')]
@@ -104,6 +109,7 @@ def parse(text: str, *args, **kwargs) \
 
 
 def _get_contragent_params(soup: BeautifulSoup) -> Iterable[str]:
+
     """Функция парсинга данных контрагента.
 
     Args:
@@ -115,6 +121,7 @@ def _get_contragent_params(soup: BeautifulSoup) -> Iterable[str]:
     Raises:
 
     """
+
     contragent_tag = soup.find('td', id='contragent')
     if contragent_tag:
         name = contragent_tag.text.replace('\n', '').strip()
@@ -128,6 +135,7 @@ def _get_contragent_params(soup: BeautifulSoup) -> Iterable[str]:
 
 
 def _get_description(soup: BeautifulSoup) -> str:
+
     """Функция парсинга данных описания обращения.
 
     Args:
@@ -139,6 +147,7 @@ def _get_description(soup: BeautifulSoup) -> str:
     Raises:
 
     """
+
     description = soup.find('td', id="requestDescription")
     if description:
         description = description\
@@ -154,6 +163,7 @@ def _get_description(soup: BeautifulSoup) -> str:
 
 
 def _get_creation_date(soup: BeautifulSoup) -> datetime:
+
     """Функция парсинга даты создания обращения.
 
     Args:
@@ -165,6 +175,7 @@ def _get_creation_date(soup: BeautifulSoup) -> datetime:
     Raises:
 
     """
+
     creation_date = soup.find('td', id="creationDate")
     if creation_date:
         str_datetime = creation_date.text.replace('\n', '').strip()
@@ -173,6 +184,7 @@ def _get_creation_date(soup: BeautifulSoup) -> datetime:
 
 
 def _get_service_params(soup: BeautifulSoup) -> Iterable[str]:
+
     """Функция парсинга данных услуги.
 
     Args:
@@ -184,6 +196,7 @@ def _get_service_params(soup: BeautifulSoup) -> Iterable[str]:
     Raises:
 
     """
+
     services = soup.find('td', id="services")
     if services:
         name = services.text.replace('\n', '').strip()
@@ -197,6 +210,7 @@ def _get_service_params(soup: BeautifulSoup) -> Iterable[str]:
 
 
 def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
+
     """Функция парсинга данных времени возврата в работу.
 
     Args:
@@ -208,6 +222,7 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
     Raises:
 
     """
+
     return_times = (soup.find('td', id="obrd"), soup.find('td', id="obrd1"),
                     soup.find('td', id="obrd2"))
     return_times = [
@@ -222,6 +237,7 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
 
 
 def card_parse(text: str, issue: Issue) -> Issue:
+
     """Функция парсинга карточки обращения.
 
     Args:
@@ -234,6 +250,7 @@ def card_parse(text: str, issue: Issue) -> Issue:
     Raises:
 
     """
+
     soup = BeautifulSoup(text, "html.parser")
     issue.name_contragent, issue.uuid_contragent = _get_contragent_params(soup)
     issue.description = _get_description(soup)
@@ -244,6 +261,7 @@ def card_parse(text: str, issue: Issue) -> Issue:
 
 
 def _get_issue_num(issue_name: str) -> str:
+
     """Функция для парсинга номера обращения.
 
     Args:
@@ -255,11 +273,13 @@ def _get_issue_num(issue_name: str) -> str:
     Raises:
 
     """
+
     number = findall(r'\d{7,10}', issue_name)[0]
     return number
 
 
 def _get_step_duration(raw_duration: str) -> timedelta:
+
     """Функция для парсинга строки продолжительности в обьект timedelta.
 
     Args:
@@ -271,6 +291,7 @@ def _get_step_duration(raw_duration: str) -> timedelta:
     Raises:
 
     """
+
     duration = dict(zip(('days', 'h', 'min'), findall(r'\d+', raw_duration)))
     duration = timedelta(days=int(duration['days']),
                          hours=int(duration['h']),

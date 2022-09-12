@@ -10,6 +10,7 @@ log = logging.getLogger(__name__)
 
 
 def parse(text: str, name: str) -> Sequence[str] | None:
+
     """Функция парсинга страницы с отчётами и получение UUID отчёта.
 
     Args:
@@ -22,6 +23,7 @@ def parse(text: str, name: str) -> Sequence[str] | None:
     Raises:
 
     """
+
     log.debug(f'Поиск отчета с именем: {name}')
     soup = BeautifulSoup(text, "html.parser")
     report_tag = soup.select(f'[title="{name}"]')
