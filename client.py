@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from datetime import datetime
 from enum import Enum
 from random import randint
@@ -141,14 +141,17 @@ def get_session(username: str, password: str,
     return ActiveConnect(session)
 
 
-def get_report(crm: ActiveConnect, report: TypeReport, *args, **kwargs) \
-                                                                -> Iterable:
+def get_report(crm: ActiveConnect, report: TypeReport,
+               *args, naumen_uuid: str = '', **kwargs) -> Iterable:
     """Функция для получения отчёта из CRM.
 
     Args:
         crm: активное соединение с CRM.
         report: отчёт, который необходимо получить.
         *args: позиционные аргументы(не используются)
+
+    Kwargs:
+        naumen_uuid: uuid уже созданного отчёта.
         **kwargs: именнованные аргументы для создания отчёта.
 
     Returns:
@@ -157,10 +160,16 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args, **kwargs) \
         CantGetData: в случае невозможности вернуть коллекцию.
     """
 
-    report_exists = True if 'naumen_uuid' in kwargs else False
+    parse_history, parse_issues_cards = False, False
+    if report in [TypeReport.ISSUES_FIRST_LINE, TypeReport.ISSUES_VIP_LINE]:
+        parse_history, parse_issues_cards, kwargs = \
+            _check_issues_report_keys(**kwargs)
+
+    report_exists = True if naumen_uuid else False
 
     if report_exists:
-        naumen_uuid = kwargs['naumen_uuid']
+        log.debug('Обьект в CRM NAUMEN уже создан. '
+                  f'Его UUID: {naumen_uuid}')
         name_report = ''
     else:
         naumen_uuid, params_for_search_report = \
@@ -175,7 +184,46 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args, **kwargs) \
         raise CantGetData
     page_text = naumen_responce.text
     collect = parse_naumen_page(page_text, name_report, report.page)
+
+    if parse_issues_cards:
+        collect = list(collect)
+        log.debug('Парсинг карточек обращений.')
+        for num, issue in enumerate(collect):
+            issue_card = get_report(
+                crm, TypeReport.ISSUE_CARD, naumen_uuid=issue.uuid)[0]
+            for field in fields(issue_card):
+                issue_card_field_value = getattr(issue_card, field.name)
+                if issue_card_field_value:
+                    setattr(issue, field.name, issue_card_field_value)
+            collect[num] = issue
+
+    if parse_history:
+        log.debug('Парсинг истории обращений.')
+
     return collect
+
+
+def _check_issues_report_keys(*args, **kwargs) -> Tuple[bool, bool, Mapping]:
+
+    """Функция для проверки определенных атрибутов ключей.
+
+    Args:
+        *args: все позиционные аргументы(не проверяются).
+
+    Kwargs:
+        **kwargs: все именнованные аргументы
+
+    Retuns:
+        Mapping: преобразованный список именнованных аргументов
+    """
+
+    log.debug('Проверка необходимости парсинга '
+              'карточек обращений и историй обращений.')
+    parse_history = kwargs.pop('parse_history', False)
+    parse_issues_cards = kwargs.pop('parse_issues_cards', False)
+    log.debug(f'Парсить карточки обращений: {parse_issues_cards}')
+    log.debug(f'Парсить историю: {parse_history}')
+    return (parse_history, parse_issues_cards, kwargs)
 
 
 def _create_report_and_find_uuid(crm: ActiveConnect, report: TypeReport, *args,

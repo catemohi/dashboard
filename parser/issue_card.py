@@ -59,7 +59,7 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
         time.text.replace('\n', '').strip() for time in return_times if time]
     log.debug(f'Из CRM собраны следующие данные: {return_times}.')
 
-    def _return_defalut_time():        
+    def _return_defalut_time():
         return_to_work_time = datetime.now() + timedelta(days=365)
         log.warning('Дата возврата в работу не обнаружена, '
                     'поставлено значение по умолчанию: '
