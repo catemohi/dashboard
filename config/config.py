@@ -71,14 +71,13 @@ def get_params_create_report(report_name: str) -> CreateParams:
     Raises:
 
     """
-
-    data_create = CreateParams('', '', {}, {}, {}, False, 0, 0)
+    url = CONFIG['url']['create']
+    data_create = CreateParams(url, '', {}, {}, {}, False, 0, 0)
     reports_name = [
         key for key, val in CONFIG.items() if "create_request" in val
         ]
     if report_name not in reports_name:
         return data_create
-    url = CONFIG['url']['create']
     uuid = CONFIG[report_name]['uuid']
     headers = CONFIG['headers']
     data = CONFIG[report_name]['create_request']['data']

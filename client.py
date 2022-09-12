@@ -38,6 +38,7 @@ class TypeReport(Enum):
     """Enum перечисление видов отчета.
 
         Attributes:
+            ISSUE_CARD: карточка одного обращения.
             ISSUES_FIRST_LINE: таблица обращений первой линии.
             ISSUES_VIP_LINE: таблица обращений vip линии.
             SERVICE_LEVEL: отчет по уровню SL
@@ -45,6 +46,7 @@ class TypeReport(Enum):
             FLR_LAVEL: отчет по уровню FLR
 
     """
+    ISSUE_CARD = 'issue card'
     ISSUES_FIRST_LINE = "issues"
     ISSUES_VIP_LINE = "vip issues"
     SERVICE_LEVEL = "service level report"
@@ -56,6 +58,7 @@ class TypeReport(Enum):
 
     def _get_page(self):
         page_dict = {
+            'ISSUE_CARD': PageType.ISSUE_CARD_PAGE,
             'ISSUES_FIRST_LINE': PageType.ISSUES_TABLE_PAGE,
             'ISSUES_VIP_LINE': PageType.ISSUES_TABLE_PAGE,
             'SERVICE_LEVEL': PageType.SERVICE_LEVEL_REPORT_PAGE,
@@ -165,7 +168,7 @@ def _get_crm_response(crm: ActiveConnect,
                                     params=rq.params,
                                     verify=rq.verify)
     if _response.status_code != 200:
-        raise ConnectionsFailed
+        raise CantGetData
 
     return _response
 
@@ -177,6 +180,43 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args, **kwargs) \
     Args:
         crm: активное соединение с CRM.
         report: отчёт, который необходимо получить.
+        *args: позиционные аргументы(не используются)
+        **kwargs: именнованные аргументы для создания отчёта.
+
+    Returns:
+        Itrrable: коллекция обьектов необходимого отчёта.
+    Raises:
+        CantGetData: в случае невозможности вернуть коллекцию.
+    """
+    if 'naumen_uuid' in kwargs:
+        naumen_uuid = kwargs['naumen_uuid']
+        name_report = ''
+    else:
+        naumen_uuid, params_for_search_report = \
+            _create_report_and_find_uuid(crm, report, *args, **kwargs)
+        name_report = params_for_search_report.name
+
+    url, headers, params, data, verify = get_params_find()
+    params.update({'uuid': naumen_uuid})
+    search_request = NaumenRequest(url, headers, params, data, verify)
+    naumen_responce = _get_crm_response(crm, search_request)
+    if not naumen_responce:
+        raise CantGetData
+    page_text = naumen_responce.text
+    collect = parse_naumen_page(page_text, name_report, report.page)
+    return collect
+
+
+def _create_report_and_find_uuid(crm: ActiveConnect, report: TypeReport, *args,
+                                 **kwargs) -> Tuple[str, SearchOptions]:
+
+    """Метод для создания отчета и получение его uuid, для парсинга.
+
+    Args:
+        crm: активное соединение с CRM.
+        report: отчёт, который необходимо получить.
+        *args: позиционные аргументы(не используются)
+        **kwargs: именнованные аргументы для создания отчёта.
 
     Returns:
         Itrrable: коллекция обьектов необходимого отчёта.
@@ -187,25 +227,16 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args, **kwargs) \
     log.debug(f'Запуск создания отчета: {report}')
     log.debug(f'Переданы параметры args: {args}')
     log.debug(f'Переданы параметры kwargs: {kwargs}')
-    naumen_reuqest, params_for_serarch_report = \
-        _create_request(report, *args, **kwargs)
+    naumen_reuqest, params_for_search_report = _create_request(report, *args,
+                                                               **kwargs)
     log.debug(f'Запрос к CRM: {naumen_reuqest}')
     naumen_reuqest = _get_crm_response(crm, naumen_reuqest)
     if not naumen_reuqest:
         raise CantGetData
     log.debug('Запрос на создание отчёта обработан CRM')
-    naumen_uuid = _find_report_uuid(crm, params_for_serarch_report)
+    naumen_uuid = _find_report_uuid(crm, params_for_search_report)
     log.debug(f'Найден UUID сформированного отчёта : {naumen_uuid}')
-    url, headers, params, data, verify = get_params_find()
-    params.update({'uuid': naumen_uuid})
-    search_request = NaumenRequest(url, headers, params, data, verify)
-    naumen_resp = _get_crm_response(crm, search_request)
-    if not naumen_resp:
-        raise CantGetData
-    page_text = naumen_resp.text
-    collect = parse_naumen_page(
-        page_text, params_for_serarch_report.name, report.page)
-    return collect
+    return naumen_uuid, params_for_search_report
 
 
 def _create_request(report: TypeReport, *args, **kwargs) -> \

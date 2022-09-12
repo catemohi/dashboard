@@ -1,7 +1,7 @@
 import logging
 from typing import Callable, Mapping, Sequence
 
-from . import flr, issue, mttr, report_page, service_level
+from . import flr, issue_card, issues, mttr, report_page, service_level
 from .parser_base import PageType
 from ..exceptions import CantGetData
 
@@ -36,8 +36,8 @@ def parse_naumen_page(page: str, name_report: str,
 
     page_parsers: Mapping[PageType, Callable] = {
         PageType.REPORT_LIST_PAGE: report_page.parse,
-        PageType.ISSUES_TABLE_PAGE: issue.parse,
-        PageType.ISSUE_CARD_PAGE: issue.card_parse,
+        PageType.ISSUES_TABLE_PAGE: issues.parse,
+        PageType.ISSUE_CARD_PAGE: issue_card.parse,
         PageType.SERVICE_LEVEL_REPORT_PAGE: service_level.parse,
         PageType.MMTR_LEVEL_REPORT_PAGE: mttr.parse,
         PageType.FLR_LEVEL_REPORT_PAGE: flr.parse,

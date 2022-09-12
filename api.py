@@ -106,6 +106,29 @@ class Client:
         log.debug(f'Параметр is_vip: {is_vip}')
         return self._get_response(report)
 
+    def get_issue_card(self, naumen_uuid: str, *args, **kwargs) -> \
+            ResponseFormatter.FORMATTED_RESPONSE:
+
+        """Метод для получения данных с карточки обращения
+
+        Args:
+            naumen_uuid: uuid обращения в CRM NAUMEN.
+            *args: не используются и не пробрасываются.
+            **kwargs: другие именнованные аргументы.
+
+        Returns:
+            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+
+        Raises:
+
+        """
+
+        report = TypeReport.ISSUE_CARD
+        report_kwargs = {'naumen_uuid': naumen_uuid}
+
+        log.debug('Запрос данных с карточки обращения.')
+        return self._get_response(report, **report_kwargs)
+
     def get_sl_report(self, start_date: str, end_date: str,
                       deadline: int = 15,
                       *args, **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
@@ -232,6 +255,13 @@ class Client:
             Raises:
 
         """
+
+        if not self._session:
+            logging.exception('Ошибка соединения с CRM NAUMEN.')
+            error_response = ResponseTemplate(StatusType._UNAUTHORIZED, ())
+            error_response.status.description = ('You are not authorized '
+                                                 'to get report.')
+            return make_response(error_response, self.formatter)
 
         try:
             content = get_report(self._session, report, *args, **kwargs)
