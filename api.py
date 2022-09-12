@@ -1,4 +1,5 @@
 import logging
+import json
 
 from requests import exceptions
 
@@ -82,7 +83,8 @@ class Client:
             logging.exception('Ошибка соединения с CRM NAUMEN.')
             return make_response(error_response, self.formatter)
 
-    def get_issues(self, is_vip: bool = False, *args, **kwargs) -> \
+    def get_issues(self, *args, is_vip: bool = False,
+                   parse_card: bool = False, **kwargs) -> \
             ResponseFormatter.FORMATTED_RESPONSE:
 
         """Метод для получения отчёта о проблемах на линии ТП.
@@ -104,6 +106,21 @@ class Client:
 
         log.debug('Запрос открытых проблем техподдержки.')
         log.debug(f'Параметр is_vip: {is_vip}')
+
+        if parse_card:
+            _response = json.loads(self._get_response(report))
+            issues = _response['content']
+            for issue in issues:
+                issue_card = json.loads(
+                    self.get_issue_card(issue['uuid']))['content'][0]
+                for key, value in issue_card.items():
+                    if value:
+                        issue[key] = value
+            _response['content'] = issues
+            return json.dumps(_response,
+                              sort_keys=False,
+                              ensure_ascii=False, separators=(',', ': '))
+
         return self._get_response(report)
 
     def get_issue_card(self, naumen_uuid: str, *args, **kwargs) -> \
@@ -130,8 +147,8 @@ class Client:
         return self._get_response(report, **report_kwargs)
 
     def get_sl_report(self, start_date: str, end_date: str,
-                      deadline: int = 15,
-                      *args, **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
+                      deadline: int = 15, *args,
+                      **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
 
         """Метод для получения отчёта о Service Level за период.
            Метод возвращает дни, без привязки к месяцу.
