@@ -492,7 +492,7 @@ def _delete_report(crm: ActiveConnect, uuid: str) -> bool:
     delete_request = NaumenRequest(url, headers, params, data, verify)
     _responce = _get_crm_response(crm, delete_request, 'GET')
 
-    if _responce == 200:
+    if _responce:
         log.info('Отчет в CRM Наумен удален.')
         return True
 
