@@ -485,7 +485,9 @@ def _delete_report(crm: ActiveConnect, uuid: str) -> bool:
     log.debug(f'Передан uuid отчёта: {uuid}')
 
     url, headers, params, data, verify = get_params_for_delete()
+    params = _params_erector(params)
     params.update({'uuid': uuid})
+    log.debug(f'Параметры для удаления отчёта {params}')
     delete_request = NaumenRequest(url, headers, params, data, verify)
     _responce = _get_crm_response(crm, delete_request, 'GET')
 

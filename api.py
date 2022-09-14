@@ -265,7 +265,7 @@ class Client:
         """
 
         if not self._session:
-            logging.exception('Ошибка соединения с CRM NAUMEN.')
+            log.exception('Ошибка соединения с CRM NAUMEN.')
             error_response = ResponseTemplate(StatusType._UNAUTHORIZED, ())
             error_response.status.description = ('You are not authorized '
                                                  'to get report.')
@@ -273,23 +273,22 @@ class Client:
 
         try:
             content = get_report(self._session, report, *args, **kwargs)
-            log.debug(content)
             api_response = ResponseTemplate(StatusType._SUCCESS, content)
             log.info('Ответ на запрос проблем техподдержки получен.')
             return make_response(api_response, self.formatter)
 
         except exceptions.ConnectionError:
-            logging.exception('Ошибка соединения с CRM NAUMEN.')
+            log.exception('Ошибка соединения с CRM NAUMEN.')
             error_response = ResponseTemplate(StatusType._GATEWAY_TIMEOUT, ())
             return make_response(error_response, self.formatter)
 
         except CantGetData:
-            logging.exception('Ошибка получения данных из CRM NAUMEN.')
+            log.exception('Ошибка получения данных из CRM NAUMEN.')
             error_response = ResponseTemplate(StatusType._BAD_REQUEST, ())
             return make_response(error_response, self.formatter)
 
         except InvalidDate:
-            logging.exception('Передан не верный формат дыты из CRM NAUMEN.')
+            log.exception('Передан не верный формат дыты из CRM NAUMEN.')
             error_response = ResponseTemplate(StatusType._BAD_REQUEST, ())
             error_response.status.description = ('Invalid date format. '
                                                  'Allowed date format: '
@@ -297,6 +296,6 @@ class Client:
             return make_response(error_response, self.formatter)
 
         except ConnectionsFailed:
-            logging.exception('Ошибка соединения с CRM NAUMEN.')
+            log.exception('Ошибка соединения с CRM NAUMEN.')
             error_response = ResponseTemplate(StatusType._UNAUTHORIZED, ())
             return make_response(error_response, self.formatter)
