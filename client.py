@@ -11,7 +11,8 @@ from requests import Response, Session
 from requests.adapters import HTTPAdapter, Retry
 from requests.packages import urllib3
 
-from .config.config import CONFIG, get_params_create_report, get_params_find
+from .config.config import CONFIG, get_params_create_report
+from .config.config import get_params_find, get_params_for_delete
 from .exceptions import CantGetData, ConnectionsFailed, InvalidDate
 from .parser.parser import parse_naumen_page
 from .parser.parser_base import PageType
@@ -199,6 +200,8 @@ def get_report(crm: ActiveConnect, report: TypeReport,
 
     if parse_history:
         log.debug('Парсинг истории обращений.')
+
+    _delete_report(crm, naumen_uuid)
 
     return collect
 
@@ -462,3 +465,33 @@ def _get_report_name() -> str:
     """
 
     return f"ID{randint(1000000,9999999)}"
+
+
+def _delete_report(crm: ActiveConnect, uuid: str) -> bool:
+    """_summary_
+
+    Args:
+        crm (ActiveConnect): _description_
+        uuid (str): _description_
+
+    Raises:
+        CantGetData: если не удалось получить ответ.
+
+    Returns:
+        bool: статус True или False, в случае успеха или неудачи.
+    """
+
+    log.debug('Удаление созданного отчета в CRM Наумен')
+    log.debug(f'Передан uuid отчёта: {uuid}')
+
+    url, headers, params, data, verify = get_params_for_delete()
+    params.update({'uuid': uuid})
+    delete_request = NaumenRequest(url, headers, params, data, verify)
+    _responce = _get_crm_response(crm, delete_request, 'GET')
+
+    if _responce == 200:
+        log.info('Отчет в CRM Наумен удален.')
+        return True
+
+    log.error('Отчет в CRM Наумен не удален.')
+    return False

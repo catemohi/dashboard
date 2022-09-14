@@ -42,7 +42,8 @@ class CreateParams(NamedTuple):
 
 class FindParams(NamedTuple):
 
-    """Класс данных для хранения сформированного запроса к CRM Naumen.
+    """Класс данных для хранения сформированного запроса поиска обьекта
+    к CRM Naumen.
 
         Attributes:
             url: ссылка
@@ -56,6 +57,16 @@ class FindParams(NamedTuple):
     params: Mapping
     data: Mapping
     verify: bool
+
+
+class DeleteParams(FindParams):
+    """Класс данных для хранения сформированного запроса на удаление обьекта
+    к CRM Naumen.
+
+    Args:
+        FindParams (NamedTuple): Класс данных для хранения
+        сформированного запроса поиска обьекта к CRM Naumen.
+    """
 
 
 def get_params_create_report(report_name: str) -> CreateParams:
@@ -111,6 +122,27 @@ def get_params_find() -> FindParams:
     params = {}
     verify = CONFIG['verify']['value']
     return FindParams(url, headers, params, data, verify)
+
+
+def get_params_for_delete() -> DeleteParams:
+
+    """Функция которая достает необходимые параметры из конфигурационного файла.
+
+    Args:
+
+    Returns:
+        Коллекцию параметров.
+
+    Raises:
+
+    """
+
+    url = CONFIG['url']['delete']
+    headers = CONFIG['headers']
+    data = {}
+    params = CONFIG['delete_report']['params']
+    verify = CONFIG['verify']['value']
+    return DeleteParams(url, headers, params, data, verify)
 
 
 if __name__ == "__main__":
