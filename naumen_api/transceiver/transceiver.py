@@ -11,11 +11,11 @@ from requests import Response, Session
 from requests.adapters import HTTPAdapter, Retry
 from requests.packages import urllib3
 
-from .config.config import CONFIG, get_params_create_report
-from .config.config import get_params_find, get_params_for_delete
-from .exceptions import CantGetData, ConnectionsFailed, InvalidDate
-from .parser.parser import parse_naumen_page
-from .parser.parser_base import PageType
+from ..config.config import CONFIG, get_params_create_report
+from ..config.config import get_params_find, get_params_for_delete
+from ..exceptions import CantGetData, ConnectionsFailed, InvalidDate
+from ..parser.parser import parse_naumen_page
+from ..parser.parser_base import PageType
 urllib3.disable_warnings()
 
 

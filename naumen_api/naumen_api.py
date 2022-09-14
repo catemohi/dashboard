@@ -2,11 +2,12 @@ import logging
 
 from requests import exceptions
 
-from .client import DOMAIN, TypeReport
-from .client import get_report, get_session
 from .exceptions import CantGetData, ConnectionsFailed, InvalidDate
-from .response_creator import JSONResponseFormatter, make_response
-from .response_creator import ResponseFormatter, ResponseTemplate, StatusType
+from .transceiver.response_creator import JSONResponseFormatter, make_response
+from .transceiver.response_creator import ResponseFormatter, ResponseTemplate
+from .transceiver.response_creator import StatusType
+from .transceiver.transceiver import DOMAIN, TypeReport
+from .transceiver.transceiver import get_report, get_session
 
 
 log = logging.getLogger(__name__)
