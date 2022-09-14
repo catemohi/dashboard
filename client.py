@@ -142,8 +142,8 @@ def get_session(username: str, password: str,
     return ActiveConnect(session)
 
 
-def get_report(crm: ActiveConnect, report: TypeReport,
-               *args, naumen_uuid: str = '', **kwargs) -> Iterable:
+def get_report(crm: ActiveConnect, report: TypeReport, *args,
+               naumen_uuid: str = '', **kwargs) -> Iterable:
     """Функция для получения отчёта из CRM.
 
     Args:
@@ -200,6 +200,7 @@ def get_report(crm: ActiveConnect, report: TypeReport,
 
     if parse_history:
         log.debug('Парсинг истории обращений.')
+        raise NotImplementedError
 
     _delete_report(crm, naumen_uuid)
 
