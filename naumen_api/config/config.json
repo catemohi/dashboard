@@ -21,6 +21,7 @@
             }
         }
     },
+    "defaul_group_name": {"value": []},
     "verify": {"value": false},
     "service level report": {
         "delay_attems": {"value": 30},

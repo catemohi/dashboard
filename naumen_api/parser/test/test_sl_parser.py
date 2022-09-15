@@ -61,6 +61,45 @@ def test_parse_error_report():
         parse(text)
 
 
+def test_parse_no_one_group_report():
+    with open('naumen_api\\parser\\test\\parse-templates-page\\'
+              'service_level_templates\\'
+              'service_level_no_group_report.html') as text:
+        text = text.read()
+        response = parse(text)
+        print(response)
+        assert response == (
+            [
+                ServiceLevel(
+                    day='4',
+                    group='Группа поддержки и управления сетью  (Напр ТП В2В)',
+                    total_issues=114,
+                    total_primary_issues=35,
+                    num_issues_before_deadline=112,
+                    num_issues_after_deadline=2,
+                    service_level=98.0),
+                ServiceLevel(
+                    day='4',
+                    group='Группа поддержки VIP - клиентов (Напр ТП В2В)',
+                    total_issues=0,
+                    total_primary_issues=0,
+                    num_issues_before_deadline=0,
+                    num_issues_after_deadline=0,
+                    service_level=100.0,
+                    ),
+                ServiceLevel(
+                    day='4',
+                    group='Итог',
+                    total_issues=114,
+                    total_primary_issues=35,
+                    num_issues_before_deadline=112,
+                    num_issues_after_deadline=2,
+                    service_level=99.0,
+                    ),
+                ],
+            )
+
+
 if __name__ == '__main__':
 
     pytest.main()

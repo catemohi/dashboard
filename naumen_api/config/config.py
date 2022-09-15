@@ -4,7 +4,7 @@ from typing import Mapping, NamedTuple
 
 
 CONFIG_FILE_PATH = Path(__file__).with_name("config.json")
-with open(CONFIG_FILE_PATH) as file:
+with open(CONFIG_FILE_PATH, encoding='utf-8') as file:
     CONFIG = load(file)
 
 # TODO прокинуть переменную из окружения
