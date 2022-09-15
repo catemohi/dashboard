@@ -6,8 +6,7 @@ import pytest
 
 def test_parse_day_report():
     with open('naumen_api\\parser\\test\\parse-templates-page\\'
-              'service_level_templates\\'
-              'service_level_day_report.html') as text:
+              'service_level\\service_level_day_report.html') as text:
 
         text = text.read()
         response = parse(text)
@@ -43,8 +42,7 @@ def test_parse_day_report():
 
 def test_parse_empty_report():
     with open('naumen_api\\parser\\test\\parse-templates-page\\'
-              'service_level_templates\\'
-              'service_level_empty_report.html') as text:
+              'service_level\\service_level_empty_report.html') as text:
 
         text = text.read()
         response = parse(text)
@@ -53,8 +51,7 @@ def test_parse_empty_report():
 
 def test_parse_error_report():
     with open('naumen_api\\parser\\test\\parse-templates-page\\'
-              'service_level_templates\\'
-              'service_level_error_report.html') as text:
+              'service_level\\service_level_error_report.html') as text:
         text = text.read()
 
     with pytest.raises(CantGetData):
@@ -63,8 +60,7 @@ def test_parse_error_report():
 
 def test_parse_no_one_group_report():
     with open('naumen_api\\parser\\test\\parse-templates-page\\'
-              'service_level_templates\\'
-              'service_level_no_group_report.html') as text:
+              'service_level\\service_level_no_group_report.html') as text:
         text = text.read()
         response = parse(text)
         print(response)
@@ -98,6 +94,15 @@ def test_parse_no_one_group_report():
                     ),
                 ],
             )
+
+
+error_text = [str(), list(), dict(), tuple(), int(), set(), 'error string']
+
+
+@pytest.mark.parametrize('text', error_text)
+def test_parse_error_params(text):
+    with pytest.raises(CantGetData):
+        parse(text)
 
 
 if __name__ == '__main__':

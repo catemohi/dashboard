@@ -202,7 +202,8 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args,
         log.debug('Парсинг истории обращений.')
         raise NotImplementedError
 
-    _delete_report(crm, naumen_uuid)
+    if not report_exists:
+        _delete_report(crm, naumen_uuid)
 
     return collect
 

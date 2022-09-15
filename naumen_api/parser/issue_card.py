@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 
 from .issues import Issue
 from .parser_base import _get_url_param_value
+from .parser_base import _validate_text_for_parsing
 from ..exceptions import CantGetData
 
 
@@ -29,7 +30,10 @@ def parse(text: str, *args, issue: Issue = None) -> Issue:
 
     if not issue:
         issue = Issue()
+    _validate_text_for_parsing(text)
     soup = BeautifulSoup(text, "html.parser")
+    if not soup:
+        raise CantGetData
     issue.name_contragent, issue.uuid_contragent = _get_contragent_params(soup)
     issue.description = _get_description(soup)
     issue.creation_date = _get_creation_date(soup)

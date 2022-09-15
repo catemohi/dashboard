@@ -172,6 +172,11 @@ def _parse_date_report(soup: BeautifulSoup, name_start_date: str,
 
     log.debug("Парсинг параметров отчёта.")
     options_table = soup.find('table', id="stdViewpart0.legendTableList")
+
+    if not options_table:
+        log.error('BeautifulSoup нечего не нашел.')
+        raise CantGetData
+
     options_tag = options_table.find_all('td', attrs={'style': 'width:100%;'})
     name_tag = options_table.find_all('td',
                                       attrs={'style': 'white-space:nowrap;'})
@@ -180,8 +185,10 @@ def _parse_date_report(soup: BeautifulSoup, name_start_date: str,
     report_options = dict(zip(name, options))
     start_date = report_options.get(name_start_date, None)
     end_date = report_options.get(name_end_date, None)
+
     if not all([start_date, end_date]):
         raise CantGetData
+
     return start_date, end_date
 
 
@@ -206,3 +213,25 @@ def _get_url_param_value(url: str, needed_param: str) -> str:
         raise CantGetData
     param_value = parse.parse_qs(parse.urlparse(url).query)[needed_param][0]
     return param_value
+
+
+def _validate_text_for_parsing(text: str) -> None:
+
+    """Функция для валидации входного текста для парсинга:
+
+    Args:
+        text: исходный текст
+
+    Raises:
+        CantGetData: если текст не прошел проверки.
+
+    Returns:
+
+    """
+    if not isinstance(text, str):
+        log.error(f'BeautifulSoup не сможет распарсить {type(text)}')
+        raise CantGetData
+
+    if not text:
+        log.error('Строка для парсинга пустая')
+        raise CantGetData
