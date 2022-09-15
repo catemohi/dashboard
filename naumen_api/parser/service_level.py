@@ -59,6 +59,9 @@ def parse(text: str, *args, **kwargs) -> \
     start_date, end_date = _parse_date_report(
         soup, 'Дата перевода, с', 'Дата перевода, по')
     log.debug(f'Получены даты отчета с {start_date} по {end_date}')
+    if start_date == end_date:
+        log.error(f'Дата {start_date} равна {end_date}. Отчёт пуст.')
+        return ()
     label = _get_columns_name(soup)
     log.debug(f'Получены названия столбцов {label}')
     data_table = soup.find('table', id='stdViewpart0.part0_TableList')
