@@ -1,21 +1,36 @@
 from json import load
-from pathlib import Path
+from pathlib import PurePath
 from typing import Mapping, NamedTuple
 
 
-CONFIG_FILE_PATH = Path(__file__).with_name("config.json")
-with open(CONFIG_FILE_PATH, encoding='utf-8') as file:
-    CONFIG = load(file)
+class AppConfig:
+    """Класс для хранения настроек приложения и переопределения их.
+    """
 
-# TODO прокинуть переменную из окружения
-NAUMEN_LOGIN = ''
-# TODO прокинуть переменную из окружения
-NAUMEN_PASSWORD = ''
-# TODO прокинуть переменную из окружения
-NAUMEN_DOMAIN = ''
-CONFIG.update({'auth': {'login': NAUMEN_LOGIN,
-                        'password': NAUMEN_PASSWORD,
-                        'domain': NAUMEN_DOMAIN}})
+    def __init__(self) -> None:
+        self.config = {}
+        self._config_path = ''
+
+    @property
+    def config_path(self) -> str:
+        return self._config_path
+
+    @config_path.setter
+    def config_path(self, value: str) -> None:
+        print(type(value))
+        if not isinstance(value, str):
+            raise TypeError("Path must be in string format.")
+        self._config_path = PurePath(value)
+
+    def load_config(self) -> None:
+        """Метод для генирации конфигурационного атрибута.
+        """
+
+        if not self.config_path:
+            self._config_path = PurePath(__file__).with_name("config.json")
+
+        with open(self.config_path, encoding='utf-8') as file:
+            self.config = load(file)
 
 
 class CreateParams(NamedTuple):
@@ -82,20 +97,20 @@ def get_params_create_report(report_name: str) -> CreateParams:
     Raises:
 
     """
-    url = CONFIG['url']['create']
+    url = CONFIG.config['url']['create']
     data_create = CreateParams(url, '', {}, {}, {}, False, 0, 0)
     reports_name = [
-        key for key, val in CONFIG.items() if "create_request" in val
+        key for key, val in CONFIG.config.items() if "create_request" in val
         ]
     if report_name not in reports_name:
         return data_create
-    uuid = CONFIG[report_name]['uuid']
-    headers = CONFIG['headers']
-    data = CONFIG[report_name]['create_request']['data']
-    params = CONFIG[report_name]['create_request']['params']
-    verify = CONFIG['verify']['value']
-    delay_attems = CONFIG[report_name]['delay_attems']['value']
-    num_attems = CONFIG[report_name]['num_attems']['value']
+    uuid = CONFIG.config[report_name]['uuid']
+    headers = CONFIG.config['headers']
+    data = CONFIG.config[report_name]['create_request']['data']
+    params = CONFIG.config[report_name]['create_request']['params']
+    verify = CONFIG.config['verify']['value']
+    delay_attems = CONFIG.config[report_name]['delay_attems']['value']
+    num_attems = CONFIG.config[report_name]['num_attems']['value']
     params["param2"] = {'name': 'uuid', 'value': uuid}
 
     return CreateParams(url, uuid, headers, params, data,
@@ -116,11 +131,11 @@ def get_params_find() -> FindParams:
 
     """
 
-    url = CONFIG['url']['open']
-    headers = CONFIG['headers']
+    url = CONFIG.config['url']['open']
+    headers = CONFIG.config['headers']
     data = {}
     params = {}
-    verify = CONFIG['verify']['value']
+    verify = CONFIG.config['verify']['value']
     return FindParams(url, headers, params, data, verify)
 
 
@@ -137,13 +152,16 @@ def get_params_for_delete() -> DeleteParams:
 
     """
 
-    url = CONFIG['url']['delete']
-    headers = CONFIG['headers']
+    url = CONFIG.config['url']['delete']
+    headers = CONFIG.config['headers']
     data = {}
-    params = CONFIG['delete_report']['params']
-    verify = CONFIG['verify']['value']
+    params = CONFIG.config['delete_report']['params']
+    verify = CONFIG.config['verify']['value']
     return DeleteParams(url, headers, params, data, verify)
 
+
+CONFIG = AppConfig()
+CONFIG.load_config()
 
 if __name__ == "__main__":
     data = get_params_create_report('')

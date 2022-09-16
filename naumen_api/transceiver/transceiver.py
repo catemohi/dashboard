@@ -123,7 +123,8 @@ def get_session(username: str, password: str,
         ConnectionsFailed: если не удалось подключиться к CRM системе.
 
     """
-    url = CONFIG['url']['login']
+
+    url = CONFIG.config['url']['login']
     if not all([username, password, domain, url]):
         raise ConnectionsFailed
     session = Session()
@@ -289,7 +290,7 @@ def _create_request(report: TypeReport, *args, **kwargs) -> \
     log.debug(f'Переданы параметры kwargs: {kwargs}')
     if not isinstance(report, TypeReport):
         raise CantGetData
-    data = CONFIG[report.value]['create_request']['data'].copy()
+    data = CONFIG.config[report.value]['create_request']['data'].copy()
 
     if not kwargs:
         return _configure_params(report)

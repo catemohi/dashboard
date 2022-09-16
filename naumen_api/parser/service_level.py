@@ -83,7 +83,10 @@ def parse(text: str, *args, **kwargs) -> \
     if len(group) == support_group_count / 2:
         log.warning('Найдена только половина названий групп ТП. '
                     'Добовляем дефолтные названия')
-        group = set([*CONFIG["defaul_group_name"]["value"], *group])
+        default_group = CONFIG.config["defaul_group_name"]["value"]
+        log.warning('Группы по умолчанию из конфигурации приложения:'
+                    f'{default_group}')
+        group = set([*default_group, *group])
         log.warning(group)
 
         if len(group) != support_group_count:
