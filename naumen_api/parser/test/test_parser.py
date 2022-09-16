@@ -1,15 +1,18 @@
 from naumen_api.exceptions import CantGetData
-from naumen_api.parser.service_level import ServiceLevel, parse
+from naumen_api.parser.parser_base import PageType
+from naumen_api.parser.parser import parse_naumen_page
+from naumen_api.parser.service_level import ServiceLevel
 
 import pytest
 
 
-def test_parse_day_report():
+def test_parse_sl_day_report():
     with open('naumen_api\\parser\\test\\parse-templates-page\\'
               'service_level\\service_level_day_report.html') as text:
 
         text = text.read()
-        response = parse(text)
+        response = parse_naumen_page(text, '',
+                                     PageType.SERVICE_LEVEL_REPORT_PAGE)
         assert response == (
             [
                 ServiceLevel(
@@ -45,7 +48,8 @@ def test_parse_empty_report():
               'service_level\\service_level_empty_report.html') as text:
 
         text = text.read()
-        response = parse(text)
+        response = parse_naumen_page(text, '',
+                                     PageType.SERVICE_LEVEL_REPORT_PAGE)
         assert response == ()
 
 
@@ -55,14 +59,15 @@ def test_parse_error_report():
         text = text.read()
 
     with pytest.raises(CantGetData):
-        parse(text)
+        parse_naumen_page(text, '', PageType.SERVICE_LEVEL_REPORT_PAGE)
 
 
 def test_parse_no_one_group_report():
     with open('naumen_api\\parser\\test\\parse-templates-page\\'
               'service_level\\service_level_no_group_report.html') as text:
         text = text.read()
-        response = parse(text)
+        response = parse_naumen_page(text, '',
+                                     PageType.SERVICE_LEVEL_REPORT_PAGE)
         assert response == (
             [
                 ServiceLevel(
@@ -101,9 +106,18 @@ error_text = [str(), list(), dict(), tuple(), int(), set(), 'error string']
 @pytest.mark.parametrize('text', error_text)
 def test_parse_error_params(text):
     with pytest.raises(CantGetData):
-        parse(text)
+        parse_naumen_page(text, '', PageType.SERVICE_LEVEL_REPORT_PAGE)
+
+
+def test_parse_error_type_report():
+    with open('naumen_api\\parser\\test\\parse-templates-page\\'
+              'service_level\\service_level_empty_report.html') as text:
+
+        text = text.read()
+
+    with pytest.raises(CantGetData):
+        parse_naumen_page(text, '', '')
 
 
 if __name__ == '__main__':
-
     pytest.main()
