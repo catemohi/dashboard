@@ -11,6 +11,7 @@ from requests import Response, Session
 from requests.adapters import HTTPAdapter, Retry
 from requests.packages import urllib3
 
+
 from ..config.config import CONFIG, get_params_create_report
 from ..config.config import get_params_find, get_params_for_delete
 from ..exceptions import CantGetData, ConnectionsFailed, InvalidDate
@@ -163,11 +164,13 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args,
     """
 
     parse_history, parse_issues_cards = False, False
+
     if report in [TypeReport.ISSUES_FIRST_LINE, TypeReport.ISSUES_VIP_LINE]:
         parse_history, parse_issues_cards, kwargs = \
             _check_issues_report_keys(**kwargs)
 
     report_exists = True if naumen_uuid else False
+    is_vip_issues = True if report == TypeReport.ISSUES_VIP_LINE else False
 
     if report_exists:
         log.debug('Обьект в CRM NAUMEN уже создан. '
@@ -182,10 +185,16 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args,
     params.update({'uuid': naumen_uuid})
     search_request = NaumenRequest(url, headers, params, data, verify)
     naumen_responce = _get_crm_response(crm, search_request)
+
     if not naumen_responce:
         raise CantGetData
+
     page_text = naumen_responce.text
     collect = parse_naumen_page(page_text, name_report, report.page)
+
+    if is_vip_issues:
+        for vip_issue in collect:
+            vip_issue.vip_contragent = True
 
     if parse_issues_cards:
         collect = list(collect)
