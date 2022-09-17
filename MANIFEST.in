@@ -1,1 +1,1 @@
-recursive-include naumen_api/config/config.json
+recursive-include naumen_api/config/ *.json
