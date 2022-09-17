@@ -4,6 +4,7 @@ from typing import Sequence
 from bs4 import BeautifulSoup
 
 from .parser_base import _get_url_param_value
+from .parser_base import _validate_text_for_parsing
 
 
 log = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ def parse(text: str, name: str) -> Sequence[str] | None:
     """
 
     log.debug(f'Поиск отчета с именем: {name}')
+    _validate_text_for_parsing(text)
     soup = BeautifulSoup(text, "html.parser")
     report_tag = soup.select(f'[title="{name}"]')
     if report_tag:

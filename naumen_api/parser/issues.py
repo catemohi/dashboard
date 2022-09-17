@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup, element
 
 from .parser_base import _get_columns_name
 from .parser_base import _get_url_param_value
+from .parser_base import _validate_text_for_parsing
 
 
 log = logging.getLogger(__name__)
@@ -70,6 +71,7 @@ def parse(text: str, *args, **kwargs) \
         CantGetData: Если не удалось найти данные.
     """
 
+    _validate_text_for_parsing(text)
     soup = BeautifulSoup(text, "html.parser")
     category = _get_columns_name(soup)
     rows = soup.select(".supp tr")[7:-1]

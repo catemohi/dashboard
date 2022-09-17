@@ -8,6 +8,8 @@ from bs4 import BeautifulSoup
 from .parser_base import PageType, _get_columns_name, _get_date_range
 from .parser_base import _forming_days_collecion, _forming_days_dict
 from .parser_base import _parse_date_report
+from .parser_base import _validate_text_for_parsing
+from ..config.config import CONFIG
 from ..exceptions import CantGetData
 
 
@@ -55,10 +57,14 @@ def parse(text: str, *args, **kwargs) -> \
 
     support_group_count = 2
     log.debug('Запуск парсинг отчёта SL')
+    _validate_text_for_parsing(text)
     soup = BeautifulSoup(text, "html.parser")
     start_date, end_date = _parse_date_report(
         soup, 'Дата перевода, с', 'Дата перевода, по')
     log.debug(f'Получены даты отчета с {start_date} по {end_date}')
+    if start_date == end_date:
+        log.error(f'Дата {start_date} равна {end_date}. Отчёт пуст.')
+        return ()
     label = _get_columns_name(soup)
     log.debug(f'Получены названия столбцов {label}')
     data_table = soup.find('table', id='stdViewpart0.part0_TableList')
@@ -69,9 +75,24 @@ def parse(text: str, *args, **kwargs) -> \
     days = _forming_days_dict(
         date_range, day_collection, PageType.SERVICE_LEVEL_REPORT_PAGE)
     group = set([_['Группа'] for _ in day_collection])
-    if len(group) != support_group_count:
-        log.error(f'Количество групп ТП не равно {support_group_count}')
+
+    if not len(group):
+        log.error('Количество групп ТП равно нулю.')
         raise CantGetData
+
+    if len(group) == support_group_count / 2:
+        log.warning('Найдена только половина названий групп ТП. '
+                    'Добовляем дефолтные названия')
+        default_group = CONFIG.config["defaul_group_name"]["value"]
+        log.warning('Группы по умолчанию из конфигурации приложения:'
+                    f'{default_group}')
+        group = set([*default_group, *group])
+        log.warning(group)
+
+        if len(group) != support_group_count:
+            log.error('Дефолтные значения не подходят.')
+            raise CantGetData
+
     days = _service_lavel_data_completion(days, group, label)
     collection = _formating_service_level_data(days)
     log.debug(f'Парсинг завершился успешно. Колекция отчетов SL '

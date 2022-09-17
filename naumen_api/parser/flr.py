@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from .parser_base import PageType,  _get_columns_name, _get_date_range
 from .parser_base import _forming_days_collecion, _forming_days_dict
 from .parser_base import _parse_date_report
+from .parser_base import _validate_text_for_parsing
 
 
 log = logging.getLogger(__name__)
@@ -48,6 +49,8 @@ def parse(text: str, *args, **kwargs) -> \
     """
 
     log.debug('Запуск парсинг отчёта FLR')
+
+    _validate_text_for_parsing(text)
     soup = BeautifulSoup(text, "html.parser")
     start_date, end_date = _parse_date_report(
         soup, 'Дата перевода, с', 'Дата перевода, по')
