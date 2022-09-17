@@ -10,7 +10,7 @@ setup(
     author="catemohi",
     author_email="catemohi@gmail.com",
     description="API CRM системы, основанное на парсинге DOM-дерева.",
-    long_description=open(join(dirname(__file__), 'README.txt')).read(),
+    long_description=open(join(dirname(__file__), 'README.md')).read(),
     long_description_content_type="text/markdown",
     url="<https://github.com/authorname/templatepackage>",    
     packages=find_packages(),    
