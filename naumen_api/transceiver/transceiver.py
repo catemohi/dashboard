@@ -449,6 +449,8 @@ def _validate_date(check_date: str) -> str:
         return datetime.strptime(check_date, '%d.%m.%Y').strftime("%d.%m.%Y")
     except ValueError:
         raise InvalidDate
+    except TypeError:
+        raise InvalidDate
 
 
 def _params_erector(params: Mapping[str,

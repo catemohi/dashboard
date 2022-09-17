@@ -1,6 +1,7 @@
+from naumen_api.config.config import CONFIG
 from naumen_api.exceptions import CantGetData
-from naumen_api.parser.parser_base import PageType
 from naumen_api.parser.parser import parse_naumen_page
+from naumen_api.parser.parser_base import PageType
 from naumen_api.parser.service_level import ServiceLevel
 
 import pytest
@@ -63,6 +64,8 @@ def test_parse_error_report():
 
 
 def test_parse_no_one_group_report():
+    CONFIG.config_path = 'E:\\.dev\\projects\\naumen_api\\.env\\config.json'
+    CONFIG.load_config()
     with open('naumen_api\\parser\\test\\parse-templates-page\\'
               'service_level\\service_level_no_group_report.html') as text:
         text = text.read()
