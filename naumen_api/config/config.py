@@ -71,7 +71,8 @@ class DeleteParams(FindParams):
 
 def get_params_create_report(report_name: str) -> CreateParams:
 
-    """Функция которая достает необходимые параметры из конфигурационного файла.
+    """Функция которая достает необходимые параметры
+    из конфигурационного файла.
 
     Args:
         report_name: название отчета
@@ -104,7 +105,8 @@ def get_params_create_report(report_name: str) -> CreateParams:
 
 def get_params_find() -> FindParams:
 
-    """Функция которая достает необходимые параметры из конфигурационного файла.
+    """Функция которая достает необходимые параметры из
+    конфигурационного файла.
 
     Args:
         report_name: название отчета
@@ -126,7 +128,8 @@ def get_params_find() -> FindParams:
 
 def get_params_for_delete() -> DeleteParams:
 
-    """Функция которая достает необходимые параметры из конфигурационного файла.
+    """Функция которая достает необходимые параметры
+    из конфигурационного файла.
 
     Args:
 
