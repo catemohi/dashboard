@@ -10,7 +10,7 @@ setup(
     description="API CRM системы, основанное на парсинге DOM-дерева.",
     long_description=open(join(dirname(__file__), 'README.md')).read(),
     long_description_content_type="text/markdown",
-    url="<https://github.com/authorname/templatepackage>",
+    url="https://github.com/catemohi/naumen-api",
     packages=find_packages(),
     install_requires=[
         'beautifulsoup4==4.11.1',
