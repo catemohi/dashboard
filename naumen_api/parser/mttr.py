@@ -33,7 +33,7 @@ class Mttr:
 
 
 def parse(text: str, *args, **kwargs) -> \
-                             Sequence | Sequence[Literal['']]:
+                             Sequence or Sequence[Literal['']]:
 
     """Функция парсинга картточки обращения.
 
@@ -41,7 +41,7 @@ def parse(text: str, *args, **kwargs) -> \
         text: сырой текст страницы.
 
     Returns:
-        Sequence | Sequence[Literal['']]: Коллекцию с найденными элементами.
+        Sequence or Sequence[Literal['']]: Коллекцию с найденными элементами.
 
     Raises:
         CantGetData: Если не удалось найти данные.

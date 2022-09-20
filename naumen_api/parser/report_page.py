@@ -10,7 +10,7 @@ from .parser_base import _validate_text_for_parsing
 log = logging.getLogger(__name__)
 
 
-def parse(text: str, name: str) -> Sequence[str] | None:
+def parse(text: str, name: str) -> Sequence[str] or None:
 
     """Функция парсинга страницы с отчётами и получение UUID отчёта.
 
@@ -19,7 +19,7 @@ def parse(text: str, name: str) -> Sequence[str] | None:
         name: уникальное название отчета.
 
     Returns:
-        Sequence | Sequence[Literal['']]: Коллекцию с найденными элементами.
+        Sequence or Sequence[Literal['']]: Коллекцию с найденными элементами.
 
     Raises:
 

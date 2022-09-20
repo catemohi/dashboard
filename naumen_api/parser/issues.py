@@ -57,7 +57,7 @@ class Issue:
 
 
 def parse(text: str, *args, **kwargs) \
-                        -> Sequence[Issue] | Sequence[Literal['']]:
+                        -> Sequence[Issue] or Sequence[Literal['']]:
 
     """Функция парсинга страницы с обращениями на группе.
 
@@ -65,7 +65,7 @@ def parse(text: str, *args, **kwargs) \
         text: сырой текст страницы.
 
     Returns:
-        Sequence | Sequence[Literal['']]: Коллекцию с найденными элементами.
+        Sequence or Sequence[Literal['']]: Коллекцию с найденными элементами.
 
     Raises:
         CantGetData: Если не удалось найти данные.
@@ -87,7 +87,7 @@ def parse(text: str, *args, **kwargs) \
             category: названия столбцов, строки.
 
         Returns:
-            Sequence[Issue] | Sequence[Literal['']: Коллекцию обращений.
+            Sequence[Issue] or Sequence[Literal['']: Коллекцию обращений.
 
         """
 
