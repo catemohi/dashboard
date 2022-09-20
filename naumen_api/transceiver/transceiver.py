@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 DOMAIN = Literal['CORP.ERTELECOM.LOC', 'O.WESTCALL.SPB.RU']
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True)
 class ActiveConnect:
 
     """Класс данных для хранения сессии активного соединения c CRM Naumen.

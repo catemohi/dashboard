@@ -14,7 +14,7 @@ from .parser_base import _validate_text_for_parsing
 log = logging.getLogger(__name__)
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True)
 class Flr:
 
     """Класс данных для хранения данных отчета FLR.

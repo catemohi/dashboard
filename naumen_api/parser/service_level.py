@@ -16,7 +16,7 @@ from ..exceptions import CantGetData
 log = logging.getLogger(__name__)
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True)
 class ServiceLevel:
 
     """Класс данных для хранения данных отчета Service Level.
