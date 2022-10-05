@@ -17,7 +17,6 @@ class AppConfig:
 
     @config_path.setter
     def config_path(self, value: str) -> None:
-        print(type(value))
         if not isinstance(value, str):
             raise TypeError("Path must be in string format.")
         self._config_path = PurePath(value)
