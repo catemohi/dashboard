@@ -45,14 +45,14 @@ class Issue:
     step: str = ''
     step_time: timedelta = timedelta(0, 0)
     responsible: str = ''
-    last_edit_time: datetime = datetime.now()
+    last_edit_time: datetime | None = None
     vip_contragent: bool = False
     creation_date: datetime = datetime.now()
     uuid_service: str = ''
     name_service: str = ''
     uuid_contragent: str = ''
     name_contragent: str = ''
-    return_to_work_time: datetime = datetime.now()
+    return_to_work_time: datetime | None = None
     description: str = ''
 
 
