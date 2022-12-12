@@ -4,7 +4,7 @@ from os.path import dirname, join
 
 setup(
     name='naumen_api',
-    version='1.0',
+    version='1.2',
     author="catemohi",
     author_email="catemohi@gmail.com",
     description="API CRM системы, основанное на парсинге DOM-дерева.",
