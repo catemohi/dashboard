@@ -194,7 +194,8 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args,
 
     if is_vip_issues:
         for vip_issue in collect:
-            vip_issue.vip_contragent = True
+            if vip_issue:
+                vip_issue.vip_contragent = True
 
     if parse_issues_cards:
         collect = list(collect)

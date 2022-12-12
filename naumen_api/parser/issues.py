@@ -76,7 +76,7 @@ def parse(text: str, *args, **kwargs) \
     category = _get_columns_name(soup)
     rows = soup.select(".supp tr")[7:-1]
     if len(rows) < 1:
-        return ('',)
+        return ()
     def parse_table_row(row: element.Tag,
 
                         category: Iterable[str]) -> Issue:
