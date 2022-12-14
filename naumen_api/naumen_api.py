@@ -248,31 +248,6 @@ class Client:
         }
         return self._get_response(TypeReport.FLR_LEVEL, **report_kwargs)
 
-    def get_issue_card(self, uuid: str, *args,
-                       **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
-
-        """Метод для получения данных с карточки обращения.
-
-        Args:
-            uuid: UUID обращения.
-            *args: не используются и не пробрасываются.
-            **kwargs: другие именнованные аргументы.
-
-        Returns:
-            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
-
-        Raises:
-
-        """
-
-        log.debug(f'UUID обращения: {uuid};')
-
-        report_kwargs = {
-            'naumen_uuid': uuid,
-            **kwargs,
-        }
-        return self._get_response(TypeReport.ISSUE_CARD, **report_kwargs)
-
     def _get_response(self, report: TypeReport, *args, **kwargs) -> \
             ResponseFormatter.FORMATTED_RESPONSE:
 
