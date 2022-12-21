@@ -64,10 +64,11 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
     log.debug(f'Из CRM собраны следующие данные: {return_times}.')
 
     def _return_defalut_time():
-        return_to_work_time = datetime.now() + timedelta(days=365)
-        log.warning('Дата возврата в работу не обнаружена, '
-                    'поставлено значение по умолчанию: '
-                    f'{return_to_work_time}')
+        return_to_work_time = datetime(datetime.now().year + 1,
+                                       12, 31, 12, 0, 0)
+        log.debug('Дата возврата в работу не обнаружена, '
+                  'поставлено значение по умолчанию: '
+                  f'{return_to_work_time}')
         return return_to_work_time
 
     if not return_times:
@@ -77,8 +78,8 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
         try:
             return datetime.strptime(string_time, '%d.%m.%Y %H:%M')
         except ValueError:
-            log.warning(f'Значение {string_time} не удалось преобразовать '
-                        'в обьект datetime, по шаблону %d.%m.%Y %H:%M')
+            log.error(f'Значение {string_time} не удалось преобразовать '
+                      'в обьект datetime, по шаблону %d.%m.%Y %H:%M')
     needed_time_string_count = 1
     times = [_string_to_time(time) for time in return_times if time]
 
@@ -86,8 +87,8 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
         return _return_defalut_time()
 
     if len(times) > needed_time_string_count:
-        log.warning(f'Получено больше {needed_time_string_count} '
-                    'значений даты. Возвращаем последнюю.')
+        log.debug(f'Получено больше {needed_time_string_count} '
+                  'значений даты. Возвращаем последнюю.')
     # возвращаем самую последнюю дату.
     return_to_work_time = sorted(times)[-1]
     log.info(f'Найдена дата возврата в работу {return_to_work_time}')
