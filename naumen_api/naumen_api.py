@@ -83,6 +83,31 @@ class Client:
             logging.exception('Ошибка соединения с CRM NAUMEN.')
             return make_response(error_response, self.formatter)
 
+    def search_issue(self, *args, number: int = None, 
+                     name_contragent: str = None,
+                     number_contragent: int = None,
+                     contact: str = None,
+                     **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
+        """Метод для получения для поиска обращения
+
+        Args:
+            number (int): номер обращения.
+            name_contragent (str): имя контрагента.
+            number_contragent (int): номер контрагента.
+            contact (str): имя контактного лица.
+            *args: не используются и не пробрасываются.
+            **kwargs: другие именнованные аргументы.
+
+        Returns:
+            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+
+        Raises:
+
+        """
+        log.debug('Поиск обращений по критериям.')
+        ...
+        
+
     def get_issues(self, *args, is_vip: bool = False,
                    parse_history: bool = False,
                    parse_issues_cards: bool = False, **kwargs) -> \
