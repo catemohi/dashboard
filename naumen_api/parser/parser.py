@@ -2,6 +2,7 @@ import logging
 from typing import Callable, Mapping, Sequence
 
 from . import flr, issue_card, issues, mttr, report_page, service_level
+from . import search_result_issues
 from .parser_base import PageType
 from ..exceptions import CantGetData
 
@@ -41,6 +42,7 @@ def parse_naumen_page(page: str, name_report: str,
         PageType.SERVICE_LEVEL_REPORT_PAGE: service_level.parse,
         PageType.MMTR_LEVEL_REPORT_PAGE: mttr.parse,
         PageType.FLR_LEVEL_REPORT_PAGE: flr.parse,
+        PageType.SEARCH_RESULT_ISSUES_PAGE: search_result_issues.parse,
     }
 
     parser = page_parsers[type_page]

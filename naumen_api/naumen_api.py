@@ -1,4 +1,5 @@
 import logging
+from typing import Union
 
 from requests import exceptions
 
@@ -83,10 +84,9 @@ class Client:
             logging.exception('Ошибка соединения с CRM NAUMEN.')
             return make_response(error_response, self.formatter)
 
-    def search_issue(self, *args, number: int = None, 
-                     name_contragent: str = None,
-                     number_contragent: int = None,
-                     contact: str = None,
+    def search_issue(self, *args, number: Union[str, int] = '',
+                     name_contragent: str = '',
+                     number_contragent: Union[str, int] = '',
                      **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
         """Метод для получения для поиска обращения
 
@@ -94,7 +94,6 @@ class Client:
             number (int): номер обращения.
             name_contragent (str): имя контрагента.
             number_contragent (int): номер контрагента.
-            contact (str): имя контактного лица.
             *args: не используются и не пробрасываются.
             **kwargs: другие именнованные аргументы.
 
@@ -105,8 +104,17 @@ class Client:
 
         """
         log.debug('Поиск обращений по критериям.')
-        ...
-        
+        log.debug(f'Параметр byNumber: {number}; '
+                  f'Параметр byCntrTitle: {name_contragent}; '
+                  f'Параметр byCntrNumber: {number_contragent};')
+
+        report_kwargs = {
+            'byNumber': number,
+            'byCntrTitle': name_contragent,
+            'byCntrNumber': number_contragent,
+            **kwargs}
+
+        return self._get_response(TypeReport.ISSUES_SEARCH, **report_kwargs)
 
     def get_issues(self, *args, is_vip: bool = False,
                    parse_history: bool = False,
@@ -300,7 +308,7 @@ class Client:
         try:
             content = get_report(self._session, report, *args, **kwargs)
             api_response = ResponseTemplate(StatusType._SUCCESS, content)
-            log.info('Ответ на запрос проблем техподдержки получен.')
+            log.info('Ответ на запрос получен.')
             return make_response(api_response, self.formatter)
 
         except exceptions.ConnectionError:
