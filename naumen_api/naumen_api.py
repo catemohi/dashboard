@@ -101,6 +101,7 @@ class Client:
             ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
 
         Raises:
+        
 
         """
         log.debug('Поиск обращений по критериям.')
