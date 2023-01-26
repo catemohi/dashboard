@@ -24,6 +24,7 @@ class PageType(Enum):
             MMTR_LEVEL_REPORT: Страница с отчётом mttr level
             FLR_LEVEL_REPORT: Страница с отчётом flr level.
             SEARCH_RESULT_ISSUES_PAGE: Страница с результатом поиска обращений
+            PAGINATION_PAGE: Парсинг пагинации
 
     """
     REPORT_LIST_PAGE = 1
@@ -33,7 +34,7 @@ class PageType(Enum):
     MMTR_LEVEL_REPORT_PAGE = 5
     FLR_LEVEL_REPORT_PAGE = 6
     SEARCH_RESULT_ISSUES_PAGE = 7
-
+    PAGINATION_PAGE = 8
 
 def _get_date_range(date_first: str, date_second: str) -> Sequence[datetime]:
 

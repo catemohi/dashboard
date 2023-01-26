@@ -61,7 +61,7 @@ def parse(text: str, *args, **kwargs) \
     soup = BeautifulSoup(text, "html.parser")
     category = _get_columns_name(soup)
     collection = _parse_result_table(soup, category)
-    print(collection)
+    return collection
 
 
 def _parse_result_table(soup: BeautifulSoup,
@@ -89,19 +89,34 @@ def _parse_result_table(soup: BeautifulSoup,
 
     for tr in tr_tag_collection:
         tr_dict = dict(zip(category, tr.find_all(name='td')))
-        _url = tr_dict['Номер обращения'].find('a', href=True)['href']
-        uuid = _get_url_param_value(_url, 'uuid')
+        _url = tr_dict['Номер обращения'].find('a', href=True)
+        if _url is not None:
+            _url = _url.get('href')
+            uuid = _get_url_param_value(_url, 'uuid')
+        else:
+            uuid = ''
         number = tr_dict['Номер обращения'].find('a').text
-        _url = tr_dict['Источник обращения'].find('a', href=True)['href']
-        uuid_contragent = _get_url_param_value(_url, 'uuid')
+        _url = tr_dict['Источник обращения'].find('a', href=True)
+        if _url is not None:
+            _url = _url.get('href')
+            uuid_contragent = _get_url_param_value(_url, 'uuid')
+        else:
+            uuid_contragent = ''
         name_contragent = tr_dict['Источник обращения'].find('a').text
-        issue_type = tr_dict['Тип обращения'].text.replace('\n','').strip()
-        step = tr_dict['Статус'].text.replace('\n','').strip()
-        _url = tr_dict['Ответственный'].find('a', href=True)['href']
-        uuid_responsible = _get_url_param_value(_url, 'uuid')
-        name_responsible = tr_dict['Ответственный'].find('a').text.replace('\n','').strip()
-        description = tr_dict['Описание'].strings
-
+        issue_type = ' '.join(list(tr_dict['Тип обращения'].stripped_strings))
+        step = ' '.join(list(tr_dict['Статус'].stripped_strings))
+        _url = tr_dict['Ответственный'].find('a', href=True)
+        if _url is not None:
+            _url = _url.get('href')
+            uuid_responsible = _get_url_param_value(_url, 'uuid')
+        else:
+            uuid_responsible = ''
+        name_responsible = tr_dict['Ответственный'].find('a')
+        if name_responsible is not None:
+            name_responsible = ' '.join(list(name_responsible.stripped_strings))
+        else:
+            name_responsible = ''
+        description = ' '.join(list(tr_dict['Описание'].stripped_strings))
         contact = tr_dict['Контактное лицо'].text.replace('\n','').strip()
         search_issue_result = SearchIssueResult(number, uuid, uuid_contragent,
                                                 name_contragent, issue_type,
