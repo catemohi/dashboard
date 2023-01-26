@@ -117,6 +117,26 @@ def get_params_create_report(report_name: str) -> CreateParams:
                         verify, delay_attems, num_attems)
 
 
+def get_params_search(report_name: str) -> CreateParams:
+
+    """Функция которая достает необходимые параметры
+    из конфигурационного файла.
+
+    Args:
+        report_name: название отчета
+
+    Returns:
+        Коллекцию параметров.
+
+    Raises:
+
+    """
+    create_params = get_params_create_report(report_name)
+    search_params = create_params._replace(
+        url=CONFIG.config['url']['open'])
+    return search_params
+
+
 def get_params_find() -> FindParams:
 
     """Функция которая достает необходимые параметры из

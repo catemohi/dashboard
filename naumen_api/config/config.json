@@ -214,5 +214,52 @@
                     "value": ""}
             }
         }
+    },
+    "search issues": {
+        "delay_attems": {"value": 15},
+        "num_attems": {"value": 5},        
+        "uuid": "",
+        "create_request": {
+            "data": {
+                "param1": {
+                    "name": "",
+                    "value": ""},
+                "param2": {
+                    "name": "",
+                    "value": ""},
+                "param3": {
+                    "name": "",
+                    "value": ""},
+                "param4": {
+                    "name": "",
+                    "value": ""},
+                "param5": {
+                    "name": "",
+                    "value": ""},
+                "param6": {
+                    "name": "",
+                    "value": ""},
+                "param7": {
+                    "name": "",
+                    "value": ""},
+                "param8": {
+                    "name": "",
+                    "value": ""},
+                "byNumber": {
+                    "name": "",
+                    "value": ""},
+                "byCntrTitle": {
+                    "name": "",
+                    "value": ""},
+                "byCntrNumber": {
+                    "name": "",
+                    "value": ""}
+                },
+            "params": {
+                "param1": {
+                    "name": "",
+                    "value": "" }
+            }
+        }
     }
 }

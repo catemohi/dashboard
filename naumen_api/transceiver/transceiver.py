@@ -14,6 +14,7 @@ from requests.packages import urllib3
 
 from ..config.config import CONFIG, get_params_create_report
 from ..config.config import get_params_find, get_params_for_delete
+from ..config.config import get_params_search
 from ..exceptions import CantGetData, ConnectionsFailed, InvalidDate
 from ..parser.parser import parse_naumen_page
 from ..parser.parser_base import PageType
@@ -414,14 +415,21 @@ def _configure_params(report: TypeReport, mod_data: Iterable = ()) -> \
         NaumenRequest: сформированный запрос для CRM Naumen
         SearchOptions: параметры для поиска созданного отчета
     """
+    if report in [TypeReport.ISSUES_SEARCH]:
+        url, uuid, headers, params, data, verify, delay_attems, num_attems = \
+            get_params_search(report.value)
+    else:
+        url, uuid, headers, params, data, verify, delay_attems, num_attems = \
+            get_params_create_report(report.value)
 
-    url, uuid, headers, params, data, verify, delay_attems, num_attems = \
-        get_params_create_report(report.value)
     if mod_data:
         data.update(mod_data)
+
     name = _get_report_name()
+
     if data.get('title', False):
         data['title']['value'] = name
+
     data = _params_erector(data)
     params = _params_erector(params)
     if not url:
