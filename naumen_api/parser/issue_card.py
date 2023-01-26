@@ -34,11 +34,18 @@ def parse(text: str, *args, issue: Issue = None) -> Issue:
     soup = BeautifulSoup(text, "html.parser")
     if not soup:
         raise CantGetData
+    issue.number = _get_number(soup)
+    issue.name = _get_title(soup)
+    issue.step = _get_step(soup)
+    issue.issue_type = _get_issue_type(soup)
+    _, issue.responsible = _get_responsible(soup)
     issue.name_contragent, issue.uuid_contragent = _get_contragent_params(soup)
     issue.description = _get_description(soup)
     issue.creation_date = _get_creation_date(soup)
     issue.name_service, issue.uuid_service = _get_service_params(soup)
+    issue.info_service = _get_service_info(soup)
     issue.return_to_work_time = _get_return_to_work_time(soup)
+    issue.diagnostics = _get_diagnostics(soup)
     return (issue, )
 
 
@@ -110,15 +117,15 @@ def _get_service_params(soup: BeautifulSoup) -> Iterable[str]:
     """
 
     services = soup.find('td', id="services")
-    if services:
-        name = services.text.replace('\n', '').strip()
-        _url = services.find('a')['href']
-        try:
-            uuid = _get_url_param_value(_url, 'uuid')
-        except CantGetData:
-            uuid = ''
-        return (name, uuid)
-    return ('', '')
+    if not services:
+        return ('', '')
+    a_collection = services.find_all('a')
+    names, uuids = [], []
+
+    for a_tag in a_collection:
+        uuids.append(_get_url_param_value(a_tag['href'], 'uuid'))
+        names.append(' '.join(list(a_tag.stripped_strings)))
+    return ';'.join(names), ';'.join(uuids)
 
 
 def _get_description(soup: BeautifulSoup) -> str:
@@ -137,15 +144,7 @@ def _get_description(soup: BeautifulSoup) -> str:
 
     description = soup.find('td', id="requestDescription")
     if description:
-        description = description\
-                                .text\
-                                .replace('\r', '')\
-                                .replace('\t', '')\
-                                .replace('\n', '')\
-                                .strip()
-        if len(description) > 140:
-            description = description[:137] + '...'
-        return description
+        return ' '.join(list(description.stripped_strings))
     return ''
 
 
@@ -194,3 +193,136 @@ def _get_contragent_params(soup: BeautifulSoup) -> Iterable[str]:
             uuid = ''
         return (name, uuid)
     return ('', '')
+
+
+def _get_number(soup: BeautifulSoup) -> str:
+    """Функция парсинга номера обращения.
+
+    Args:
+        soup: подготовленная для парсинга HTML страница.
+
+    Returns:
+        str
+
+    Raises:
+
+    """
+    number_tag = soup.find(id='number')
+    number = ' '.join(list(number_tag.stripped_strings))
+    return number
+
+
+def _get_responsible(soup: BeautifulSoup) -> tuple['str', 'str']:
+    """Функция парсинга ответсвенного за состояние.
+
+    Args:
+        soup: подготовленная для парсинга HTML страница.
+
+    Returns:
+        str
+
+    Raises:
+
+    """
+    responsible_tag = soup.find(id='stateResponsible')
+    _url = responsible_tag.find('a', href=True)
+    if _url is not None:
+        _url = _url.get('href')
+        uuid_responsible = _get_url_param_value(_url, 'uuid')
+    else:
+        uuid_responsible = ''
+
+    name_responsible = responsible_tag.find('a')
+    if name_responsible is not None:
+        name_responsible = ' '.join(list(name_responsible.stripped_strings))
+    else:
+        name_responsible = ''
+
+    return uuid_responsible, name_responsible
+
+
+def _get_title(soup: BeautifulSoup) -> str:
+    """Функция парсинга названия обращения.
+
+    Args:
+        soup: подготовленная для парсинга HTML страница.
+
+    Returns:
+        str
+
+    Raises:
+
+    """
+    title_tag = soup.find(id='title')
+    title = ' '.join(list(title_tag.stripped_strings))
+    return title
+
+
+def _get_step(soup: BeautifulSoup) -> str:
+    """Функция парсинга названия обращения.
+
+    Args:
+        soup: подготовленная для парсинга HTML страница.
+
+    Returns:
+        str
+
+    Raises:
+
+    """
+    step_tag = soup.find(id='stage')
+    step = ' '.join(list(step_tag.stripped_strings))
+    return step
+
+
+def _get_issue_type(soup: BeautifulSoup) -> str:
+    """Функция парсинга названия обращения.
+
+    Args:
+        soup: подготовленная для парсинга HTML страница.
+
+    Returns:
+        str
+
+    Raises:
+
+    """
+    issue_type_tag = soup.find(id='BOCase')
+    issue_type = ' '.join(list(issue_type_tag.stripped_strings))
+    return issue_type
+
+
+def _get_service_info(soup: BeautifulSoup) -> str:
+    """Функция парсинга информации по услугам.
+
+    Args:
+        soup: подготовленная для парсинга HTML страница.
+
+    Returns:
+        str
+
+    Raises:
+
+    """
+    service_info_tag = soup.find(id='srvInf')
+    service_info = ' '.join(list(service_info_tag.stripped_strings))
+    service_info = ['Услуга ' + item for item in service_info.split('Услуга')
+                    if item]
+    return ';'.join(service_info)
+
+
+def _get_diagnostics(soup: BeautifulSoup) -> str:
+    """Функция парсинга диагностики.
+
+    Args:
+        soup: подготовленная для парсинга HTML страница.
+
+    Returns:
+        str
+
+    Raises:
+
+    """
+    diagnostics_tag = soup.find(id='diagnostica')
+    diagnostics = ' '.join(list(diagnostics_tag.stripped_strings))
+    return diagnostics

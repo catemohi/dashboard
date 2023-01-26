@@ -14,7 +14,7 @@ from requests.packages import urllib3
 
 from ..config.config import CONFIG, get_params_create_report
 from ..config.config import get_params_find, get_params_for_delete
-from ..config.config import get_params_search
+from ..config.config import get_params_search, get_params_control
 from ..exceptions import CantGetData, ConnectionsFailed, InvalidDate
 from ..parser.parser import parse_naumen_page
 from ..parser.parser_base import PageType
@@ -57,6 +57,8 @@ class TypeReport(Enum):
     SERVICE_LEVEL = "service level report"
     MTTR_LEVEL = "mttr report"
     FLR_LEVEL = "flr report"
+    CONTROL_ENABLE_SEARCH = "enable search"
+    CONTROL_SELECT_SEARCH = "select search"
 
     def __init__(self, value):
         self.page = self._get_page()
@@ -70,6 +72,8 @@ class TypeReport(Enum):
             'SERVICE_LEVEL': PageType.SERVICE_LEVEL_REPORT_PAGE,
             'MTTR_LEVEL': PageType.MMTR_LEVEL_REPORT_PAGE,
             'FLR_LEVEL': PageType.FLR_LEVEL_REPORT_PAGE,
+            'CONTROL_ENABLE_SEARCH': None,
+            'CONTROL_SELECT_SEARCH': None,
         }
         try:
             return page_dict[self.name]
@@ -175,6 +179,12 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args,
 
     if report in [TypeReport.ISSUES_SEARCH]:
         name_report = ''
+        _get_search_issue_responce(crm, TypeReport.CONTROL_ENABLE_SEARCH,
+                                   *[], **{})
+        sleep(1)
+        _get_search_issue_responce(crm, TypeReport.CONTROL_SELECT_SEARCH,
+                                   *[], **{})
+        sleep(2)
         naumen_responce = _get_search_issue_responce(
             crm, report, *args, **kwargs)
         page_text = naumen_responce.text
@@ -418,6 +428,10 @@ def _configure_params(report: TypeReport, mod_data: Iterable = ()) -> \
     if report in [TypeReport.ISSUES_SEARCH]:
         url, uuid, headers, params, data, verify, delay_attems, num_attems = \
             get_params_search(report.value)
+    elif report in [TypeReport.CONTROL_SELECT_SEARCH,
+                    TypeReport.CONTROL_ENABLE_SEARCH]:
+        url, uuid, headers, params, data, verify, delay_attems, num_attems = \
+            get_params_control(report.value)
     else:
         url, uuid, headers, params, data, verify, delay_attems, num_attems = \
             get_params_create_report(report.value)

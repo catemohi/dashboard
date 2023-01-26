@@ -1,5 +1,6 @@
 import logging
 from typing import Union
+from json import loads
 
 from requests import exceptions
 
@@ -101,7 +102,7 @@ class Client:
             ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
 
         Raises:
-        
+
 
         """
         log.debug('Поиск обращений по критериям.')
@@ -115,7 +116,18 @@ class Client:
             'byCntrNumber': number_contragent,
             **kwargs}
 
-        return self._get_response(TypeReport.ISSUES_SEARCH, **report_kwargs)
+        finded_items_json = self._get_response(TypeReport.ISSUES_SEARCH,
+                                               **report_kwargs)
+        finded_items_obj = loads(finded_items_json)
+
+        if finded_items_obj["status_code"] != 200:
+            return finded_items_json
+
+        for num, item in enumerate(finded_items_obj["content"]):
+            finded_items_obj["content"][
+                num] = self.get_issue_card(item['uuid'])
+        print(finded_items_obj)
+        return ()
 
     def get_issues(self, *args, is_vip: bool = False,
                    parse_history: bool = False,

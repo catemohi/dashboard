@@ -74,13 +74,14 @@ def _parse_result_table(soup: BeautifulSoup,
         category (Sequence[str]): наименования столбцов результотов поиска
 
     Returns:
-        Sequence or Sequence[SearchIssueResult]: Коллекцию с найденными элементами.
+        Sequence or Sequence[SearchIssueResult]: Коллекцию с найденными элемен.
 
     Raises:
 
     """
     collection = []
-    result_table = soup.find(name='table', attrs={'id': 'advSearchTab.searchResults'})
+    result_table = soup.find(name='table', attrs={
+        'id': 'advSearchTab.searchResults'})
 
     if not result_table:
         return tuple(collection)
@@ -113,11 +114,12 @@ def _parse_result_table(soup: BeautifulSoup,
             uuid_responsible = ''
         name_responsible = tr_dict['Ответственный'].find('a')
         if name_responsible is not None:
-            name_responsible = ' '.join(list(name_responsible.stripped_strings))
+            name_responsible = ' '.join(list(
+                name_responsible.stripped_strings))
         else:
             name_responsible = ''
         description = ' '.join(list(tr_dict['Описание'].stripped_strings))
-        contact = tr_dict['Контактное лицо'].text.replace('\n','').strip()
+        contact = tr_dict['Контактное лицо'].text.replace('\n', '').strip()
         search_issue_result = SearchIssueResult(number, uuid, uuid_contragent,
                                                 name_contragent, issue_type,
                                                 step, uuid_responsible,

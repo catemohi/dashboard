@@ -32,10 +32,12 @@ class Issue:
             creation_date: дата создания обращения.
             uuid_service: уникалный идентификатор обьекта в CRM системе.
             name_service: название услуги.
+            info_service: данные услуги
             uuid_contragent: уникалный идентификатор обьекта в CRM системе.
             name_contragent: название контр агента.
             return_to_work_time: время возврата обращения в работу.
             description: описание обращения.
+            diagnostics: диагностика
     """
 
     uuid: str = ''
@@ -50,10 +52,12 @@ class Issue:
     creation_date: datetime = datetime.now()
     uuid_service: str = ''
     name_service: str = ''
+    info_service: str = ''
     uuid_contragent: str = ''
     name_contragent: str = ''
     return_to_work_time: datetime or None = None
     description: str = ''
+    diagnostics: str = ''
 
 
 def parse(text: str, *args, **kwargs) \
