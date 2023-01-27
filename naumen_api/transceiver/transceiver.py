@@ -16,7 +16,7 @@ from ..config.config import CONFIG, get_params_create_report
 from ..config.config import get_params_find, get_params_for_delete
 from ..config.config import get_params_search, get_params_control
 from ..exceptions import CantGetData, ConnectionsFailed, InvalidDate
-from ..parser.parser import parse_naumen_page, pagination
+from ..parser.parser import parse_naumen_page
 from ..parser.parser_base import PageType
 urllib3.disable_warnings()
 
