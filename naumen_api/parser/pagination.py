@@ -40,7 +40,6 @@ def parse(text: str, *args, **kwargs) \
         CantGetData: Если не удалось найти данные.
     """
 
-    # collection = []
     _validate_text_for_parsing(text)
     soup = BeautifulSoup(text, "html.parser")
     i = 1
@@ -52,5 +51,4 @@ def parse(text: str, *args, **kwargs) \
             i += 1
         else:
             i = -1
-    raise NotImplementedError
-
+    return len(raw_page_collection)

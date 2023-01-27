@@ -362,18 +362,24 @@ def _get_diagnostics(soup: BeautifulSoup) -> str:
     """
     diagnostics_tag = soup.find(id='diagnostica')
     if diagnostics_tag:
-        diagnostics_base = [item.split(': ') for item in list(
-            diagnostics_tag.stripped_strings) if ':' in item]
-        for item in diagnostics_base:
-            if len(item) < 2:
-                item.append('')
-            else:
-                item = item[:2]
-            print(item)
-        diagnostics_base = dict(diagnostics_base)
-        for item in list(diagnostics_tag.stripped_strings):
-            if ':' not in item:
-                diagnostics_base['Диагностика'] += ' ' + item
+        try:
+            diagnostics_base = [item.split(': ') for item in list(
+                diagnostics_tag.stripped_strings) if ':' in item]
+            for item in diagnostics_base:
+                if len(item) < 2:
+                    item.append('')
+                else:
+                    item = item[:2]
+                print(item)
+            diagnostics_base = dict(diagnostics_base)
+            for item in list(diagnostics_tag.stripped_strings):
+                if ':' not in item:
+                    diagnostics_base['Диагностика'] += ' ' + item
+        except KeyError:
+            diagnostics_base = {
+                'Диагностика':
+                ' '.join([text.strip() for text
+                          in diagnostics_tag.stripped_strings])}
         return tuple(diagnostics_base.items())
     return ()
 

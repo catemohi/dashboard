@@ -1,12 +1,10 @@
 import logging
 from dataclasses import dataclass
-from typing import Literal, Mapping, Sequence
+from typing import Literal, Sequence
 
 from bs4 import BeautifulSoup
 
-from .parser_base import PageType, _get_columns_name, _get_date_range
-from .parser_base import _forming_days_collecion, _forming_days_dict
-from .parser_base import _parse_date_report
+from .parser_base import _get_columns_name
 from .parser_base import _get_url_param_value
 from .parser_base import _validate_text_for_parsing
 

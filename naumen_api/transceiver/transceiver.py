@@ -16,7 +16,7 @@ from ..config.config import CONFIG, get_params_create_report
 from ..config.config import get_params_find, get_params_for_delete
 from ..config.config import get_params_search, get_params_control
 from ..exceptions import CantGetData, ConnectionsFailed, InvalidDate
-from ..parser.parser import parse_naumen_page
+from ..parser.parser import parse_naumen_page, pagination
 from ..parser.parser_base import PageType
 urllib3.disable_warnings()
 
@@ -188,7 +188,18 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args,
         naumen_responce = _get_search_issue_responce(
             crm, report, *args, **kwargs)
         page_text = naumen_responce.text
-        collect = parse_naumen_page(page_text, name_report, report.page)
+        log.debug('Проверка количества страниц')
+        page_count = parse_naumen_page(page_text, '', PageType.PAGINATION_PAGE)
+        log.debug(f'Количество страниц: {page_count}')
+        page_collection = [page_text]
+        for i in range(1, page_count):
+            naumen_responce = _get_search_issue_responce(
+                crm, report, *args, **{'mod_params': {'pagination': str(i)},
+                                       **kwargs})
+            page_collection.append(naumen_responce.text)
+        collect = []
+        for page in page_collection:
+            collect += parse_naumen_page(page, name_report, report.page)
         return collect
 
     report_exists = True if naumen_uuid else False
@@ -367,9 +378,14 @@ def _create_request(report: TypeReport, *args, **kwargs) -> \
     if not isinstance(report, TypeReport):
         raise CantGetData
     data = CONFIG.config[report.value]['create_request']['data'].copy()
-
+    params = CONFIG.config[report.value]['create_request']['params'].copy()
     if not kwargs:
         return _configure_params(report)
+
+    if kwargs.get('mod_params', False):
+        mod_params = kwargs.pop('mod_params')
+        for name, value in mod_params.items():
+            params[name]['value'] = value
 
     date_name_keys = ('start_date', 'end_date')
     log.debug(f'Получены именнованные аргументы: {kwargs}')
@@ -378,7 +394,8 @@ def _create_request(report: TypeReport, *args, **kwargs) -> \
             value = _validate_date(value)
         data[name]['value'] = value
 
-    return _configure_params(report, tuple(data.items()))
+    return _configure_params(report, tuple(data.items()),
+                             tuple(params.items()))
 
 
 def _get_crm_response(crm: ActiveConnect,
@@ -413,8 +430,9 @@ def _get_crm_response(crm: ActiveConnect,
     return _response
 
 
-def _configure_params(report: TypeReport, mod_data: Iterable = ()) -> \
-                                        Tuple[NaumenRequest, SearchOptions]:
+def _configure_params(report: TypeReport, mod_data: Iterable = (),
+                      mod_params: Iterable = ()) -> \
+                          Tuple[NaumenRequest, SearchOptions]:
     """Функция для создания, даты или параметров запроса.
 
     Args:
@@ -425,6 +443,8 @@ def _configure_params(report: TypeReport, mod_data: Iterable = ()) -> \
         NaumenRequest: сформированный запрос для CRM Naumen
         SearchOptions: параметры для поиска созданного отчета
     """
+    print(mod_data)
+    print(mod_params)
     if report in [TypeReport.ISSUES_SEARCH]:
         url, uuid, headers, params, data, verify, delay_attems, num_attems = \
             get_params_search(report.value)
@@ -437,7 +457,10 @@ def _configure_params(report: TypeReport, mod_data: Iterable = ()) -> \
             get_params_create_report(report.value)
 
     if mod_data:
-        data.update(mod_data)
+        data.update(dict(mod_data))
+
+    if mod_params:
+        params.update(dict(mod_params))
 
     name = _get_report_name()
 
@@ -446,6 +469,7 @@ def _configure_params(report: TypeReport, mod_data: Iterable = ()) -> \
 
     data = _params_erector(data)
     params = _params_erector(params)
+
     if not url:
         raise CantGetData
 
