@@ -125,9 +125,8 @@ class Client:
 
         for num, item in enumerate(finded_items_obj["content"]):
             finded_items_obj["content"][
-                num] = self.get_issue_card(item['uuid'])
-        print(finded_items_obj)
-        return ()
+                num] = loads(self.get_issue_card(item['uuid']))["content"]
+        return finded_items_obj
 
     def get_issues(self, *args, is_vip: bool = False,
                    parse_history: bool = False,

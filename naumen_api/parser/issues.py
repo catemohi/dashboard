@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from re import findall
-from typing import Iterable, Literal, Sequence
+from typing import Iterable, Literal, Sequence, Mapping
 
 from bs4 import BeautifulSoup, element
 
@@ -26,6 +26,7 @@ class Issue:
             issue_type: тип обращения
             step: шаг на котром находится обращение.
             step_time: время последнего шага .
+            uuid_responsible: уникалный идентификатор обьекта в CRM системе.
             responsible: ответственный за последний шаг.
             last_edit_time: время последнего изменения.
             vip_contragent: имеет ли клиент статус vip.
@@ -46,18 +47,24 @@ class Issue:
     issue_type: str = ''
     step: str = ''
     step_time: timedelta = timedelta(0, 0)
+    uuid_responsible: str = ''
     responsible: str = ''
     last_edit_time: datetime or None = None
     vip_contragent: bool = False
     creation_date: datetime = datetime.now()
     uuid_service: str = ''
     name_service: str = ''
-    info_service: str = ''
+    info_service: Sequence = ()
     uuid_contragent: str = ''
     name_contragent: str = ''
+    contragent_category: str = ''
     return_to_work_time: datetime or None = None
     description: str = ''
     diagnostics: str = ''
+    required_date: datetime or None = None
+    close_date: datetime or None = None
+    client_requisite: Sequence = ()
+    contact: Sequence = ()
 
 
 def parse(text: str, *args, **kwargs) \
