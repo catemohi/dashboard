@@ -1,6 +1,9 @@
+from datetime import datetime
 from json import load
 from pathlib import PurePath
-from typing import Mapping, NamedTuple
+from typing import Any, Literal, Mapping, NamedTuple, Tuple
+
+from ..exceptions import InvalidDate
 
 
 class AppConfig:
@@ -156,7 +159,7 @@ def get_params_control(report_name: str):
     return contol_params
 
 
-def get_params_find() -> FindParams:
+def get_params_find_create_report() -> FindParams:
 
     """Функция которая достает необходимые параметры из
     конфигурационного файла.
@@ -199,6 +202,83 @@ def get_params_for_delete() -> DeleteParams:
     params = CONFIG.config['delete_report']['params']
     verify = CONFIG.config['verify']['value']
     return DeleteParams(url, headers, params, data, verify)
+
+
+def get_raw_params(report_name: str, request_type: str,
+                   mod_params: Tuple[Tuple[str, Any]] = (),
+                   mod_data: Tuple[Tuple[str, Any]] = (),
+                   *args, **kwargs) -> Tuple[Tuple[str, Any],
+                                             Tuple[str, Any]]:
+    """Функция создания данных для запроса и поиска созданного отчета.
+
+    Args:
+        report_name: название типа отчета для которого требуется запрос.
+        request_type: название типа запроса
+        mod_params: модифицированные параметры. По умолчанию = ()
+        mod_params: модифицированная дата. По умолчанию = ()
+        *args: параметры необходимые для создания отчета.
+
+    Kwargs:
+        **kwargs: именнованные параметры необходимы для создания отчета.
+
+    Returns:
+        Сырые данные параметров и даты для создания запроса в CRM
+
+    Raises:
+        CantGetData: в случае неверной работы функции.
+
+    """
+
+    date_name_keys = ('start_date', 'end_date')
+    data = CONFIG.config[report_name][request_type]['data'].copy()
+    params = CONFIG.config[report_name][request_type]['params'].copy()
+
+    for name, value in mod_params:
+        params[name]['value'] = value
+
+    for name, value in mod_data:
+        if name in date_name_keys:
+            value = _validate_date(value)
+        data[name]['value'] = value
+
+    return tuple(data.items()), tuple(params.items())
+
+
+def _validate_date(check_date: str) -> str:
+    """Функция проверки формата даты.
+
+    Args:
+        first_date: первая дата, format '%d.%m.%Y'
+
+    Returns:
+        date: строка даты необходимого формата.
+
+    Raises:
+        InvalidDate: при неудачной проверке или конвертиртации даты.
+
+    """
+
+    try:
+        return datetime.strptime(check_date, '%d.%m.%Y').strftime("%d.%m.%Y")
+    except ValueError:
+        raise InvalidDate
+    except TypeError:
+        raise InvalidDate
+
+
+def params_erector(params: Mapping[str, Mapping[Literal['name', 'value'],
+                                                str]]) -> Mapping[str, str]:
+    """Функция для уплотнения, даты или параметров запроса.
+
+    Args:
+        params: данные которые необходимо собрать
+
+    Returns:
+        Mapping: Готовый словарь для запроса.
+    """
+
+    return dict([[val for _, val in root_val.items()
+                  ] for _, root_val in params.items()])
 
 
 CONFIG = AppConfig()

@@ -1,15 +1,15 @@
 import logging
-from typing import Union
 from json import loads
+from typing import Union
 
 from requests import exceptions
 
 from .exceptions import CantGetData, ConnectionsFailed, InvalidDate
+from .transceiver.crm import DOMAIN, get_session
 from .transceiver.response_creator import JSONResponseFormatter, make_response
 from .transceiver.response_creator import ResponseFormatter, ResponseTemplate
 from .transceiver.response_creator import StatusType
-from .transceiver.transceiver import DOMAIN, TypeReport
-from .transceiver.transceiver import get_report, get_session
+from .transceiver.transceiver import TypeReport, get_report
 
 
 log = logging.getLogger(__name__)
