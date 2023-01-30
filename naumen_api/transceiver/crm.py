@@ -1,12 +1,13 @@
 import logging
-from typing import Literal
+from typing import Any, Literal, Tuple, Union
 
 from requests import Response, Session
 from requests.adapters import HTTPAdapter, Retry
 from requests.packages import urllib3
 
-from ..config.config import CONFIG
-from ..config.structures import ActiveConnect, NaumenRequest
+from ..config.config import CONFIG, create_naumen_request
+from ..config.structures import ActiveConnect
+from ..config.structures import SearchType, TypeReport
 from ..exceptions import CantGetData, ConnectionsFailed
 
 
@@ -51,13 +52,20 @@ def get_session(username: str, password: str, domain: DOMAIN) -> ActiveConnect:
 
 
 def get_crm_response(crm: ActiveConnect,
-                     rq: NaumenRequest,
-                     method: Literal['GET', 'POST'] = 'POST') -> Response:
+                     obj: Union[TypeReport, SearchType],
+                     request_type: str,
+                     *args,
+                     mod_params: Tuple[Tuple[str, Any]] = (),
+                     mod_data: Tuple[Tuple[str, Any]] = (),
+                     method: Literal['GET', 'POST'] = 'POST',
+                     **kwargs) -> Response:
     """Функция для получения ответа из CRM системы.
 
     Args:
         crm: сессия с CRM Naumen.
-        request: запрос в CRM Naumen.
+        obj (Union[TypeReport, SearchType]): обьект которого строится запрос.
+        mod_params (Tuple[Tuple[str, Any]]): модифицированные параметры запроса
+        mod_params (Tuple[Tuple[str, Any]]): модифицированные данные запроса
         method: HTTP метод.
 
     Returns:
@@ -67,6 +75,8 @@ def get_crm_response(crm: ActiveConnect,
         CantGetData: если не удалось получить ответ.
 
     """
+    rq = create_naumen_request(obj, request_type, mod_params,
+                               mod_data, *args, **kwargs)
     if method == 'POST':
         _response = crm.session.post(url=rq.url, headers=rq.headers,
                                      params=rq.params,

@@ -3,9 +3,9 @@ from logging import getLogger
 from json import load
 from pathlib import PurePath
 from random import randint
-from typing import Any, Literal, Mapping, NamedTuple, Tuple
+from typing import Any, Literal, Mapping, NamedTuple, Tuple, Union
 
-from .structures import NaumenRequest, SearchOptions, TypeReport
+from .structures import NaumenRequest, SearchOptions, TypeReport, SearchType
 from ..exceptions import CantGetData, InvalidDate
 
 
@@ -213,8 +213,7 @@ def get_params_for_delete() -> DeleteParams:
 def get_raw_params(report_name: str, request_type: str,
                    mod_params: Tuple[Tuple[str, Any]] = (),
                    mod_data: Tuple[Tuple[str, Any]] = (),
-                   *args, **kwargs) -> Tuple[Tuple[str, Any],
-                                             Tuple[str, Any]]:
+                   *args, **kwargs) -> Tuple[Tuple[str, Any], Tuple[str, Any]]:
     """Функция создания данных для запроса и поиска созданного отчета.
 
     Args:
@@ -337,6 +336,7 @@ def get_search_create_report_params(report: TypeReport, report_name: str,
 
 
 def configure_params(report: TypeReport,
+                     request_type: str,
                      mod_data: Tuple[Tuple[str, Any]] = (),
                      mod_params: Tuple[Tuple[str, Any]] = (),
                      ) -> NaumenRequest:
@@ -361,6 +361,16 @@ def configure_params(report: TypeReport,
         url, uuid, headers, params, data, verify, delay_attems, num_attems = \
             get_params_create_report(report.value)
 
+    if request_type == 'search_created_report':
+        url = CONFIG.config['url']['open']
+        params = {}
+        data = {}
+
+    elif request_type == 'delete_report':
+        url = CONFIG.config['url']['delete']
+        data = {}
+        params = CONFIG.config[report.value][request_type]['params']
+
     if mod_data:
         data.update(mod_data)
 
@@ -377,7 +387,8 @@ def configure_params(report: TypeReport,
     return request
 
 
-def create_naumen_request(report: TypeReport, request_type: str,
+def create_naumen_request(obj: Union[TypeReport, SearchType],
+                          request_type: str,
                           mod_params: Tuple[Tuple[str, Any]] = (),
                           mod_data: Tuple[Tuple[str, Any]] = (),
                           *args,
@@ -398,17 +409,17 @@ def create_naumen_request(report: TypeReport, request_type: str,
         CantGetData: в случае невозможности вернуть коллекцию.
     """
 
-    log.debug(f'Запуск создания отчета: {report}')
+    log.debug(f'Запуск создания отчета: {obj}')
     log.debug(f'Переданы модифицированные params: {mod_params}')
     log.debug(f'Переданы модифицированные data: {mod_data}')
     log.debug(f'Переданы параметры args: {args}')
     log.debug(f'Переданы параметры kwargs: {kwargs}')
 
-    if not isinstance(report, TypeReport):
+    if not any([isinstance(obj, TypeReport), isinstance(obj, SearchType)]):
         raise CantGetData
-    data, params = get_raw_params(report.value, request_type,
+    data, params = get_raw_params(obj.value, request_type,
                                   mod_params, mod_data, *args, **kwargs)
-    naumen_reuqest = configure_params(report, data, params)
+    naumen_reuqest = configure_params(obj, request_type, data, params)
     log.debug(f'Запрос к CRM: {naumen_reuqest}')
     return naumen_reuqest
 

@@ -3,14 +3,10 @@ from dataclasses import fields
 from time import sleep
 from typing import Iterable, Mapping, Tuple, Any
 
-from requests import Response
-
-from .crm import ActiveConnect, NaumenRequest, get_crm_response
+from .crm import ActiveConnect, get_crm_response
 from .search import find_report_uuid
-from ..config.config import create_naumen_request, formating_params
-from ..config.config import get_params_find_create_report
+from ..config.config import formating_params
 from ..config.structures import TypeReport
-from ..config.config import get_params_for_delete, params_erector
 from ..config.config import get_report_name, get_search_create_report_params
 from ..exceptions import CantGetData
 from ..parser.parser import parse_naumen_page
@@ -50,15 +46,15 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args,
         mod_data = tuple(mod_data.items())
 
     if report in [TypeReport.ISSUES_SEARCH]:
-        _create_report(crm, TypeReport.CONTROL_ENABLE_SEARCH, 'create_request',
-                       *[], **{})
+        get_crm_response(crm, TypeReport.CONTROL_ENABLE_SEARCH,
+                         'create_request', *[], **{})
         sleep(1)
-        _create_report(crm, TypeReport.CONTROL_SELECT_SEARCH, 'create_request',
-                       *[], **{})
+        get_crm_response(crm, TypeReport.CONTROL_SELECT_SEARCH,
+                         'create_request', *[], **{})
         sleep(2)
-        naumen_responce = _create_report(crm, report, 'create_request', *args,
-                                         mod_params=mod_params,
-                                         mod_data=mod_data, **kwargs)
+        naumen_responce = get_crm_response(crm, report, 'create_request',
+                                           *args, mod_params=mod_params,
+                                           mod_data=mod_data, **kwargs)
         page_text = naumen_responce.text
         log.debug('Проверка количества страниц')
         page_count = parse_naumen_page(page_text, PageType.PAGINATION_PAGE)
@@ -68,7 +64,7 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args,
             mod_params = dict(mod_params)
             mod_params.update({'pagination': str(i)})
             mod_params = tuple(mod_params.items())
-            naumen_responce = _create_report(
+            naumen_responce = get_crm_response(
                 crm, report, 'create_request', *args,
                 mod_params=mod_params, mod_data=mod_data,
                 **kwargs)
@@ -89,20 +85,19 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args,
         mod_data = dict(mod_data)
         mod_data.update({'title': report_name})
         mod_data = tuple(mod_data.items())
-        naumen_responce = _create_report(crm, report, 'create_request', *args,
-                                         mod_params=mod_params,
-                                         mod_data=mod_data, **kwargs)
+        naumen_responce = get_crm_response(crm, report, 'create_request',
+                                           *args, mod_params=mod_params,
+                                           mod_data=mod_data, **kwargs)
         params_for_search_report = get_search_create_report_params(report,
                                                                    report_name)
 
-        naumen_uuid = find_report_uuid(crm, params_for_search_report)
+        naumen_uuid = find_report_uuid(crm, params_for_search_report, report)
 
     log.debug(f'Найден UUID сформированного отчёта : {naumen_uuid}')
 
-    url, headers, params, data, verify = get_params_find_create_report()
-    params.update({'uuid': naumen_uuid})
-    search_request = NaumenRequest(url, headers, params, data, verify)
-    naumen_responce = get_crm_response(crm, search_request)
+    search_params = tuple({'uuid': naumen_uuid}.items())
+    naumen_responce = get_crm_response(crm, report, 'search_created_report',
+                                       mod_params=search_params)
 
     if not naumen_responce:
         raise CantGetData
@@ -132,7 +127,7 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args,
         raise NotImplementedError
 
     if not report_exists:
-        _delete_report(crm, naumen_uuid)
+        _delete_report(crm, report, naumen_uuid)
 
     return collect
 
@@ -160,38 +155,7 @@ def _check_issues_report_keys(*args, **kwargs) -> Tuple[bool, bool, Mapping]:
     return (parse_history, parse_issues_cards, kwargs)
 
 
-def _create_report(crm: ActiveConnect, report: TypeReport, request_type: str,
-                   *args, mod_params: Tuple[Tuple[str, Any]] = (),
-                   mod_data: Tuple[Tuple[str, Any]] = (),
-                   **kwargs) -> Response:
-
-    """Метод для создания отчета в NAUMEN POST запросом в NAUMEN.
-
-    Args:
-        crm: активное соединение с CRM.
-        report: отчёт, который необходимо получить.
-        request_type (str): название необходимого типа запроса
-        mod_params (Tuple[Tuple[str, Any]]): модифицированные параметры запроса
-        mod_params (Tuple[Tuple[str, Any]]): модифицированные данные запроса
-        *args: позиционные аргументы(не используются)
-        **kwargs: именнованные аргументы для создания отчёта.
-
-    Returns:
-        Itrrable: коллекция обьектов необходимого отчёта.
-    Raises:
-        CantGetData: в случае невозможности вернуть коллекцию.
-    """
-
-    naumen_reuqest = create_naumen_request(
-        report, request_type, mod_params, mod_data, *args, **kwargs)
-    naumen_response = get_crm_response(crm, naumen_reuqest)
-    if not naumen_response:
-        raise CantGetData
-
-    return naumen_response
-
-
-def _delete_report(crm: ActiveConnect, uuid: str) -> bool:
+def _delete_report(crm: ActiveConnect, report: TypeReport, uuid: str) -> bool:
     """_summary_
 
     Args:
@@ -208,12 +172,10 @@ def _delete_report(crm: ActiveConnect, uuid: str) -> bool:
     log.debug('Удаление созданного отчета в CRM Наумен')
     log.debug(f'Передан uuid отчёта: {uuid}')
 
-    url, headers, params, data, verify = get_params_for_delete()
-    params = params_erector(params)
-    params.update({'uuid': uuid})
+    params = tuple({'uuid': uuid}.items())
     log.debug(f'Параметры для удаления отчёта {params}')
-    delete_request = NaumenRequest(url, headers, params, data, verify)
-    _responce = get_crm_response(crm, delete_request, 'GET')
+    _responce = get_crm_response(crm, report, 'delete_report',
+                                 mod_params=params, method='GET')
 
     if _responce:
         log.info('Отчет в CRM Наумен удален.')
@@ -221,3 +183,34 @@ def _delete_report(crm: ActiveConnect, uuid: str) -> bool:
 
     log.error('Отчет в CRM Наумен не удален.')
     return False
+
+
+# def _create_report(crm: ActiveConnect, report: TypeReport, request_type: str,
+#                    *args, mod_params: Tuple[Tuple[str, Any]] = (),
+#                    mod_data: Tuple[Tuple[str, Any]] = (),
+#                    **kwargs) -> Response:
+
+#     """Метод для создания отчета в NAUMEN POST запросом в NAUMEN.
+
+#     Args:
+#         crm: активное соединение с CRM.
+#         report: отчёт, который необходимо получить.
+#         request_type (str): название необходимого типа запроса
+#         mod_params (Tuple[Tuple[str, Any]]): модифицированные параметры запроса
+#         mod_params (Tuple[Tuple[str, Any]]): модифицированные данные запроса
+#         *args: позиционные аргументы(не используются)
+#         **kwargs: именнованные аргументы для создания отчёта.
+
+#     Returns:
+#         Itrrable: коллекция обьектов необходимого отчёта.
+#     Raises:
+#         CantGetData: в случае невозможности вернуть коллекцию.
+#     """
+
+#     naumen_reuqest = create_naumen_request(
+#         report, request_type, mod_params, mod_data, *args, **kwargs)
+#     naumen_response = get_crm_response(crm, naumen_reuqest)
+#     if not naumen_response:
+#         raise CantGetData
+
+#     return naumen_response

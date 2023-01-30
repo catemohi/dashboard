@@ -1,9 +1,9 @@
 import logging
 from time import sleep
-from typing import Sequence, Iterable
+from typing import Sequence, Iterable, Tuple
 
-from .crm import ActiveConnect, NaumenRequest, get_crm_response
-from ..config.structures import SearchOptions
+from .crm import ActiveConnect, get_crm_response
+from ..config.structures import SearchOptions, NaumenRequest, TypeReport
 from ..config.config import get_params_find_create_report
 from ..config.structures import PageType, SearchType
 from ..exceptions import CantGetData
@@ -13,12 +13,14 @@ from ..parser.parser import parse_naumen_page
 log = logging.getLogger(__name__)
 
 
-def find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
+def find_report_uuid(crm: ActiveConnect, options: SearchOptions,
+                     report: TypeReport) -> str:
     """Функция поиска сформированного отчета в CRM Naumen.
 
     Args:
         crm:  активное соединение с CRM Naumen.
-        params: параметры для поиска отчета в CRM Naumen.
+        options: параметры для поиска отчета в CRM Naumen.
+        report: тип отчета который необходимо найти
 
     Returns:
         str: строчный идентификатор обьекта в CRM Naumen.
@@ -28,7 +30,7 @@ def find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
 
     """
 
-    def _searching(num_attems: int, search_request: NaumenRequest,
+    def _searching(report: TypeReport, num_attems: int, mod_params: Tuple,
                    ) -> Sequence[str]:
         """Рекурсивная функция поиска отчета в CRM системе.
 
@@ -45,9 +47,9 @@ def find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
 
         log.debug(f'Поиск свормированного отчета: {options.name}.'
                   f'Осталось попыток: {num_attems}')
-        log.debug(f'Сформированный запрос: {search_request}')
         sleep(options.delay_attems)
-        response = get_crm_response(crm, search_request, 'GET')
+        response = get_crm_response(crm, report, 'search_created_report',
+                                    mod_params=mod_params, method='GET')
         page_text = response.text
         parsed_collection = parse_naumen_page(page_text,
                                               PageType.REPORT_LIST_PAGE,
@@ -55,15 +57,13 @@ def find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
                                               )
         if parsed_collection is None:
             if num_attems >= 1:
-                return _searching(num_attems - 1, search_request)
+                return _searching(report, num_attems - 1, mod_params)
             log.error(f'Не удалось найти отчёт: {options.name}')
             raise CantGetData
         return parsed_collection
 
-    url, headers, params, data, verify = get_params_find_create_report()
-    params.update({'uuid': options.uuid})
-    search_request = NaumenRequest(url, headers, params, data, verify)
-    parsed_collection = _searching(options.num_attems, search_request)
+    mod_params = tuple({'uuid': options.uuid}.items())
+    parsed_collection = _searching(report, options.num_attems, mod_params)
 
     if len(parsed_collection) != 1:
         raise CantGetData
