@@ -299,7 +299,7 @@ def formating_params(*args, **kwargs):
     return mod_params, mod_data
 
 
-def _get_report_name() -> str:
+def get_report_name() -> str:
     """Функция получения уникального названия для отчета.
 
     Args:
@@ -311,10 +311,35 @@ def _get_report_name() -> str:
     return f"ID{randint(1000000,9999999)}"
 
 
+def get_search_create_report_params(report: TypeReport, report_name: str,
+                                    ) -> SearchOptions:
+    """Функция для формирования параметров для поиска созданного отчета
+
+    Args:
+        report: тип запрашиваемого отчета.
+        report_name: название созданного отчета
+
+    Returns:
+        SearchOptions: параметры для поиска созданного отчета
+    """
+    if report in [TypeReport.ISSUES_SEARCH]:
+        url, uuid, headers, params, data, verify, delay_attems, num_attems = \
+            get_params_search(report.value)
+    elif report in [TypeReport.CONTROL_SELECT_SEARCH,
+                    TypeReport.CONTROL_ENABLE_SEARCH]:
+        url, uuid, headers, params, data, verify, delay_attems, num_attems = \
+            get_params_control(report.value)
+    else:
+        url, uuid, headers, params, data, verify, delay_attems, num_attems = \
+            get_params_create_report(report.value)
+    search_options = SearchOptions(report_name, delay_attems, num_attems, uuid)
+    return search_options
+
+
 def configure_params(report: TypeReport,
                      mod_data: Tuple[Tuple[str, Any]] = (),
                      mod_params: Tuple[Tuple[str, Any]] = (),
-                     ) -> Tuple[NaumenRequest, SearchOptions]:
+                     ) -> NaumenRequest:
     """Функция для создания, даты или параметров запроса.
 
     Args:
@@ -342,27 +367,21 @@ def configure_params(report: TypeReport,
     if mod_params:
         params.update(mod_params)
 
-    name = _get_report_name()
-
-    if data.get('title', False):
-        data['title']['value'] = name
-
     data = params_erector(data)
     params = params_erector(params)
 
     if not url:
         raise CantGetData
 
-    search_options = SearchOptions(name, delay_attems, num_attems, uuid)
     request = NaumenRequest(url, headers, params, data, verify)
-    return (request, search_options)
+    return request
 
 
 def create_naumen_request(report: TypeReport, request_type: str,
                           mod_params: Tuple[Tuple[str, Any]] = (),
                           mod_data: Tuple[Tuple[str, Any]] = (),
                           *args,
-                          **kwargs) -> Tuple[NaumenRequest, SearchOptions]:
+                          **kwargs) -> NaumenRequest:
 
     """Метод для создания первичного запроса в NAUMEN .
 
@@ -389,10 +408,9 @@ def create_naumen_request(report: TypeReport, request_type: str,
         raise CantGetData
     data, params = get_raw_params(report.value, request_type,
                                   mod_params, mod_data, *args, **kwargs)
-    naumen_reuqest, params_for_search_report = configure_params(report, data,
-                                                                params)
+    naumen_reuqest = configure_params(report, data, params)
     log.debug(f'Запрос к CRM: {naumen_reuqest}')
-    return naumen_reuqest, params_for_search_report
+    return naumen_reuqest
 
 
 CONFIG = AppConfig()

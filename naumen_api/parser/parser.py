@@ -10,15 +10,15 @@ from ..exceptions import CantGetData
 log = logging.getLogger(__name__)
 
 
-def parse_naumen_page(page: str, name_report: str,
-                      type_page: PageType) -> Sequence:
+def parse_naumen_page(page: str, type_page: PageType, name_report: str = '',
+                      ) -> Sequence:
 
     """Функция парсинга страниц из crm Naumen, входной интерфейс подмодуля.
 
     Args:
         page: страница которую требуется распарсить.
         type_page: тип страницы
-        name_report: уникальное имя сформированное отчёта.
+        name_report: уникальное имя сформированное отчёта. По умолчанию ''
 
     Returns:
         Sequence: Результат парсинга страницы, коллекция распаршенных элементов
