@@ -1,55 +1,16 @@
 import logging
-from enum import Enum
 from time import sleep
-from typing import NamedTuple, Sequence
+from typing import Sequence
 
 from .crm import ActiveConnect, NaumenRequest, get_crm_response
+from ..config.structures import SearchOptions
 from ..config.config import get_params_find_create_report
+from ..config.structures import PageType
 from ..exceptions import CantGetData
 from ..parser.parser import parse_naumen_page
-from ..parser.parser_base import PageType
 
 
 log = logging.getLogger(__name__)
-
-
-class SearchOptions(NamedTuple):
-
-    """Класс данных для хранения опций поиска созданных отчетов в CRM.
-
-        Attributes:
-            name: имя искомого отчета
-            delay_attems: задержка между попытками
-            num_attems: количество попыток поиска отчета
-            uuid: идентификатор обьекта в CRM Naumen
-    """
-    name: str
-    delay_attems: int
-    num_attems: int
-    uuid: str
-
-
-class SearchType(Enum):
-
-    """Enum перечисление видов поиска в CRM NAUMEN.
-
-        Attributes:
-            ISSUES_SEARCH: запрос для поиска обращения
-
-    """
-    ISSUES_SEARCH = "search issues"
-
-    def __init__(self, value):
-        self.page = self._get_page()
-
-    def _get_page(self):
-        page_dict = {
-            'ISSUES_SEARCH':  PageType.SEARCH_RESULT_ISSUES_PAGE,
-        }
-        try:
-            return page_dict[self.name]
-        except (KeyError, TypeError):
-            raise CantGetData
 
 
 def find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
@@ -67,7 +28,7 @@ def find_report_uuid(crm: ActiveConnect, options: SearchOptions) -> str:
 
     """
 
-    def _searching(num_attems: int, search_request: NaumenRequest
+    def _searching(num_attems: int, search_request: NaumenRequest,
                    ) -> Sequence[str]:
         """Рекурсивная функция поиска отчета в CRM системе.
 

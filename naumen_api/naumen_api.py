@@ -4,12 +4,12 @@ from typing import Union
 
 from requests import exceptions
 
+from .config.structures import StatusType, TypeReport
 from .exceptions import CantGetData, ConnectionsFailed, InvalidDate
 from .transceiver.crm import DOMAIN, get_session
 from .transceiver.response_creator import JSONResponseFormatter, make_response
 from .transceiver.response_creator import ResponseFormatter, ResponseTemplate
-from .transceiver.response_creator import StatusType
-from .transceiver.transceiver import TypeReport, get_report
+from .transceiver.transceiver import get_report
 
 
 log = logging.getLogger(__name__)

@@ -2,7 +2,7 @@ import logging
 from typing import Callable, Mapping, Sequence
 
 from . import flr, issue_card, issues, mttr, report_page, service_level
-from . import search_result_issues, pagination
+from . import pagination, search_result_issues
 from .parser_base import PageType
 from ..exceptions import CantGetData
 

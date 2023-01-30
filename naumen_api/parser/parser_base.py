@@ -1,40 +1,16 @@
 import logging
 from datetime import datetime, timedelta
-from enum import Enum
 from typing import Iterable, Mapping, Sequence
 from urllib import parse
 
 from bs4 import BeautifulSoup
 
+from ..config.structures import PageType
 from ..exceptions import CantGetData
 
 
 log = logging.getLogger(__name__)
 
-
-class PageType(Enum):
-
-    """Класс данных для хранения типов страниц парсинга.
-
-        Attributes:
-            REPORT_LIST: Страница со списком сформированных отчётов.
-            ISSUES_TABLE: Страница со списком обращений на группе.
-            ISSUE_CARD: Страница карточки обращения.
-            SERVICE_LEVEL_REPORT: Страница с отчётом service level.
-            MMTR_LEVEL_REPORT: Страница с отчётом mttr level
-            FLR_LEVEL_REPORT: Страница с отчётом flr level.
-            SEARCH_RESULT_ISSUES_PAGE: Страница с результатом поиска обращений
-            PAGINATION_PAGE: Парсинг пагинации
-
-    """
-    REPORT_LIST_PAGE = 1
-    ISSUES_TABLE_PAGE = 2
-    ISSUE_CARD_PAGE = 3
-    SERVICE_LEVEL_REPORT_PAGE = 4
-    MMTR_LEVEL_REPORT_PAGE = 5
-    FLR_LEVEL_REPORT_PAGE = 6
-    SEARCH_RESULT_ISSUES_PAGE = 7
-    PAGINATION_PAGE = 8
 
 def _get_date_range(date_first: str, date_second: str) -> Sequence[datetime]:
 

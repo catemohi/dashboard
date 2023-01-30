@@ -1,47 +1,18 @@
 import logging
-from dataclasses import dataclass
-from typing import Literal, Mapping, NamedTuple
+from typing import Literal
 
-from requests import Session, Response
+from requests import Response, Session
 from requests.adapters import HTTPAdapter, Retry
 from requests.packages import urllib3
 
 from ..config.config import CONFIG
-from ..exceptions import ConnectionsFailed, CantGetData
+from ..config.structures import ActiveConnect, NaumenRequest
+from ..exceptions import CantGetData, ConnectionsFailed
 
 
 urllib3.disable_warnings()
 log = logging.getLogger(__name__)
 DOMAIN = Literal['CORP.ERTELECOM.LOC', 'O.WESTCALL.SPB.RU']
-
-
-@dataclass(frozen=True)
-class ActiveConnect:
-
-    """Класс данных для хранения сессии активного соединения c CRM Naumen.
-
-        Attributes:
-            session: активное соединение с crm системой.
-    """
-    session: Session
-
-
-class NaumenRequest(NamedTuple):
-
-    """Класс данных для хранения сформированного запроса к CRM Naumen.
-
-        Attributes:
-            url: ссылка для запроса
-            header: header для запроса
-            parsms: параметры для запроса
-            data: данные запроса
-            verify: верификация
-    """
-    url: str
-    headers: Mapping
-    params: Mapping
-    data: Mapping
-    verify: bool
 
 
 def get_session(username: str, password: str, domain: DOMAIN) -> ActiveConnect:

@@ -1,46 +1,9 @@
 import json
 from dataclasses import asdict, is_dataclass
 from datetime import datetime, timedelta
-from enum import Enum
-from typing import Iterable, Mapping, NamedTuple
+from typing import Iterable, NamedTuple
 
-
-class StatusType(Enum):
-
-    """Enum перечисление видов статуса API .
-
-        Attributes:
-            _SUCCESS: успешный ответ
-            _BAD_REQUEST: ответ при ошибке запроса
-            _UNAUTHORIZED: ответ при проблемах с авторизацией
-            _GATEWAY_TIMEOUT: при проблемах с Naumen
-
-    """
-
-    _SUCCESS = {'code': 200,
-                'message': 'OK',
-                'description': '',
-                }
-    _BAD_REQUEST = {'code': 400,
-                    'message': 'Bad Request',
-                    'description': 'Wrong, incorrect request.',
-                    }
-    _UNAUTHORIZED = {'code': 401,
-                     'message': 'Unauthorized',
-                     'description': 'Failed to create a connection. '
-                     'Please check the data and route to the system '
-                     'or config.json settings.',
-                     }
-    _GATEWAY_TIMEOUT = {'code': 504,
-                        'message': 'Naumen Does Not Answer',
-                        'description': 'Remote end closed '
-                        'connection without response',
-                        }
-
-    def __init__(self, status_content: Mapping):
-        self.code = status_content['code']
-        self.message = status_content['message']
-        self.description = status_content['description']
+from ..config.structures import StatusType
 
 
 class ResponseTemplate(NamedTuple):

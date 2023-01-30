@@ -1,9 +1,15 @@
 from datetime import datetime
+from logging import getLogger
 from json import load
 from pathlib import PurePath
+from random import randint
 from typing import Any, Literal, Mapping, NamedTuple, Tuple
 
-from ..exceptions import InvalidDate
+from .structures import NaumenRequest, SearchOptions, TypeReport
+from ..exceptions import CantGetData, InvalidDate
+
+
+log = getLogger(__name__)
 
 
 class AppConfig:
@@ -279,6 +285,114 @@ def params_erector(params: Mapping[str, Mapping[Literal['name', 'value'],
 
     return dict([[val for _, val in root_val.items()
                   ] for _, root_val in params.items()])
+
+
+def formating_params(*args, **kwargs):
+    """
+    Форматирование параметров и даты для дальнейшего использования.
+    """
+    if kwargs.get('mod_params', False):
+        mod_params = kwargs('mod_params')
+    else:
+        mod_params = ()
+    mod_data = tuple(kwargs.items())
+    return mod_params, mod_data
+
+
+def _get_report_name() -> str:
+    """Функция получения уникального названия для отчета.
+
+    Args:
+
+    Returns:
+        Строку названия.
+    """
+
+    return f"ID{randint(1000000,9999999)}"
+
+
+def configure_params(report: TypeReport,
+                     mod_data: Tuple[Tuple[str, Any]] = (),
+                     mod_params: Tuple[Tuple[str, Any]] = (),
+                     ) -> Tuple[NaumenRequest, SearchOptions]:
+    """Функция для создания, даты или параметров запроса.
+
+    Args:
+        report: тип запрашиваемого отчета.
+        mod_data: параметры даты которые необходимо модифицировать
+
+    Returns:
+        NaumenRequest: сформированный запрос для CRM Naumen
+        SearchOptions: параметры для поиска созданного отчета
+    """
+    if report in [TypeReport.ISSUES_SEARCH]:
+        url, uuid, headers, params, data, verify, delay_attems, num_attems = \
+            get_params_search(report.value)
+    elif report in [TypeReport.CONTROL_SELECT_SEARCH,
+                    TypeReport.CONTROL_ENABLE_SEARCH]:
+        url, uuid, headers, params, data, verify, delay_attems, num_attems = \
+            get_params_control(report.value)
+    else:
+        url, uuid, headers, params, data, verify, delay_attems, num_attems = \
+            get_params_create_report(report.value)
+
+    if mod_data:
+        data.update(mod_data)
+
+    if mod_params:
+        params.update(mod_params)
+
+    name = _get_report_name()
+
+    if data.get('title', False):
+        data['title']['value'] = name
+
+    data = params_erector(data)
+    params = params_erector(params)
+
+    if not url:
+        raise CantGetData
+
+    search_options = SearchOptions(name, delay_attems, num_attems, uuid)
+    request = NaumenRequest(url, headers, params, data, verify)
+    return (request, search_options)
+
+
+def create_naumen_request(report: TypeReport, request_type: str,
+                          mod_params: Tuple[Tuple[str, Any]] = (),
+                          mod_data: Tuple[Tuple[str, Any]] = (),
+                          *args,
+                          **kwargs) -> Tuple[NaumenRequest, SearchOptions]:
+
+    """Метод для создания первичного запроса в NAUMEN .
+
+    Args:
+        crm: активное соединение с CRM.
+        report: отчёт, который необходимо получить.
+        *args: позиционные аргументы(не используются)
+        **kwargs: именнованные аргументы для создания отчёта.
+
+    Returns:
+        Tuple[NaumenRequest, SearchOptions]: запрос и данные для нахождения
+        Tuple[Response, SearchOptions]: коллекция обьектов необходимого отчёта.
+    Raises:
+        CantGetData: в случае невозможности вернуть коллекцию.
+    """
+
+    log.debug(f'Запуск создания отчета: {report}')
+    log.debug(f'Переданы модифицированные params: {mod_params}')
+    log.debug(f'Переданы модифицированные data: {mod_data}')
+    log.debug(f'Переданы параметры args: {args}')
+    log.debug(f'Переданы параметры kwargs: {kwargs}')
+
+    if not isinstance(report, TypeReport):
+        raise CantGetData
+    data, params = get_raw_params(report.value, request_type,
+                                  mod_params, mod_data, *args, **kwargs)
+    naumen_reuqest, params_for_search_report = configure_params(report, data,
+                                                                params)
+    log.debug(f'Запрос к CRM: {naumen_reuqest}')
+    return naumen_reuqest, params_for_search_report
 
 
 CONFIG = AppConfig()
