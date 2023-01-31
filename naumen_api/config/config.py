@@ -1,6 +1,6 @@
 from datetime import datetime
-from logging import getLogger
 from json import load
+from logging import getLogger
 from pathlib import PurePath
 from random import randint
 from typing import Any, Literal, Mapping, Tuple, Union

@@ -1,14 +1,14 @@
 import logging
-from typing import Any, Union, Tuple
+from typing import Any, Tuple, Union
 
 from requests import exceptions
 
-from .config.structures import StatusType, TypeReport, SearchType
+from .config.structures import SearchType, StatusType, TypeReport
 from .exceptions import CantGetData, ConnectionsFailed, InvalidDate
 from .transceiver.crm import DOMAIN, get_session
+from .transceiver.reports import get_report
 from .transceiver.response_creator import JSONResponseFormatter, make_response
 from .transceiver.response_creator import ResponseFormatter, ResponseTemplate
-from .transceiver.reports import get_report
 from .transceiver.search import search
 
 
