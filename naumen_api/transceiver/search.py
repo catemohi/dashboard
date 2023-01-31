@@ -4,7 +4,6 @@ from typing import Sequence, Iterable, Tuple
 
 from .crm import ActiveConnect, get_crm_response
 from ..config.structures import SearchOptions, NaumenRequest, TypeReport
-from ..config.config import get_params_find_create_report
 from ..config.structures import PageType, SearchType
 from ..exceptions import CantGetData
 from ..parser.parser import parse_naumen_page

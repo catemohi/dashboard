@@ -1,7 +1,7 @@
 import logging
 from dataclasses import fields
 from time import sleep
-from typing import Iterable, Mapping, Tuple, Any
+from typing import Iterable, Mapping, Tuple
 
 from .crm import ActiveConnect, get_crm_response
 from .search import find_report_uuid
