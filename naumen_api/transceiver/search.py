@@ -12,8 +12,7 @@ from ..parser.parser import parse_naumen_page
 log = logging.getLogger(__name__)
 
 
-def search(crm: ActiveConnect, report: SearchType, *args,
-               naumen_uuid: str = '', **kwargs) -> Iterable:
+def search(crm: ActiveConnect, report: SearchType, *args, **kwargs) -> Iterable:
     """Функция для получения отчёта из CRM.
 
     Args:

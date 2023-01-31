@@ -4,7 +4,6 @@ from time import sleep
 from typing import Any, Iterable, Mapping, Tuple, Sequence
 
 from .crm import ActiveConnect, get_crm_response
-from ..config.config import formating_params
 from ..config.structures import TypeReport, NaumenRequestType, SearchOptions
 from ..config.config import get_report_name, get_search_create_report_params
 from ..exceptions import CantGetData
@@ -16,7 +15,8 @@ log = logging.getLogger(__name__)
 
 
 def get_report(crm: ActiveConnect, report: TypeReport, *args,
-               naumen_uuid: str = '', **kwargs) -> Iterable:
+               naumen_uuid: str = '', mod_params: Tuple[Tuple[str, Any]] = (),
+               mod_data: Tuple[Tuple[str, Any]] = (), **kwargs) -> Iterable:
     """Функция для получения отчёта из CRM.
 
     Args:
@@ -35,10 +35,10 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args,
     """
 
     report_exists = True if naumen_uuid else False
+    need_delete_report = False
     is_vip_issues = True if report == TypeReport.ISSUES_VIP_LINE else False
     parse_history, parse_issues_cards = False, False
     report_name = get_report_name()
-    mod_params, mod_data = formating_params(*args, **kwargs)
 
     if report in [TypeReport.ISSUES_FIRST_LINE, TypeReport.ISSUES_VIP_LINE]:
         mod_data = dict(mod_data)
@@ -50,6 +50,7 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args,
         log.debug(f'Обьект в CRM NAUMEN уже создан. Его UUID: {naumen_uuid}')
 
     else:
+        need_delete_report = True
         mod_data = dict(mod_data)
         mod_data.update({'title': report_name})
         mod_data = tuple(mod_data.items())
@@ -90,7 +91,7 @@ def get_report(crm: ActiveConnect, report: TypeReport, *args,
         log.debug('Парсинг истории обращений.')
         raise NotImplementedError
 
-    if not report_exists:
+    if need_delete_report:
         _delete_report(crm, report, naumen_uuid)
 
     return collect

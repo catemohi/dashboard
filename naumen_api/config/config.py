@@ -79,22 +79,6 @@ def _params_erector(params: Mapping[str, Mapping[Literal['name', 'value'],
                   ] for _, root_val in params.items()])
 
 
-def formating_params(*args, **kwargs) -> \
-        Tuple[Tuple[Tuple[str, Any]], Tuple[Tuple[str, Any]]]:
-    """
-    Форматирование параметров и даты для дальнейшего использования.
-
-    Returns:
-        Tuple[Tuple[Tuple[str, Any]], Tuple[Tuple[str, Any]]]: параметры и дата
-    """
-    if kwargs.get('mod_params', False):
-        mod_params = kwargs('mod_params')
-    else:
-        mod_params = ()
-    mod_data = tuple(kwargs.items())
-    return mod_params, mod_data
-
-
 def get_report_name() -> str:
     """Функция получения уникального названия для отчета.
 

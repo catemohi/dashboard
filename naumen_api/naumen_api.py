@@ -1,6 +1,6 @@
 import logging
 from json import loads
-from typing import Union
+from typing import Any, Union, Tuple
 
 from requests import exceptions
 
@@ -178,10 +178,8 @@ class Client:
         """
 
         report = TypeReport.ISSUE_CARD
-        report_kwargs = {'naumen_uuid': naumen_uuid}
-
         log.debug('Запрос данных с карточки обращения.')
-        return self._get_response(report, **report_kwargs)
+        return self._get_response(report, **{'naumen_uuid': naumen_uuid})
 
     def get_sl_report(self, start_date: str, end_date: str,
                       deadline: int = 15, *args,
@@ -228,9 +226,9 @@ class Client:
             'start_date': start_date,
             'end_date': end_date,
             'deadline': deadline,
-            **kwargs,
         }
-        return self._get_response(TypeReport.SERVICE_LEVEL, **report_kwargs)
+        return self._get_response(TypeReport.SERVICE_LEVEL,
+                                  mod_data=report_kwargs, **kwargs)
 
     def get_mttr_report(self, start_date: str, end_date: str, *args,
                         **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
@@ -260,9 +258,9 @@ class Client:
         report_kwargs = {
             'start_date': start_date,
             'end_date': end_date,
-            **kwargs,
         }
-        return self._get_response(TypeReport.MTTR_LEVEL, **report_kwargs)
+        return self._get_response(TypeReport.MTTR_LEVEL,
+                                  mod_data=report_kwargs, **kwargs)
 
     def get_flr_report(self, start_date: str, end_date: str, *args,
                        **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
@@ -289,12 +287,14 @@ class Client:
         report_kwargs = {
             'start_date': start_date,
             'end_date': end_date,
-            **kwargs,
         }
-        return self._get_response(TypeReport.FLR_LEVEL, **report_kwargs)
+        return self._get_response(TypeReport.FLR_LEVEL, mod_data=report_kwargs,
+                                  **kwargs)
 
-    def _get_response(self, report: TypeReport, *args, **kwargs) -> \
-            ResponseFormatter.FORMATTED_RESPONSE:
+    def _get_response(self, report: TypeReport,
+                      mod_params: Tuple[Tuple[str, Any]] = (),
+                      mod_data: Tuple[Tuple[str, Any]] = (),
+                      *args, **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
 
         """Шаблонный метод для получения ответа от CRM NAUMEN.
 
@@ -318,7 +318,8 @@ class Client:
             return make_response(error_response, self.formatter)
 
         try:
-            content = get_report(self._session, report, *args, **kwargs)
+            content = get_report(self._session, report, mod_params=mod_params,
+                                 mod_data=mod_data, *args, **kwargs)
             api_response = ResponseTemplate(StatusType._SUCCESS, content)
             log.info('Ответ на запрос получен.')
             return make_response(api_response, self.formatter)
