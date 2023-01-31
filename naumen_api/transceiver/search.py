@@ -3,9 +3,8 @@ from time import sleep
 from typing import Any, Iterable, Tuple
 
 from .crm import ActiveConnect, get_crm_response
-from ..config.structures import SearchOptions, NaumenRequest, TypeReport
+from ..config.structures import TypeReport
 from ..config.structures import PageType, SearchType, NaumenRequestType
-from ..exceptions import CantGetData
 from ..parser.parser import parse_naumen_page
 
 
