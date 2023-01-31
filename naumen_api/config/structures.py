@@ -112,6 +112,7 @@ class NaumenRequestType(Enum):
     CREATE_REPORT = "create_report"
     SEARCH_REPORT = "search_report"
     DELETE_REPORT = "delete_report"
+    CONTROL = "create_control_request"
 
 
 class TypeReport(Enum):
@@ -184,7 +185,6 @@ class SearchType(Enum):
 
     """
     ISSUES_SEARCH = "search issues"
-    CREATED_REPORT_SEARCH = "search created report"
 
     def __init__(self, value):
         self.page = self._get_page()
@@ -192,7 +192,6 @@ class SearchType(Enum):
     def _get_page(self):
         page_dict = {
             'ISSUES_SEARCH':  PageType.SEARCH_RESULT_ISSUES_PAGE,
-            'CREATED_REPORT_SEARCH': None,
         }
         try:
             return page_dict[self.name]

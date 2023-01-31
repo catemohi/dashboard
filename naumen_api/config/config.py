@@ -130,6 +130,7 @@ def configure_params(report: TypeReport, request_type: NaumenRequestType,
         NaumenRequestType.CREATE_REPORT: CONFIG.config['url']['create'],
         NaumenRequestType.SEARCH_REPORT: CONFIG.config['url']['open'],
         NaumenRequestType.DELETE_REPORT: CONFIG.config['url']['delete'],
+        NaumenRequestType.CONTROL: CONFIG.config['url']['control'],
     }
     date_name_keys = ('start_date', 'end_date')
 

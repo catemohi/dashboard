@@ -1,15 +1,15 @@
 import logging
-from json import loads
 from typing import Any, Union, Tuple
 
 from requests import exceptions
 
-from .config.structures import StatusType, TypeReport
+from .config.structures import StatusType, TypeReport, SearchType
 from .exceptions import CantGetData, ConnectionsFailed, InvalidDate
 from .transceiver.crm import DOMAIN, get_session
 from .transceiver.response_creator import JSONResponseFormatter, make_response
 from .transceiver.response_creator import ResponseFormatter, ResponseTemplate
 from .transceiver.reports import get_report
+from .transceiver.search import search
 
 
 log = logging.getLogger(__name__)
@@ -114,19 +114,19 @@ class Client:
             'byNumber': number,
             'byCntrTitle': name_contragent,
             'byCntrNumber': number_contragent,
-            **kwargs}
+            }
+        report_kwargs = tuple(report_kwargs.items())
+        return self._get_response(SearchType.ISSUES_SEARCH,
+                                  mod_data=report_kwargs, **kwargs)
+        # finded_items_obj = loads(finded_items_json)
 
-        finded_items_json = self._get_response(TypeReport.ISSUES_SEARCH,
-                                               **report_kwargs)
-        finded_items_obj = loads(finded_items_json)
+        # if finded_items_obj["status_code"] != 200:
+        #     return finded_items_json
 
-        if finded_items_obj["status_code"] != 200:
-            return finded_items_json
-
-        for num, item in enumerate(finded_items_obj["content"]):
-            finded_items_obj["content"][
-                num] = loads(self.get_issue_card(item['uuid']))["content"]
-        return finded_items_obj
+        # for num, item in enumerate(finded_items_obj["content"]):
+        #     finded_items_obj["content"][
+        #         num] = loads(self.get_issue_card(item['uuid']))["content"]
+        # return finded_items_obj
 
     def get_issues(self, *args, is_vip: bool = False,
                    parse_history: bool = False,
@@ -157,7 +157,7 @@ class Client:
             'parse_history': parse_history,
             'parse_issues_cards': parse_issues_cards,
             }
-
+        report_kwargs = tuple(report_kwargs.items())
         return self._get_response(report, **report_kwargs)
 
     def get_issue_card(self, naumen_uuid: str, *args, **kwargs) -> \
@@ -227,6 +227,7 @@ class Client:
             'end_date': end_date,
             'deadline': deadline,
         }
+        report_kwargs = tuple(report_kwargs.items())
         return self._get_response(TypeReport.SERVICE_LEVEL,
                                   mod_data=report_kwargs, **kwargs)
 
@@ -259,6 +260,7 @@ class Client:
             'start_date': start_date,
             'end_date': end_date,
         }
+        report_kwargs = tuple(report_kwargs.items())
         return self._get_response(TypeReport.MTTR_LEVEL,
                                   mod_data=report_kwargs, **kwargs)
 
@@ -288,6 +290,7 @@ class Client:
             'start_date': start_date,
             'end_date': end_date,
         }
+        report_kwargs = tuple(report_kwargs.items())
         return self._get_response(TypeReport.FLR_LEVEL, mod_data=report_kwargs,
                                   **kwargs)
 
@@ -318,8 +321,13 @@ class Client:
             return make_response(error_response, self.formatter)
 
         try:
-            content = get_report(self._session, report, mod_params=mod_params,
-                                 mod_data=mod_data, *args, **kwargs)
+            if report in TypeReport:
+                call_func = get_report
+            elif report in SearchType:
+                call_func = search
+
+            content = call_func(self._session, report, mod_params=mod_params,
+                                mod_data=mod_data, *args, **kwargs)
             api_response = ResponseTemplate(StatusType._SUCCESS, content)
             log.info('Ответ на запрос получен.')
             return make_response(api_response, self.formatter)
