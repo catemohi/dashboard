@@ -1,5 +1,5 @@
 /.env
-
+.*.py
 parse-templates-page/
 # Byte-compiled / optimized / DLL files
 __pycache__/
