@@ -9,7 +9,7 @@ from .exceptions import CantGetData, ConnectionsFailed, InvalidDate
 from .transceiver.crm import DOMAIN, get_session
 from .transceiver.response_creator import JSONResponseFormatter, make_response
 from .transceiver.response_creator import ResponseFormatter, ResponseTemplate
-from .transceiver.transceiver import get_report
+from .transceiver.reports import get_report
 
 
 log = logging.getLogger(__name__)
