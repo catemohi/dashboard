@@ -6,7 +6,7 @@ from requests.adapters import HTTPAdapter, Retry
 from requests.packages import urllib3
 
 from ..config.config import CONFIG, create_naumen_request
-from ..config.structures import ActiveConnect
+from ..config.structures import ActiveConnect, NaumenRequestType
 from ..config.structures import SearchType, TypeReport
 from ..exceptions import CantGetData, ConnectionsFailed
 
@@ -53,7 +53,7 @@ def get_session(username: str, password: str, domain: DOMAIN) -> ActiveConnect:
 
 def get_crm_response(crm: ActiveConnect,
                      obj: Union[TypeReport, SearchType],
-                     request_type: str,
+                     request_type: NaumenRequestType,
                      *args,
                      mod_params: Tuple[Tuple[str, Any]] = (),
                      mod_data: Tuple[Tuple[str, Any]] = (),

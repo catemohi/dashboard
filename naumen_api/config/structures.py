@@ -99,6 +99,21 @@ class PageType(Enum):
     PAGINATION_PAGE = 8
 
 
+class NaumenRequestType(Enum):
+
+    """Класс данных для хранения типов запросов к CRM NAUMEN.
+
+        Attributes:
+            CREATE_REPORT: Запрос на создание отчета.
+            SEARCH_REPORT: Запрос для поиска созданного отчета.
+            DELETE_REPORT: Запрос для удаления.
+
+    """
+    CREATE_REPORT = "create_report"
+    SEARCH_REPORT = "search_report"
+    DELETE_REPORT = "delete_report"
+
+
 class TypeReport(Enum):
 
     """Enum перечисление видов отчета.

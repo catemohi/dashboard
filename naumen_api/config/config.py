@@ -3,9 +3,10 @@ from logging import getLogger
 from json import load
 from pathlib import PurePath
 from random import randint
-from typing import Any, Literal, Mapping, NamedTuple, Tuple, Union
+from typing import Any, Literal, Mapping, Tuple, Union
 
-from .structures import NaumenRequest, SearchOptions, TypeReport, SearchType
+from .structures import NaumenRequest, SearchOptions, TypeReport
+from .structures import NaumenRequestType, SearchType
 from ..exceptions import CantGetData, InvalidDate
 
 
@@ -63,8 +64,8 @@ def _validate_date(check_date: str) -> str:
         raise InvalidDate
 
 
-def params_erector(params: Mapping[str, Mapping[Literal['name', 'value'],
-                                                str]]) -> Mapping[str, str]:
+def _params_erector(params: Mapping[str, Mapping[Literal['name', 'value'],
+                                                 str]]) -> Mapping[str, str]:
     """Функция для уплотнения, даты или параметров запроса.
 
     Args:
@@ -78,9 +79,13 @@ def params_erector(params: Mapping[str, Mapping[Literal['name', 'value'],
                   ] for _, root_val in params.items()])
 
 
-def formating_params(*args, **kwargs):
+def formating_params(*args, **kwargs) -> \
+        Tuple[Tuple[Tuple[str, Any]], Tuple[Tuple[str, Any]]]:
     """
     Форматирование параметров и даты для дальнейшего использования.
+
+    Returns:
+        Tuple[Tuple[Tuple[str, Any]], Tuple[Tuple[str, Any]]]: параметры и дата
     """
     if kwargs.get('mod_params', False):
         mod_params = kwargs('mod_params')
@@ -120,33 +125,39 @@ def get_search_create_report_params(report: TypeReport, report_name: str,
     return search_options
 
 
-def configure_params(report: TypeReport,
-                     request_type: str,
+def configure_params(report: TypeReport, request_type: NaumenRequestType,
                      mod_data: Tuple[Tuple[str, Any]] = (),
                      mod_params: Tuple[Tuple[str, Any]] = (),
                      ) -> NaumenRequest:
     """Функция для создания, даты или параметров запроса.
 
     Args:
-        report: тип запрашиваемого отчета.
-        mod_data: параметры даты которые необходимо модифицировать
-
+        report (TypeReport): тип запрашиваемого отчета.
+        request_type (NaumenRequestType): тип запроса к NAUMEN
+        mod_data (Tuple[Tuple[str, Any]]): данные запроса, которые
+        необходимо модифицировать
+        mod_params (Tuple[Tuple[str, Any]]): параметры запроса, которые
+        необходимо модифицировать
     Returns:
         NaumenRequest: сформированный запрос для CRM Naumen
         SearchOptions: параметры для поиска созданного отчета
     """
+    url_map = {
+        NaumenRequestType.CREATE_REPORT: CONFIG.config['url']['create'],
+        NaumenRequestType.SEARCH_REPORT: CONFIG.config['url']['open'],
+        NaumenRequestType.DELETE_REPORT: CONFIG.config['url']['delete'],
+    }
     date_name_keys = ('start_date', 'end_date')
-    headers = CONFIG.config["headers"]
-    verify = CONFIG.config["verify"]["value"]
-    data = CONFIG.config[report.value][request_type]['data'].copy()
-    params = CONFIG.config[report.value][request_type]['params'].copy()
-    url = CONFIG.config['url']['create']
 
-    if request_type == 'search_created_report':
-        url = CONFIG.config['url']['open']
-
-    elif request_type == 'delete_report':
-        url = CONFIG.config['url']['delete']
+    try:
+        headers = CONFIG.config["headers"]
+        verify = CONFIG.config["verify"]["value"]
+        data = CONFIG.config[report.value][request_type.value]['data'].copy()
+        params = CONFIG.config[report.value][request_type.value]['params']\
+            .copy()
+        url = url_map[request_type]
+    except KeyError:
+        raise CantGetData
 
     for name, value in mod_data:
         if name in date_name_keys:
@@ -156,18 +167,15 @@ def configure_params(report: TypeReport,
     for name, value in mod_params:
         params[name]['value'] = value
 
-    data = params_erector(data)
-    params = params_erector(params)
-
-    if not url:
-        raise CantGetData
+    data = _params_erector(data)
+    params = _params_erector(params)
 
     request = NaumenRequest(url, headers, params, data, verify)
     return request
 
 
 def create_naumen_request(obj: Union[TypeReport, SearchType],
-                          request_type: str,
+                          request_type: NaumenRequestType,
                           mod_params: Tuple[Tuple[str, Any]] = (),
                           mod_data: Tuple[Tuple[str, Any]] = (),
                           *args,
@@ -176,8 +184,13 @@ def create_naumen_request(obj: Union[TypeReport, SearchType],
     """Метод для создания первичного запроса в NAUMEN .
 
     Args:
-        crm: активное соединение с CRM.
-        report: отчёт, который необходимо получить.
+        obj (Union[TypeReport, SearchType]): обьект, который необходимо
+        создать/получить из CRM.
+        request_type (NaumenRequestType): типа запроса
+        mod_params (Tuple[Tuple[str, Any]]): параметры, которые необходимо
+        модифицировать в запроса
+        mod_data (Tuple[Tuple[str, Any]]): данные, которые необходимо
+        модифицировать в запросе
         *args: позиционные аргументы(не используются)
         **kwargs: именнованные аргументы для создания отчёта.
 
