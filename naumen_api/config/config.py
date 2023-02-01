@@ -3,7 +3,7 @@ from json import load
 from logging import getLogger
 from pathlib import PurePath
 from random import randint
-from typing import Any, Literal, Mapping, Tuple, Union
+from typing import Any, Literal, Mapping, Tuple, Union, Sequence
 
 from .structures import NaumenRequest, SearchOptions, TypeReport
 from .structures import NaumenRequestType, SearchType
@@ -17,28 +17,39 @@ class AppConfig:
     """Класс для хранения настроек приложения и переопределения их.
     """
 
-    def __init__(self) -> None:
-        self.config = {}
-        self._config_path = ''
+    def __init__(self, config: Mapping = {},
+                 config_path: Union[PurePath, None] = None) -> None:
+        """
+        Создание обьекта для хранения настроек приложения
+
+        Args:
+            config (Mapping): параметры конфигурации.По умолчанию {}.
+            config_path (Union[PurePath, None]): путь к файлу конфигрурации. По умолчанию None.
+        """
+        self.config = config
+        self._config_path = config_path
 
     @property
-    def config_path(self) -> str:
+    def config_path(self) -> Union[PurePath, None]:
         return self._config_path
 
     @config_path.setter
-    def config_path(self, value: str) -> None:
-        if not isinstance(value, str):
+    def config_path(self, value: Union[PurePath, str]) -> None:
+        if not isinstance(value, str) or not isinstance(value, PurePath):
             raise TypeError("Path must be in string format.")
+        if isinstance(value, str):
+            value = PurePath(value)
         self._config_path = PurePath(value)
 
     def load_config(self) -> None:
         """Метод для генирации конфигурационного атрибута.
         """
 
-        if not self.config_path:
+        if self.config_path is None:
             self._config_path = PurePath(__file__).with_name("config.json")
 
-        with open(self.config_path, encoding='utf-8') as file:
+        path_to_config = str(self.config_path)
+        with open(path_to_config, encoding='utf-8') as file:
             self.config = load(file)
 
 
@@ -110,18 +121,18 @@ def get_search_create_report_params(report: TypeReport, report_name: str,
 
 
 def configure_params(report: TypeReport, request_type: NaumenRequestType,
-                     mod_data: Tuple[Tuple[str, Any]] = (),
-                     mod_params: Tuple[Tuple[str, Any]] = (),
+                     mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+                     mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
                      ) -> NaumenRequest:
     """Функция для создания, даты или параметров запроса.
 
     Args:
         report (TypeReport): тип запрашиваемого отчета.
         request_type (NaumenRequestType): тип запроса к NAUMEN
-        mod_data (Tuple[Tuple[str, Any]]): данные запроса, которые
-        необходимо модифицировать
-        mod_params (Tuple[Tuple[str, Any]]): параметры запроса, которые
-        необходимо модифицировать
+        mod_data (Union[Tuple[Tuple[str, Any]], Tuple]): данные запроса,
+        которые необходимо модифицировать
+        mod_params (Union[Tuple[Tuple[str, Any]], Tuple]): параметры запроса,
+        которые необходимо модифицировать
     Returns:
         NaumenRequest: сформированный запрос для CRM Naumen
         SearchOptions: параметры для поиска созданного отчета
@@ -161,10 +172,10 @@ def configure_params(report: TypeReport, request_type: NaumenRequestType,
 
 def create_naumen_request(obj: Union[TypeReport, SearchType],
                           request_type: NaumenRequestType,
-                          mod_params: Tuple[Tuple[str, Any]] = (),
-                          mod_data: Tuple[Tuple[str, Any]] = (),
-                          *args,
-                          **kwargs) -> NaumenRequest:
+                          mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+                          mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+                          *args: Sequence,
+                          **kwargs: Mapping) -> NaumenRequest:
 
     """Метод для создания первичного запроса в NAUMEN .
 
@@ -172,9 +183,9 @@ def create_naumen_request(obj: Union[TypeReport, SearchType],
         obj (Union[TypeReport, SearchType]): обьект, который необходимо
         создать/получить из CRM.
         request_type (NaumenRequestType): типа запроса
-        mod_params (Tuple[Tuple[str, Any]]): параметры, которые необходимо
+        mod_params (Union[Tuple[Tuple[str, Any]], Tuple]): параметры, которые необходимо
         модифицировать в запроса
-        mod_data (Tuple[Tuple[str, Any]]): данные, которые необходимо
+        mod_data (Union[Tuple[Tuple[str, Any]], Tuple]): данные, которые необходимо
         модифицировать в запросе
         *args: позиционные аргументы(не используются)
         **kwargs: именнованные аргументы для создания отчёта.
