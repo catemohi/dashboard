@@ -120,14 +120,15 @@ def get_search_create_report_params(report: TypeReport, report_name: str,
     return search_options
 
 
-def configure_params(report: TypeReport, request_type: NaumenRequestType,
+def configure_params(report: Union[TypeReport, SearchType],
+                     request_type: NaumenRequestType,
                      mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
                      mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
                      ) -> NaumenRequest:
     """Функция для создания, даты или параметров запроса.
 
     Args:
-        report (TypeReport): тип запрашиваемого отчета.
+        report (Union[TypeReport, SearchType]): тип запрашиваемого отчета.
         request_type (NaumenRequestType): тип запроса к NAUMEN
         mod_data (Union[Tuple[Tuple[str, Any]], Tuple]): данные запроса,
         которые необходимо модифицировать

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Tuple, Union
+from typing import Any, Tuple, Union, Type, Mapping, Sequence
 
 from requests import exceptions
 
@@ -8,7 +8,7 @@ from .exceptions import CantGetData, ConnectionsFailed, InvalidDate
 from .transceiver.crm import DOMAIN, get_session
 from .transceiver.reports import get_report
 from .transceiver.response_creator import JSONResponseFormatter, make_response
-from .transceiver.response_creator import ResponseFormatter, ResponseTemplate
+from .transceiver.response_creator import ResponseFormatter, ResponseTemplate, FORMATTED_RESPONSE
 from .transceiver.search import search
 
 
@@ -23,7 +23,8 @@ class Client:
 
     def __init__(self, *, username: str = '', password: str = '',
                  domain: DOMAIN = '',
-                 formatter: ResponseFormatter = JSONResponseFormatter) -> None:
+                 formatter: Type[ResponseFormatter] = JSONResponseFormatter
+                 ) -> None:
 
         """Инициализация клиента api. Принимает именнованные аргументы.
 
@@ -42,8 +43,7 @@ class Client:
         self._session = None
 
     def connect(self, *, username: str = '',
-                password: str = '', domain: DOMAIN = '') -> \
-            ResponseFormatter.FORMATTED_RESPONSE:
+                password: str = '', domain: DOMAIN = '') -> FORMATTED_RESPONSE:
 
         """Метод для соединение с системой NAUMEN.
            Принимает именнованные аргументы.
@@ -54,7 +54,7 @@ class Client:
             domain (DOMAIN, optional): Домен. По умолчанию ''.
 
         Returns:
-            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+            FORMATTED_RESPONSE: отформатированный ответ
 
         """
 
@@ -74,8 +74,7 @@ class Client:
             self.password = password
             self.domain = domain
         try:
-            self._session = get_session(self.username,
-                                        self.password,
+            self._session = get_session(self.username, self.password,
                                         self.domain)
             log.info('Соединение с CRM NAUMEN успешно установлено.')
             success_response = ResponseTemplate(StatusType._SUCCESS, ())
@@ -85,10 +84,10 @@ class Client:
             logging.exception('Ошибка соединения с CRM NAUMEN.')
             return make_response(error_response, self.formatter)
 
-    def search_issue(self, *args, number: Union[str, int] = '',
+    def search_issue(self, *args: Sequence, number: Union[str, int] = '',
                      name_contragent: str = '',
                      number_contragent: Union[str, int] = '',
-                     **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
+                     **kwargs: Mapping) -> FORMATTED_RESPONSE:
         """Метод для получения для поиска обращения
 
         Args:
@@ -99,7 +98,7 @@ class Client:
             **kwargs: другие именнованные аргументы.
 
         Returns:
-            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+            FORMATTED_RESPONSE: отформатированный ответ
 
         Raises:
 
@@ -130,8 +129,8 @@ class Client:
 
     def get_issues(self, *args, is_vip: bool = False,
                    parse_history: bool = False,
-                   parse_issues_cards: bool = False, **kwargs) -> \
-            ResponseFormatter.FORMATTED_RESPONSE:
+                   parse_issues_cards: bool = False, **kwargs
+                   ) -> FORMATTED_RESPONSE:
 
         """Метод для получения отчёта о проблемах на линии ТП.
 
@@ -141,7 +140,7 @@ class Client:
             **kwargs: другие именнованные аргументы.
 
         Returns:
-            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+            FORMATTED_RESPONSE: отформатированный ответ
 
         Raises:
 
@@ -161,7 +160,7 @@ class Client:
         return self._get_response(report, **report_kwargs)
 
     def get_issue_card(self, naumen_uuid: str, *args, **kwargs) -> \
-            ResponseFormatter.FORMATTED_RESPONSE:
+            FORMATTED_RESPONSE:
 
         """Метод для получения данных с карточки обращения
 
@@ -171,7 +170,7 @@ class Client:
             **kwargs: другие именнованные аргументы.
 
         Returns:
-            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+            FORMATTED_RESPONSE: отформатированный ответ
 
         Raises:
 
@@ -183,7 +182,7 @@ class Client:
 
     def get_sl_report(self, start_date: str, end_date: str,
                       deadline: int = 15, *args,
-                      **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
+                      **kwargs) -> FORMATTED_RESPONSE:
 
         """Метод для получения отчёта о Service Level за период.
            Метод возвращает дни, без привязки к месяцу.
@@ -200,7 +199,7 @@ class Client:
             **kwargs: другие именнованные аргументы.
 
         Returns:
-            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+            FORMATTED_RESPONSE: отформатированный ответ
 
         Raises:
 
@@ -232,7 +231,7 @@ class Client:
                                   mod_data=report_kwargs, **kwargs)
 
     def get_mttr_report(self, start_date: str, end_date: str, *args,
-                        **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
+                        **kwargs) -> FORMATTED_RESPONSE:
 
         """Метод для получения отчёта о Mttr за период.
            Метод возвращает дни, без привязки к месяцу.
@@ -247,7 +246,7 @@ class Client:
             **kwargs: другие именнованные аргументы.
 
         Returns:
-            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+            FORMATTED_RESPONSE: отформатированный ответ
 
         Raises:
 
@@ -265,7 +264,7 @@ class Client:
                                   mod_data=report_kwargs, **kwargs)
 
     def get_flr_report(self, start_date: str, end_date: str, *args,
-                       **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
+                       **kwargs) -> FORMATTED_RESPONSE:
 
         """Метод для получения отчёта о Flr за период.
            Метод возвращает дни, c привязкой к месяцу.
@@ -277,7 +276,7 @@ class Client:
             **kwargs: другие именнованные аргументы.
 
         Returns:
-            ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+            FORMATTED_RESPONSE: отформатированный ответ
 
         Raises:
 
@@ -297,7 +296,7 @@ class Client:
     def _get_response(self, report: TypeReport,
                       mod_params: Tuple[Tuple[str, Any]] = (),
                       mod_data: Tuple[Tuple[str, Any]] = (),
-                      *args, **kwargs) -> ResponseFormatter.FORMATTED_RESPONSE:
+                      *args, **kwargs) -> FORMATTED_RESPONSE:
 
         """Шаблонный метод для получения ответа от CRM NAUMEN.
 
@@ -307,7 +306,7 @@ class Client:
                 **kwargs: прокинутые именнованные аргументы.
 
             Returns:
-                ResponseFormatter.FORMATTED_RESPONSE: отформатированный ответ
+                FORMATTED_RESPONSE: отформатированный ответ
 
             Raises:
 

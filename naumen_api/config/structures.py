@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Mapping, NamedTuple
+from typing import Any, Mapping, NamedTuple, Union
 
 from requests import Session
 
@@ -139,15 +139,15 @@ class TypeReport(Enum):
     CONTROL_ENABLE_SEARCH = "enable search"
     CONTROL_SELECT_SEARCH = "select search"
 
-    def __init__(self, value):
+    def __init__(self, value: Any):
         self.page = self._get_page()
 
-    def _get_page(self):
+    def _get_page(self) -> Union[PageType, None]:
         page_dict = {
             'ISSUE_CARD': PageType.ISSUE_CARD_PAGE,
             'ISSUES_FIRST_LINE': PageType.ISSUES_TABLE_PAGE,
             'ISSUES_VIP_LINE': PageType.ISSUES_TABLE_PAGE,
-            'ISSUES_SEARCH':  PageType.SEARCH_RESULT_ISSUES_PAGE,
+            'ISSUES_SEARCH': PageType.SEARCH_RESULT_ISSUES_PAGE,
             'SERVICE_LEVEL': PageType.SERVICE_LEVEL_REPORT_PAGE,
             'MTTR_LEVEL': PageType.MMTR_LEVEL_REPORT_PAGE,
             'FLR_LEVEL': PageType.FLR_LEVEL_REPORT_PAGE,
@@ -186,12 +186,12 @@ class SearchType(Enum):
     """
     ISSUES_SEARCH = "search issues"
 
-    def __init__(self, value):
+    def __init__(self, value: Any):
         self.page = self._get_page()
 
-    def _get_page(self):
+    def _get_page(self) -> PageType:
         page_dict = {
-            'ISSUES_SEARCH':  PageType.SEARCH_RESULT_ISSUES_PAGE,
+            'ISSUES_SEARCH': PageType.SEARCH_RESULT_ISSUES_PAGE,
         }
         try:
             return page_dict[self.name]

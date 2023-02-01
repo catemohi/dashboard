@@ -1,9 +1,9 @@
 import logging
-from typing import Any, Literal, Tuple, Union
+from typing import Any, Literal, Tuple, Union, Sequence, Mapping
 
 from requests import Response, Session
 from requests.adapters import HTTPAdapter, Retry
-from requests.packages import urllib3
+from requests.packages.urllib3 import disable_warnings
 
 from ..config.config import CONFIG, create_naumen_request
 from ..config.structures import ActiveConnect, NaumenRequestType
@@ -11,9 +11,9 @@ from ..config.structures import SearchType, TypeReport
 from ..exceptions import CantGetData, ConnectionsFailed
 
 
-urllib3.disable_warnings()
+disable_warnings()
 log = logging.getLogger(__name__)
-DOMAIN = Literal['CORP.ERTELECOM.LOC', 'O.WESTCALL.SPB.RU']
+DOMAIN = str
 
 
 def get_session(username: str, password: str, domain: DOMAIN) -> ActiveConnect:
@@ -54,18 +54,18 @@ def get_session(username: str, password: str, domain: DOMAIN) -> ActiveConnect:
 def get_crm_response(crm: ActiveConnect,
                      obj: Union[TypeReport, SearchType],
                      request_type: NaumenRequestType,
-                     *args,
-                     mod_params: Tuple[Tuple[str, Any]] = (),
-                     mod_data: Tuple[Tuple[str, Any]] = (),
+                     *args: Sequence,
+                     mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+                     mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
                      method: Literal['GET', 'POST'] = 'POST',
-                     **kwargs) -> Response:
+                     **kwargs: Mapping) -> Response:
     """Функция для получения ответа из CRM системы.
 
     Args:
         crm: сессия с CRM Naumen.
         obj (Union[TypeReport, SearchType]): обьект которого строится запрос.
-        mod_params (Tuple[Tuple[str, Any]]): модифицированные параметры запроса
-        mod_params (Tuple[Tuple[str, Any]]): модифицированные данные запроса
+        mod_params (Union[Tuple[Tuple[str, Any]], Tuple]): модифицированные параметры запроса
+        mod_params (Union[Tuple[Tuple[str, Any]], Tuple]): модифицированные данные запроса
         method: HTTP метод.
 
     Returns:
