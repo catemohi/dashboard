@@ -1,7 +1,7 @@
 import logging
 import re
 from datetime import datetime
-from typing import Iterable
+from typing import Any, Iterable, Sequence, Union, Tuple, List
 
 from bs4 import BeautifulSoup
 
@@ -14,7 +14,8 @@ from ..exceptions import CantGetData
 log = logging.getLogger(__name__)
 
 
-def parse(text: str, *args, issue: Issue = None) -> Issue:
+def parse(text: str, *args: Sequence,
+          issue: Union[Issue, None] = None) -> Sequence[Issue]:
 
     """Функция парсинга карточки обращения.
 
@@ -55,12 +56,27 @@ def parse(text: str, *args, issue: Issue = None) -> Issue:
     return (issue, )
 
 
+def _return_defalut_time() -> datetime:
+    """
+    Функция возвращает время возврата в работу по умолчанию
+
+    Returns:
+        datetime: время возврата в работу по умолчанию
+    """
+    return_to_work_time = datetime(datetime.now().year + 1,
+                                   12, 31, 12, 0, 0)
+    log.debug('Дата возврата в работу не обнаружена, '
+              'поставлено значение по умолчанию: '
+              f'{return_to_work_time}')
+    return return_to_work_time
+
+
 def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
 
     """Функция парсинга данных времени возврата в работу.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
         datetime: время возврата в работу
@@ -72,29 +88,34 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
 
     return_times = (soup.find('td', id="obrd"), soup.find('td', id="obrd1"),
                     soup.find('td', id="obrd2"))
-    return_times = [
-        time.text.replace('\n', '').strip() for time in return_times if time]
+    return_times_formated = [time.text.replace('\n', '').strip()
+                             for time in return_times if time]
+
     log.debug(f'Из CRM собраны следующие данные: {return_times}.')
 
-    def _return_defalut_time():
-        return_to_work_time = datetime(datetime.now().year + 1,
-                                       12, 31, 12, 0, 0)
-        log.debug('Дата возврата в работу не обнаружена, '
-                  'поставлено значение по умолчанию: '
-                  f'{return_to_work_time}')
-        return return_to_work_time
-
-    if not return_times:
+    if not return_times_formated:
         return _return_defalut_time()
 
-    def _string_to_time(string_time: str):
+    def _string_to_time(string_time: str) -> Union[datetime, None]:
+        """
+        Функция парсинга строк с датой в обьект даты
+
+        Args:
+            string_time (str): строка даты
+
+        Returns:
+            datetime: обьект даты
+        """
         try:
             return datetime.strptime(string_time, '%d.%m.%Y %H:%M')
         except ValueError:
             log.error(f'Значение {string_time} не удалось преобразовать '
                       'в обьект datetime, по шаблону %d.%m.%Y %H:%M')
+            return None
+
     needed_time_string_count = 1
-    times = [_string_to_time(time) for time in return_times if time]
+    times = [_string_to_time(time) for time in return_times_formated if time]
+    times = [time for time in times if time is not None]
 
     if not times:
         return _return_defalut_time()
@@ -102,18 +123,24 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
     if len(times) > needed_time_string_count:
         log.debug(f'Получено больше {needed_time_string_count} '
                   'значений даты. Возвращаем последнюю.')
-    # возвращаем самую последнюю дату.
-    return_to_work_time = sorted(times)[-1]
+        # возвращаем самую последнюю дату.
+        return_to_work_time = sorted(times)[-1]
+    else:
+        return_to_work_time = times[0]
     log.info(f'Найдена дата возврата в работу {return_to_work_time}')
+
+    if return_to_work_time is None:
+        return _return_defalut_time()
+
     return return_to_work_time
 
 
-def _get_service_params(soup: BeautifulSoup) -> Iterable[str]:
+def _get_service_params(soup: BeautifulSoup) -> Iterable[Union[Tuple, str]]:
 
     """Функция парсинга данных услуги.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
         Iterable[str]: коллекцию с параметрами.
@@ -131,7 +158,7 @@ def _get_service_params(soup: BeautifulSoup) -> Iterable[str]:
     for a_tag in a_collection:
         uuids.append(_get_url_param_value(a_tag['href'], 'uuid'))
         names.append(' '.join(list(a_tag.stripped_strings)))
-    return names, uuids
+    return (tuple(names), tuple(uuids))
 
 
 def _get_description(soup: BeautifulSoup) -> str:
@@ -139,7 +166,7 @@ def _get_description(soup: BeautifulSoup) -> str:
     """Функция парсинга данных описания обращения.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
         str: Описание обращения.
@@ -159,7 +186,7 @@ def _get_creation_date(soup: BeautifulSoup) -> datetime:
     """Функция парсинга даты создания обращения.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
         datetime: дата создания обращения.
@@ -186,7 +213,7 @@ def _get_contragent_params(soup: BeautifulSoup) -> Iterable[str]:
     """Функция парсинга данных контрагента.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
         Iterable[str]: Коллекцию с параметрами контрагента.
@@ -211,7 +238,7 @@ def _get_number(soup: BeautifulSoup) -> str:
     """Функция парсинга номера обращения.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
         str
@@ -228,7 +255,7 @@ def _get_responsible(soup: BeautifulSoup) -> tuple['str', 'str']:
     """Функция парсинга ответсвенного за состояние.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
         str
@@ -257,7 +284,7 @@ def _get_title(soup: BeautifulSoup) -> str:
     """Функция парсинга названия обращения.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
         str
@@ -276,7 +303,7 @@ def _get_step(soup: BeautifulSoup) -> str:
     """Функция парсинга названия обращения.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
         str
@@ -295,7 +322,7 @@ def _get_issue_type(soup: BeautifulSoup) -> str:
     """Функция парсинга названия обращения.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
         str
@@ -314,14 +341,16 @@ def _get_issue_type(soup: BeautifulSoup) -> str:
     return ''
 
 
-def _get_service_info(soup: BeautifulSoup) -> str:
+def _get_service_info(soup: BeautifulSoup
+                      ) -> Union[Sequence[Sequence[Any]], Sequence]:
     """Функция парсинга информации по услугам.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
-        str
+        Union[Sequence[Sequence[Any]], Sequence]: коллекция информации
+        о услугах
 
     Raises:
 
@@ -330,32 +359,33 @@ def _get_service_info(soup: BeautifulSoup) -> str:
     if service_info_tag:
         collection_service = []
         service_info = ' '.join(list(service_info_tag.stripped_strings))
-        service_info = ['Услуга ' + item for item
-                        in service_info.split('Услуга') if item]
-        for item in service_info:
-            item = [_.replace(':', '').strip() for _ in re.split(
+        service_info_collection = ['Услуга ' + item for item in
+                                   service_info.split('Услуга') if item]
+        for item in service_info_collection:
+            item_list = [_.replace(':', '').strip() for _ in re.split(
                 r"(Услуга\s?:) | (Адрес установки\s?:) | (Состояние\s?:)",
                 item) if _]
-            if len(item) >= 6:
-                service_name = {item[:2][0]: item[:2][1]}
-                service_addres = {item[2:4][0]: item[2:4][1]}
-                service_status = {item[4:][0]: item[4:][1]}
-                item = {**service_name, **service_addres, **service_status}
-                collection_service.append(tuple(item.items()))
+            if len(item_list) >= 6:
+                service_name = {item_list[:2][0]: item_list[:2][1]}
+                service_addres = {item_list[2:4][0]: item_list[2:4][1]}
+                service_status = {item_list[4:][0]: item_list[4:][1]}
+                item_dict = {**service_name, **service_addres, **service_status}
+                collection_service.append(tuple(item_dict.items()))
             else:
                 collection_service.append(())
         return collection_service
     return ()
 
 
-def _get_diagnostics(soup: BeautifulSoup) -> str:
+def _get_diagnostics(soup: BeautifulSoup
+                     ) -> Union[Sequence[Sequence[Any]], Sequence]:
     """Функция парсинга диагностики.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
-        str
+        Union[Sequence[Sequence[Any]], Sequence]: коллекция диагностики
 
     Raises:
 
@@ -365,33 +395,34 @@ def _get_diagnostics(soup: BeautifulSoup) -> str:
         try:
             diagnostics_base = [item.split(': ') for item in list(
                 diagnostics_tag.stripped_strings) if ':' in item]
+
             for item in diagnostics_base:
                 if len(item) < 2:
                     item.append('')
                 else:
                     item = item[:2]
-                print(item)
-            diagnostics_base = dict(diagnostics_base)
+
+            diagnostics_base_dict = dict(diagnostics_base)
+
             for item in list(diagnostics_tag.stripped_strings):
                 if ':' not in item:
-                    diagnostics_base['Диагностика'] += ' ' + item
+                    diagnostics_base_dict['Диагностика'] += ' ' + item
+
         except KeyError:
-            diagnostics_base = {
-                'Диагностика':
-                ' '.join([text.strip() for text
-                          in diagnostics_tag.stripped_strings])}
-        return tuple(diagnostics_base.items())
+            diagnostics_base_dict = {'Диагностика': ' '.join(
+                [text.strip() for text in diagnostics_tag.stripped_strings])}
+        return tuple(diagnostics_base_dict.items())
     return ()
 
 
-def _get_required_date(soup: BeautifulSoup) -> str:
+def _get_required_date(soup: BeautifulSoup) -> Union[datetime, None]:
     """Функция парсинга даты отработки по умолчанию.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
-        str
+        Union[datetime, None]: обьект даты отработки заявки или None
 
     Raises:
 
@@ -400,19 +431,18 @@ def _get_required_date(soup: BeautifulSoup) -> str:
     if required_date_tag:
         required_date = ' '.join(list(required_date_tag.stripped_strings))
         if required_date:
-            required_date = datetime.strptime(required_date, '%d.%m.%Y %H:%M')
-            return required_date
+            return datetime.strptime(required_date, '%d.%m.%Y %H:%M')
     return None
 
 
-def _get_close_date(soup: BeautifulSoup) -> str:
+def _get_close_date(soup: BeautifulSoup) -> Union[datetime, None]:
     """Функция парсинга даты закрытия заявки.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
-        str
+        Union[datetime, None]: обьект даты закрытия заявки или None
 
     Raises:
 
@@ -421,19 +451,19 @@ def _get_close_date(soup: BeautifulSoup) -> str:
     if close_date_tag:
         close_date = ' '.join(list(close_date_tag.stripped_strings))
         if close_date:
-            close_date = datetime.strptime(close_date, '%d.%m.%Y %H:%M')
-            return close_date
+            return datetime.strptime(close_date, '%d.%m.%Y %H:%M')
     return None
 
 
-def _get_client_requisite(soup: BeautifulSoup) -> str:
+def _get_client_requisite(soup: BeautifulSoup
+                          ) -> Union[Sequence[str], Sequence]:
     """Функция парсинга реквизиты клиентов.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
-        str
+        Union[Sequence[str], Sequence]: коллекция реквизитов клиента
 
     Raises:
 
@@ -445,13 +475,20 @@ def _get_client_requisite(soup: BeautifulSoup) -> str:
     if client_requisite_tag:
         client_requisite = ' '.join(
             list(client_requisite_tag.stripped_strings))
-        client_requisite = [item.replace(':', '').strip() for item in
-                            re.split(reg_template, client_requisite) if item]
-        client_fullname = {client_requisite[0]: client_requisite[1]}
-        client_inn = {client_requisite[2]: client_requisite[3]}
-        client_kpp = {client_requisite[4]: client_requisite[5]}
-        client_address = {client_requisite[6]: client_requisite[7]}
-        client_mail_address = {client_requisite[8]: client_requisite[9]}
+        client_requisite_list = [item.replace(':', '').strip() for item in
+                                 re.split(reg_template, client_requisite)
+                                 if item]
+        client_fullname = {
+            client_requisite_list[0]: client_requisite_list[1]}
+        client_inn = {
+            client_requisite_list[2]: client_requisite_list[3]}
+        client_kpp = {
+            client_requisite_list[4]: client_requisite_list[5]}
+        client_address = {
+            client_requisite_list[6]: client_requisite_list[7]}
+        client_mail_address = {
+            client_requisite_list[8]: client_requisite_list[9]}
+
         return tuple({**client_fullname, **client_inn, **client_kpp,
                       **client_address, **client_mail_address}.items())
     return ()
@@ -461,10 +498,10 @@ def _get_contragent_category(soup: BeautifulSoup) -> str:
     """Функция парсинга категории контрагента.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
-        str
+        str: категория контрагента
 
     Raises:
 
@@ -477,19 +514,19 @@ def _get_contragent_category(soup: BeautifulSoup) -> str:
     return ''
 
 
-def _get_contact(soup: BeautifulSoup) -> str:
+def _get_contact(soup: BeautifulSoup) -> Union[Sequence[str], Sequence]:
     """Функция парсинга контактов.
 
     Args:
-        soup: подготовленная для парсинга HTML страница.
+        soup (BeautifulSoup): подготовленная для парсинга HTML страница.
 
     Returns:
-        str
+        Union[Sequence[str], Sequence]: коллекция контактов
 
     Raises:
 
     """
-    collection = []
+    collection: List = []
     category = _get_columns_name(soup)
     result_table = soup.find(name='table', attrs={
         'id': 'Request.ListsParent.ListsParent2.ContactPersonsList'})

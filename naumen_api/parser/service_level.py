@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal, Mapping, Sequence
+from typing import Mapping, Sequence, Union, Dict
 
 from bs4 import BeautifulSoup
 
@@ -40,16 +40,17 @@ class ServiceLevel:
     service_level: float
 
 
-def parse(text: str, *args, **kwargs) -> \
-                                Sequence or Sequence[Literal['']]:
+def parse(text: str, *args: Sequence, **kwargs: Mapping,
+          ) -> Union[Sequence[ServiceLevel], Sequence]:
 
     """Функция парсинга картточки обращения.
 
     Args:
-        text: сырой текст страницы.
+        text (str): сырой текст страницы.
 
     Returns:
-        Sequence or Sequence[Literal['']]: Коллекцию с найденными элементами.
+        Union[Sequence[ServiceLevel], Sequence]: Коллекцию с найденными
+        элементами.
 
     Raises:
         CantGetData: Если не удалось найти данные.
@@ -93,15 +94,15 @@ def parse(text: str, *args, **kwargs) -> \
             log.error('Дефолтные значения не подходят.')
             raise CantGetData
 
-    days = _service_lavel_data_completion(days, group, label)
+    days = _service_lavel_data_completion(days, tuple(group), label)
     collection = _formating_service_level_data(days)
     log.debug(f'Парсинг завершился успешно. Колекция отчетов SL '
               f'с {start_date} по {end_date} содержит {len(collection)} элем.')
     return tuple(collection)
 
 
-def _service_lavel_data_completion(days: dict, groups: Sequence,
-                                   lable: Sequence) -> Mapping[int, Sequence]:
+def _service_lavel_data_completion(days: Dict, groups: Sequence,
+                                   lable: Sequence) -> Dict[int, Sequence]:
 
     """Функция для дополнения данных отчёта  Service Level.
         т.к Naumen отдает не все необходимые данные, необходимо их дополнить.
@@ -109,12 +110,12 @@ def _service_lavel_data_completion(days: dict, groups: Sequence,
         Заполнить пропуски за не наступившие дни: SL будет 0%
 
     Args:
-        days: словарь дней, где ключ номер дня
-        groups: название групп в crm Naumen
-        lable: название категорий
+        days (Dict): словарь дней, где ключ номер дня
+        groups (Sequence): название групп в crm Naumen
+        lable (Sequence): название категорий
 
     Returns:
-        Mapping: дополненый словарь.
+        Dict[int, Sequence]: дополненый словарь.
     """
 
     today = datetime.now().day
@@ -123,33 +124,32 @@ def _service_lavel_data_completion(days: dict, groups: Sequence,
         if today >= day:
             sl = '100.0'
         if len(content) == 0:
-            days[day] = [dict(
-                zip(lable,
-                    (str(day), group, '0', '0', '0', '0', sl)),
-                ) for group in groups]
+            days[day] = [dict(zip(lable,
+                                  (str(day), group, '0', '0', '0', '0', sl)),)
+                         for group in groups]
+
         elif len(content) != 2:
             day_groups = [_['Группа'] for _ in days[day]]
             for group in groups:
                 if group not in day_groups:
                     days[day].append(
-                        dict(
-                            zip(lable,
-                                (str(day), group, '0', '0', '0', '0', sl)),
-                            ),
-                        )
+                        dict(zip(lable,
+                                 (str(day), group, '0', '0', '0', '0', sl)
+                                 ),
+                             ))
     return days
 
 
-def _formating_service_level_data(days: Mapping[int, Sequence]) \
-                                 -> Sequence[ServiceLevel]:
+def _formating_service_level_data(days: Mapping[int, Sequence]
+                                  ) -> Sequence[Sequence[ServiceLevel]]:
 
     """Формирование итоговой коллекции обьектов отчёта Service Level.
 
     Args:
-        days: словарь дней, где ключ номер дня.
+        days (Mapping[int, Sequence]): словарь дней, где ключ номер дня.
 
     Returns:
-        Sequence[ServiceLevel]: коллекция с отчётами Service Level.
+        Sequence[Sequence[ServiceLevel]]: коллекция с отчётами Service Level.
     """
 
     collection = []
@@ -181,7 +181,7 @@ def _formating_service_level_data(days: Mapping[int, Sequence]) \
         sl = ServiceLevel(day, group, gen_total_issues,
                           gen_total_primary_issues,
                           gen_num_issues_before_deadline,
-                          gen_num_issues_after_deadline, gen_service_level/2)
+                          gen_num_issues_after_deadline, gen_service_level / 2)
         day_collection.append(sl)
         collection.append(day_collection)
     return tuple(collection)

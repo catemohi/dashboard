@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Iterable, Mapping, Sequence
+from typing import Iterable, Sequence, Dict, Union, List
 from urllib import parse
 
 from bs4 import BeautifulSoup
@@ -12,13 +12,14 @@ from ..exceptions import CantGetData
 log = logging.getLogger(__name__)
 
 
-def _get_date_range(date_first: str, date_second: str) -> Sequence[datetime]:
+def _get_date_range(date_first: Union[str, datetime],
+                    date_second: Union[str, datetime]) -> Sequence[datetime]:
 
     """Функция для создания коллекции чисел.
 
     Args:
-        date_first: первая дата.
-        date_second: вторая дата
+        date_first (Union[str, datetime]): первая дата.
+        date_second (Union[str, datetime]): вторая дата
 
     Returns:
         Sequence[datetime]: Коллекцию дат.
@@ -28,8 +29,10 @@ def _get_date_range(date_first: str, date_second: str) -> Sequence[datetime]:
     """
 
     log.debug(f'Формирование списка дат между {date_first} и {date_second}')
-    date_first = datetime.strptime(date_first, '%d.%m.%Y')
-    date_second = datetime.strptime(date_second, '%d.%m.%Y')
+    if isinstance(date_first, str):
+        date_first = datetime.strptime(date_first, '%d.%m.%Y')
+    if isinstance(date_second, str):
+        date_second = datetime.strptime(date_second, '%d.%m.%Y')
     start_date = min(date_first, date_second)
     end_date = max(date_first, date_second)
     log.debug(f'Минимальная дата: {start_date}')
@@ -43,7 +46,7 @@ def _get_date_range(date_first: str, date_second: str) -> Sequence[datetime]:
 
 def _forming_days_dict(date_range: Sequence[datetime],
                        day_collection: Sequence,
-                       report_type: PageType) -> Mapping:
+                       report_type: PageType) -> Dict:
 
     """Функция для преобразование сырых спаршенных данных к словарю с
     ключем по дню.
@@ -56,19 +59,18 @@ def _forming_days_dict(date_range: Sequence[datetime],
         Mapping: словарю с ключем по дню.
     """
 
-    days = {}
+    days: Dict = {}
     if report_type == PageType.FLR_LEVEL_REPORT_PAGE:
 
         for day in date_range:
             days[day.strftime("%d.%m.%Y")] = [
                 _ for _ in day_collection
-                if _['День'] == str(day.day)
-                and _['Месяц'] == str(day.month)
+                if _['День'] == str(day.day) and _['Месяц'] == str(day.month)
             ]
         return days
 
     for day in date_range:
-        days[day.day] = [
+        days[str(day.day)] = [
             _ for _ in day_collection if _['День'] == str(day.day)]
     return days
 
@@ -86,30 +88,26 @@ def _forming_days_collecion(data_table: Sequence, label: Sequence,
         Mapping: коллекцию словарей дней.
     """
 
-    day_collection = list()
+    day_collection: List = list()
     for num, elem in enumerate(data_table):
         elem = [_.text.strip() for _ in elem.find_all('td')]
 
-        if all(
-            [
-                report_type == PageType.SERVICE_LEVEL_REPORT_PAGE,
+        if all([report_type == PageType.SERVICE_LEVEL_REPORT_PAGE,
                 not elem[0].isdigit(),
                 ]):
-            elem.insert(0, day_collection[num-1][0])
+            elem.insert(0, day_collection[num - 1][0])
 
-        elif all(
-            [
-                report_type == PageType.FLR_LEVEL_REPORT_PAGE,
-                len(elem) < 5,
-                ]):
-            elem.insert(0, day_collection[num-1][0])
+        elif all([report_type == PageType.FLR_LEVEL_REPORT_PAGE,
+                  len(elem) < 5,
+                  ]):
+            elem.insert(0, day_collection[num - 1][0])
 
         day_collection.append(elem)
     day_collection = [dict(zip(label, day)) for day in day_collection]
     return day_collection
 
 
-def _get_columns_name(soup: BeautifulSoup) -> Iterable[str]:
+def _get_columns_name(soup: BeautifulSoup) -> Sequence[str]:
 
     """Функция парсинга названий столбцов отчётов.
 

@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Literal, Sequence
+from typing import Sequence, Mapping
 
 from bs4 import BeautifulSoup
 
@@ -25,8 +25,8 @@ class PaginationPage:
     url: str = ''
 
 
-def parse(text: str, *args, **kwargs) \
-          -> Sequence[PaginationPage] or Sequence[Literal['']]:
+def parse(text: str, *args: Sequence, **kwargs: Mapping
+          ) -> int:
 
     """Функция парсинга пагинации страницы
 
@@ -34,7 +34,7 @@ def parse(text: str, *args, **kwargs) \
         text: сырой текст страницы.
 
     Returns:
-        Sequence or Sequence[Literal['']]: Коллекцию с найденными элементами.
+        int: Количество страниц пагинации
 
     Raises:
         CantGetData: Если не удалось найти данные.

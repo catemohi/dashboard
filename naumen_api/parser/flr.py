@@ -1,11 +1,11 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal, Mapping, Sequence
+from typing import Mapping, Sequence, Union, Dict
 
 from bs4 import BeautifulSoup
 
-from .parser_base import PageType,  _get_columns_name, _get_date_range
+from .parser_base import PageType, _get_columns_name, _get_date_range
 from .parser_base import _forming_days_collecion, _forming_days_dict
 from .parser_base import _parse_date_report
 from .parser_base import _validate_text_for_parsing
@@ -33,8 +33,8 @@ class Flr:
     total_primary_issues: int
 
 
-def parse(text: str, *args, **kwargs) -> \
-                            Sequence or Sequence[Literal['']]:
+def parse(text: str, *args: Sequence, **kwargs: Mapping
+          ) -> Union[Sequence[Flr], Sequence]:
 
     """Функция парсинга карточки обращения.
 
@@ -71,8 +71,8 @@ def parse(text: str, *args, **kwargs) -> \
     return tuple(collection)
 
 
-def _flr_data_completion(days: dict, lable: Sequence) -> \
-                          Mapping[int, Sequence]:
+def _flr_data_completion(days: dict, lable: Sequence
+                         ) -> Dict[int, Sequence]:
 
     """Функция для дополнения данных отчёта FLR.
         т.к Naumen отдает не все необходимые данные, необходимо их дополнить.
@@ -83,7 +83,7 @@ def _flr_data_completion(days: dict, lable: Sequence) -> \
         lable: название категорий
 
     Returns:
-        Mapping: дополненый словарь.
+        Dict: дополненый словарь.
     """
 
     flr_level = '0'
@@ -92,21 +92,17 @@ def _flr_data_completion(days: dict, lable: Sequence) -> \
     for day, content in days.items():
         if len(content) == 0:
             obj_day = datetime.strptime(day, '%d.%m.%Y')
-            days[day] = [
-                dict(zip(
-                    lable,
-                    (str(obj_day.month),
-                     str(obj_day.day),
-                     flr_level,
-                     num_issues_closed_independently,
-                     total_primary_issues),
-                    )),
-                ]
+            days[day] = [dict(zip(lable,
+                                  (str(obj_day.month), str(obj_day.day),
+                                   flr_level, num_issues_closed_independently,
+                                   total_primary_issues)
+                                  )
+                              )]
     return days
 
 
-def _formating_flr_data(days: Mapping[int, Sequence]) \
-                                 -> Sequence[Flr]:
+def _formating_flr_data(days: Mapping[int, Sequence]
+                        ) -> Sequence[Flr]:
 
     """Формирование итоговой коллекции обьектов отчёта FLR.
 
@@ -119,16 +115,13 @@ def _formating_flr_data(days: Mapping[int, Sequence]) \
 
     collection = []
     for day, day_content in days.items():
-        day_content = day_content[0]
-        date = day
-        flr_level = day_content['FLR по дн (в %)']
-        num_issues_closed_independently = day_content['Закрыто ТП без др отд']
-        total_primary_issues = day_content['Количество первичных']
-        flr = Flr(
-            date, flr_level,
-            num_issues_closed_independently,
-            total_primary_issues,
-            )
+        date = str(day)
+        flr_level = day_content[0]['FLR по дн (в %)']
+        num_issues_closed_independently = \
+            day_content[0]['Закрыто ТП без др отд']
+        total_primary_issues = day_content[0]['Количество первичных']
+        flr = Flr(date, flr_level, num_issues_closed_independently,
+                  total_primary_issues)
         collection.append(flr)
 
     return collection

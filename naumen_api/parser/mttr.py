@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Literal, Mapping, Sequence
+from typing import Mapping, Sequence, Union, Dict
 
 from bs4 import BeautifulSoup
 
@@ -16,7 +16,8 @@ log = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class Mttr:
 
-    """Класс данных для хранения данных отчета MTTR.
+    """
+    Класс данных для хранения данных отчета MTTR.
 
         Attributes:
             day: день отсчёта.
@@ -32,16 +33,17 @@ class Mttr:
     average_mttr_tech_support: float
 
 
-def parse(text: str, *args, **kwargs) -> \
-                             Sequence or Sequence[Literal['']]:
+def parse(text: str, *args: Sequence, **kwargs: Mapping
+          ) -> Union[Sequence[Mttr], Sequence]:
 
-    """Функция парсинга картточки обращения.
+    """
+    Функция парсинга картточки обращения.
 
     Args:
         text: сырой текст страницы.
 
     Returns:
-        Sequence or Sequence[Literal['']]: Коллекцию с найденными элементами.
+        Union[Sequence[Mttr], Sequence]: Коллекцию с найденными элементами.
 
     Raises:
         CantGetData: Если не удалось найти данные.
@@ -69,43 +71,44 @@ def parse(text: str, *args, **kwargs) -> \
     return tuple(collection)
 
 
-def _formating_mttr_data(days: Mapping[int, Sequence]) \
-                                 -> Sequence[Mttr]:
+def _formating_mttr_data(days: Dict[int, Sequence]
+                         ) -> Union[Sequence[Mttr], Sequence]:
 
-    """Формирование итоговой коллекции обьектов отчёта Mttr.
+    """
+    Формирование итоговой коллекции обьектов отчёта Mttr.
 
     Args:
         days: словарь дней, где ключ номер дня.
 
     Returns:
-        Sequence[Mttr]: коллекция с отчётами Mttr.
+        Union[Sequence[Mttr], Sequence]: коллекция с отчётами Mttr.
     """
 
     collection = []
     for day, day_content in days.items():
-        day_content = day_content[0]
-        day = day_content['День']
-        total_issues = day_content['Всего ТТ']
-        average_mttr = day_content['Средн МТТР']
-        average_mttr_tech_support = day_content['Средн МТТР ТП']
+        day = day_content[0]['День']
+        total_issues = day_content[0]['Всего ТТ']
+        average_mttr = day_content[0]['Средн МТТР']
+        average_mttr_tech_support = day_content[0]['Средн МТТР ТП']
         mttr = Mttr(day, total_issues, average_mttr, average_mttr_tech_support)
         collection.append(mttr)
 
     return tuple(collection)
 
 
-def _mttr_data_completion(days: dict, lable: Sequence) -> \
-                          Mapping[int, Sequence]:
-    """Функция для дополнения данных отчёта MTTR.
-        т.к Naumen отдает не все необходимые данные, необходимо их дополнить.
-        Заполнить пропуски за не наступившие дни: MTTR будет 0%
+def _mttr_data_completion(days: dict, lable: Sequence
+                          ) -> Dict[int, Sequence]:
+    """
+    Функция для дополнения данных отчёта MTTR.
+    т.к Naumen отдает не все необходимые данные, необходимо их дополнить.
+    Заполнить пропуски за не наступившие дни: MTTR будет 0 мин.
 
     Args:
         days: словарь дней, где ключ номер дня
         lable: название категорий
 
     Returns:
-        Mapping: дополненый словарь.
+        Dict[int, Sequence]: дополненый словарь.
     """
 
     avg_mttr = '0.0'
@@ -113,7 +116,6 @@ def _mttr_data_completion(days: dict, lable: Sequence) -> \
     issues_count = '0'
     for day, content in days.items():
         if len(content) == 0:
-            days[day] = [
-                dict(zip(lable, (str(day), issues_count, avg_mttr, mttr))),
-                ]
+            days[day] = [dict(zip(lable, (str(day),
+                                          issues_count, avg_mttr, mttr)))]
     return days

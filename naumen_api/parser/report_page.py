@@ -1,5 +1,5 @@
 import logging
-from typing import Sequence
+from typing import Sequence, Union
 
 from bs4 import BeautifulSoup
 
@@ -10,7 +10,7 @@ from .parser_base import _validate_text_for_parsing
 log = logging.getLogger(__name__)
 
 
-def parse(text: str, name: str) -> Sequence[str] or None:
+def parse(text: str, name: str) -> Union[Sequence[str], None]:
 
     """Функция парсинга страницы с отчётами и получение UUID отчёта.
 
@@ -19,7 +19,7 @@ def parse(text: str, name: str) -> Sequence[str] or None:
         name: уникальное название отчета.
 
     Returns:
-        Sequence or Sequence[Literal['']]: Коллекцию с найденными элементами.
+        Union[Sequence[str], None]: Коллекцию с найденными элементами.
 
     Raises:
 

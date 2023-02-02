@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Literal, Sequence
+from typing import Sequence, Mapping, Union, List
 
 from bs4 import BeautifulSoup
 
@@ -21,7 +21,7 @@ class SearchIssueResult:
             number: номер обращения
             uuid: уникальный идентификатор обьекта в CRM системе.
             name_contragent: источник обращения(контрагент)
-            uuid_contragent: уникальный идентификатор контрагента в CRM системе 
+            uuid_contragent: уникальный идентификатор контрагента в CRM системе
             issue_type: тип обращения
             step: щаг обращения
             responsible: ответственный за последний шаг
@@ -41,8 +41,8 @@ class SearchIssueResult:
     contact: str = ''
 
 
-def parse(text: str, *args, **kwargs) \
-          -> Sequence[SearchIssueResult] or Sequence[Literal['']]:
+def parse(text: str, *args: Sequence, **kwargs: Mapping,
+          ) -> Union[Sequence[SearchIssueResult], Sequence]:
 
     """Функция парсинга страницы с обращениями на группе.
 
@@ -50,7 +50,8 @@ def parse(text: str, *args, **kwargs) \
         text: сырой текст страницы.
 
     Returns:
-        Sequence or Sequence[Literal['']]: Коллекцию с найденными элементами.
+        Sequence[SearchIssueResult] or Sequence: Коллекцию
+        с найденными элементами.
 
     Raises:
         CantGetData: Если не удалось найти данные.
@@ -62,9 +63,8 @@ def parse(text: str, *args, **kwargs) \
     return collection
 
 
-def _parse_result_table(soup: BeautifulSoup,
-                        category: Sequence[str]
-                        ) -> Sequence[SearchIssueResult]:
+def _parse_result_table(soup: BeautifulSoup, category: Sequence[str]
+                        ) -> Union[Sequence[SearchIssueResult], Sequence]:
     """Функция парсинга таблицы с результатами поиска.
 
     Args:
@@ -77,7 +77,7 @@ def _parse_result_table(soup: BeautifulSoup,
     Raises:
 
     """
-    collection = []
+    collection: List = []
     result_table = soup.find(name='table', attrs={
         'id': 'advSearchTab.searchResults'})
 
@@ -116,6 +116,7 @@ def _parse_result_table(soup: BeautifulSoup,
                 name_responsible.stripped_strings))
         else:
             name_responsible = ''
+
         description = ' '.join(list(tr_dict['Описание'].stripped_strings))
         contact = tr_dict['Контактное лицо'].text.replace('\n', '').strip()
         search_issue_result = SearchIssueResult(number, uuid, uuid_contragent,

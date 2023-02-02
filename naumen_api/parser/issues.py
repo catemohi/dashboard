@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from re import findall
-from typing import Iterable, Literal, Sequence, Mapping
+from typing import Any, Iterable, Sequence, Mapping, Union, Tuple
 
 from bs4 import BeautifulSoup, element
 
@@ -39,36 +39,40 @@ class Issue:
             return_to_work_time: время возврата обращения в работу.
             description: описание обращения.
             diagnostics: диагностика
+            required_date: стандартная дата отработки обращения
+            close_date: дата закрытия обращения
+            client_requisite: реквизиты клиента
+            contact: контакты клиента
     """
 
     uuid: str = ''
-    number: int = 0
+    number: str = ''
     name: str = ''
     issue_type: str = ''
     step: str = ''
     step_time: timedelta = timedelta(0, 0)
     uuid_responsible: str = ''
     responsible: str = ''
-    last_edit_time: datetime or None = None
+    last_edit_time: Union[datetime, None] = None
     vip_contragent: bool = False
     creation_date: datetime = datetime.now()
-    uuid_service: str = ''
-    name_service: str = ''
+    uuid_service: Union[Tuple, str] = ''
+    name_service: Union[Tuple, str] = ''
     info_service: Sequence = ()
     uuid_contragent: str = ''
     name_contragent: str = ''
     contragent_category: str = ''
-    return_to_work_time: datetime or None = None
+    return_to_work_time: Union[datetime, None] = None
     description: str = ''
-    diagnostics: str = ''
-    required_date: datetime or None = None
-    close_date: datetime or None = None
+    diagnostics: Union[Sequence[Sequence[Any]], Sequence] = ''
+    required_date: Union[datetime, None] = None
+    close_date: Union[datetime, None] = None
     client_requisite: Sequence = ()
     contact: Sequence = ()
 
 
-def parse(text: str, *args, **kwargs) \
-                        -> Sequence[Issue] or Sequence[Literal['']]:
+def parse(text: str, *args: Sequence, **kwargs: Mapping
+          ) -> Union[Sequence[Issue], Sequence]:
 
     """Функция парсинга страницы с обращениями на группе.
 
@@ -76,7 +80,7 @@ def parse(text: str, *args, **kwargs) \
         text: сырой текст страницы.
 
     Returns:
-        Sequence or Sequence[Literal['']]: Коллекцию с найденными элементами.
+        Union[Sequence[Issue], Sequence]: Коллекцию с найденными элементами.
 
     Raises:
         CantGetData: Если не удалось найти данные.
@@ -135,7 +139,7 @@ def _get_issue_num(issue_name: str) -> str:
     """
 
     number = findall(r'\d{7,10}', issue_name)[0]
-    return number
+    return str(number)
 
 
 def _get_step_duration(raw_duration: str) -> timedelta:
@@ -152,8 +156,9 @@ def _get_step_duration(raw_duration: str) -> timedelta:
 
     """
 
-    duration = dict(zip(('days', 'h', 'min'), findall(r'\d+', raw_duration)))
-    duration = timedelta(days=int(duration['days']),
-                         hours=int(duration['h']),
-                         minutes=int(duration['min']))
+    raw_duration_dict = dict(zip(('days', 'h', 'min'),
+                                 findall(r'\d+', raw_duration)))
+    duration = timedelta(days=int(raw_duration_dict['days']),
+                         hours=int(raw_duration_dict['h']),
+                         minutes=int(raw_duration_dict['min']))
     return duration
