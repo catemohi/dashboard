@@ -92,9 +92,9 @@ def parse(text: str, *args: Sequence, **kwargs: Mapping
     rows = soup.select(".supp tr")[7:-1]
     if len(rows) < 1:
         return ()
-    def parse_table_row(row: element.Tag,
 
-                        category: Iterable[str]) -> Issue:
+    def parse_table_row(row: element.Tag, category: Iterable[str]
+                        ) -> Union[Issue, None]:
         """Функция парсинга строки таблицы.
 
         Args:
@@ -102,7 +102,7 @@ def parse(text: str, *args: Sequence, **kwargs: Mapping
             category: названия столбцов, строки.
 
         Returns:
-            Sequence[Issue] or Sequence[Literal['']: Коллекцию обращений.
+            Union(Issue, None): Обращение или None.
 
         """
 
@@ -110,7 +110,14 @@ def parse(text: str, *args: Sequence, **kwargs: Mapping
         issus_params = [
             col.text.replace('\n', '').strip() for col in row.select('td')]
         issues_dict = dict(zip(category, issus_params))
-        _url = (row.find('a', href=True)['href'])
+        url_tag = row.find('a', href=True)
+
+        if url_tag is None:
+            # Если нет ссылки то неудасться спарсить uuid.
+            # Uuid это первичный ключ в БД, возращаем None.
+            return None
+
+        _url = url_tag['href']
         issue.uuid = _get_url_param_value(_url, 'uuid')
         issue.number = _get_issue_num(issues_dict['Обращение'])
         issue.step_time = _get_step_duration(issues_dict['Время решения'])
@@ -120,7 +127,10 @@ def parse(text: str, *args: Sequence, **kwargs: Mapping
         issue.step = issues_dict['Состояние']
         issue.responsible = issues_dict['Ответственный']
         return issue
+
     collection = [parse_table_row(row, category) for row in rows]
+    # отфльтровываем некореректо спаршенные обращения
+    collection = [issue for issue in collection if issue is not None]
     return tuple(collection)
 
 
