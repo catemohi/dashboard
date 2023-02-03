@@ -90,12 +90,14 @@ def parse(text: str, *args, **kwargs) \
             Sequence[Issue] or Sequence[Literal['']: Коллекцию обращений.
 
         """
-
         issue = Issue()
         issus_params = [
             col.text.replace('\n', '').strip() for col in row.select('td')]
         issues_dict = dict(zip(category, issus_params))
-        _url = (row.find('a', href=True)['href'])
+        _url_tag = row.find('a', href=True)
+        if _url_tag is None:
+            return ()
+        _url = _url_tag['href']
         issue.uuid = _get_url_param_value(_url, 'uuid')
         issue.number = _get_issue_num(issues_dict['Обращение'])
         issue.step_time = _get_step_duration(issues_dict['Время решения'])
@@ -106,6 +108,7 @@ def parse(text: str, *args, **kwargs) \
         issue.responsible = issues_dict['Ответственный']
         return issue
     collection = [parse_table_row(row, category) for row in rows]
+    collection = [issue for issue in collection if issue]
     return tuple(collection)
 
 
