@@ -36,7 +36,7 @@ class AppConfig:
 
     @config_path.setter
     def config_path(self, value: Union[PurePath, str]) -> None:
-        if not isinstance(value, str) or not isinstance(value, PurePath):
+        if not any([isinstance(value, str), isinstance(value, PurePath)]):
             raise TypeError("Path must be in string format.")
         if isinstance(value, str):
             value = PurePath(value)
