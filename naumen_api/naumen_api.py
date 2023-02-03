@@ -113,7 +113,7 @@ class Client:
             'byNumber': number,
             'byCntrTitle': name_contragent,
             'byCntrNumber': number_contragent,
-            }
+        }
         report_kwargs = tuple(report_kwargs.items())
         return self._get_response(SearchType.ISSUES_SEARCH,
                                   mod_data=report_kwargs, **kwargs)
@@ -127,9 +127,9 @@ class Client:
         #         num] = loads(self.get_issue_card(item['uuid']))["content"]
         # return finded_items_obj
 
-    def get_issues(self, *args, is_vip: bool = False,
+    def get_issues(self, *args: Sequence, is_vip: bool = False,
                    parse_history: bool = False,
-                   parse_issues_cards: bool = False, **kwargs
+                   parse_issues_cards: bool = False, **kwargs: Mapping,
                    ) -> FORMATTED_RESPONSE:
 
         """Метод для получения отчёта о проблемах на линии ТП.
@@ -155,12 +155,12 @@ class Client:
         report_kwargs = {
             'parse_history': parse_history,
             'parse_issues_cards': parse_issues_cards,
-            }
+        }
         report_kwargs = tuple(report_kwargs.items())
         return self._get_response(report, **report_kwargs)
 
-    def get_issue_card(self, naumen_uuid: str, *args, **kwargs) -> \
-            FORMATTED_RESPONSE:
+    def get_issue_card(self, naumen_uuid: str, *args: Sequence,
+                       **kwargs: Mapping) -> FORMATTED_RESPONSE:
 
         """Метод для получения данных с карточки обращения
 
@@ -181,8 +181,8 @@ class Client:
         return self._get_response(report, **{'naumen_uuid': naumen_uuid})
 
     def get_sl_report(self, start_date: str, end_date: str,
-                      deadline: int = 15, *args,
-                      **kwargs) -> FORMATTED_RESPONSE:
+                      deadline: int = 15, *args: Sequence,
+                      **kwargs: Mapping) -> FORMATTED_RESPONSE:
 
         """Метод для получения отчёта о Service Level за период.
            Метод возвращает дни, без привязки к месяцу.
@@ -230,8 +230,8 @@ class Client:
         return self._get_response(TypeReport.SERVICE_LEVEL,
                                   mod_data=report_kwargs, **kwargs)
 
-    def get_mttr_report(self, start_date: str, end_date: str, *args,
-                        **kwargs) -> FORMATTED_RESPONSE:
+    def get_mttr_report(self, start_date: str, end_date: str, *args: Sequence,
+                        **kwargs: Mapping) -> FORMATTED_RESPONSE:
 
         """Метод для получения отчёта о Mttr за период.
            Метод возвращает дни, без привязки к месяцу.
@@ -263,8 +263,8 @@ class Client:
         return self._get_response(TypeReport.MTTR_LEVEL,
                                   mod_data=report_kwargs, **kwargs)
 
-    def get_flr_report(self, start_date: str, end_date: str, *args,
-                       **kwargs) -> FORMATTED_RESPONSE:
+    def get_flr_report(self, start_date: str, end_date: str, *args: Sequence,
+                       **kwargs: Mapping) -> FORMATTED_RESPONSE:
 
         """Метод для получения отчёта о Flr за период.
            Метод возвращает дни, c привязкой к месяцу.
@@ -294,9 +294,9 @@ class Client:
                                   **kwargs)
 
     def _get_response(self, report: TypeReport,
-                      mod_params: Tuple[Tuple[str, Any]] = (),
-                      mod_data: Tuple[Tuple[str, Any]] = (),
-                      *args, **kwargs) -> FORMATTED_RESPONSE:
+                      mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+                      mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+                      *args: Sequence, **kwargs: Mapping) -> FORMATTED_RESPONSE:
 
         """Шаблонный метод для получения ответа от CRM NAUMEN.
 

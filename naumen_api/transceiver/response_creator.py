@@ -1,7 +1,7 @@
 import json
 from dataclasses import asdict, is_dataclass
 from datetime import datetime, timedelta
-from typing import Any, Iterable, NamedTuple
+from typing import Any, Iterable, NamedTuple, Type
 
 from ..config.structures import StatusType
 
@@ -89,8 +89,8 @@ class EnhancedJSONEncoder(json.JSONEncoder):
         return super().default(encoding_object)
 
 
-def make_response(api_response: ResponseTemplate, formatter: ResponseFormatter
-                  ) -> FORMATTED_RESPONSE:
+def make_response(api_response: ResponseTemplate,
+                  formatter: Type[ResponseFormatter]) -> FORMATTED_RESPONSE:
 
     """Функция форматорования ответа.
 
