@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Mapping, Sequence
+from typing import Callable, Mapping, Sequence, Union
 
 from . import flr, issue_card, issues, mttr, report_page, service_level
 from . import pagination, search_result_issues
@@ -10,15 +10,16 @@ from ..exceptions import CantGetData
 log = logging.getLogger(__name__)
 
 
-def parse_naumen_page(page: str, type_page: PageType, name_report: str = '',
-                      ) -> Sequence:
+def parse_naumen_page(page: str, type_page: Union[PageType, None],
+                      name_report: str = '') -> Sequence:
 
     """Функция парсинга страниц из crm Naumen, входной интерфейс подмодуля.
 
     Args:
-        page: страница которую требуется распарсить.
-        type_page: тип страницы
-        name_report: уникальное имя сформированное отчёта. По умолчанию ''
+        page (str): страница которую требуется распарсить.
+        type_page (Union[PageType, None]): тип страницы
+        name_report (str): уникальное имя сформированное отчёта.
+        По умолчанию ''
 
     Returns:
         Sequence: Результат парсинга страницы, коллекция распаршенных элементов

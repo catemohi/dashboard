@@ -24,7 +24,8 @@ class AppConfig:
 
         Args:
             config (Mapping): параметры конфигурации.По умолчанию {}.
-            config_path (Union[PurePath, None]): путь к файлу конфигрурации. По умолчанию None.
+            config_path (Union[PurePath, None]): путь к файлу конфигрурации.
+            По умолчанию None.
         """
         self.config = config
         self._config_path = config_path
@@ -184,10 +185,10 @@ def create_naumen_request(obj: Union[TypeReport, SearchType],
         obj (Union[TypeReport, SearchType]): обьект, который необходимо
         создать/получить из CRM.
         request_type (NaumenRequestType): типа запроса
-        mod_params (Union[Tuple[Tuple[str, Any]], Tuple]): параметры, которые необходимо
-        модифицировать в запроса
-        mod_data (Union[Tuple[Tuple[str, Any]], Tuple]): данные, которые необходимо
-        модифицировать в запросе
+        mod_params (Union[Tuple[Tuple[str, Any]], Tuple]): параметры, которые
+        необходимо модифицировать в запроса
+        mod_data (Union[Tuple[Tuple[str, Any]], Tuple]): данные, которые
+        необходимо модифицировать в запросе
         *args: позиционные аргументы(не используются)
         **kwargs: именнованные аргументы для создания отчёта.
 
