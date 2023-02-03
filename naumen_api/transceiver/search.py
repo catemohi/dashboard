@@ -1,6 +1,6 @@
 import logging
 from time import sleep
-from typing import Any, Iterable, Tuple
+from typing import Any, List, Iterable, Sequence, Mapping, Tuple, Union
 
 from .crm import ActiveConnect, get_crm_response
 from ..config.structures import NaumenRequestType, PageType, SearchType
@@ -11,9 +11,10 @@ from ..parser.parser import parse_naumen_page
 log = logging.getLogger(__name__)
 
 
-def search(crm: ActiveConnect, report: SearchType, *args,
-           mod_params: Tuple[Tuple[str, Any]] = (),
-           mod_data: Tuple[Tuple[str, Any]] = (), **kwargs) -> Iterable:
+def search(crm: ActiveConnect, report: SearchType, *args: Sequence,
+           mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+           mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+           **kwargs: Mapping) -> Iterable:
     """Функция для получения отчёта из CRM.
 
     Args:
@@ -30,7 +31,7 @@ def search(crm: ActiveConnect, report: SearchType, *args,
     Raises:
         CantGetData: в случае невозможности вернуть коллекцию.
     """
-    collect = []
+    collect: List = []
     if report in [SearchType.ISSUES_SEARCH]:
         get_crm_response(crm, TypeReport.CONTROL_ENABLE_SEARCH,
                          NaumenRequestType.CONTROL)
@@ -41,19 +42,20 @@ def search(crm: ActiveConnect, report: SearchType, *args,
         naumen_responce = get_crm_response(crm, report,
                                            NaumenRequestType.SEARCH_REPORT,
                                            *args, mod_params=mod_params,
-                                           mod_data=mod_data, **kwargs)
+                                           mod_data=mod_data, method='POST',
+                                           **kwargs)
         page_text = naumen_responce.text
         log.debug('Проверка количества страниц')
         page_count = parse_naumen_page(page_text, PageType.PAGINATION_PAGE)
         log.debug(f'Количество страниц: {page_count}')
         page_collection = [page_text]
-        for i in range(1, page_count):
-            mod_params = dict(mod_params)
-            mod_params.update({'pagination': str(i)})
-            mod_params = tuple(mod_params.items())
+        for i in range(1, page_count):  # type: ignore
+            _ = dict(mod_params)
+            _.update({'pagination': str(i)})
+            mod_params = tuple(_.items())
             naumen_responce = get_crm_response(
                 crm, report, NaumenRequestType.CREATE_REPORT, *args,
-                mod_params=mod_params, mod_data=mod_data,
+                mod_params=mod_params, mod_data=mod_data, method='GET',
                 **kwargs)
             page_collection.append(naumen_responce.text)
         for page in page_collection:

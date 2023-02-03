@@ -8,8 +8,9 @@ class ConnectionsFailed(Exception):
     """
 
     def __init__(self,
-                 message="Неудалось создать подключение используя "
-                 "переданные данные. Проверьте данные и маршрут до системы."):
+                 message: str = ("Неудалось создать подключение используя "
+                                 "переданные данные. Проверьте данные и "
+                                 "маршрут до системы.")) -> None:
         self.message = message
         super().__init__(self.message)
 
@@ -31,7 +32,7 @@ class InvalidDate(Exception):
             message: объяснение ошибки.
     """
 
-    def __init__(self,
-                 message="Формат даты неверный. Необходимый формат %d.%m.%Y"):
+    def __init__(self, message: str = ("Формат даты неверный."
+                                       "Необходимый формат %d.%m.%Y")) -> None:
         self.message = message
         super().__init__(self.message)
