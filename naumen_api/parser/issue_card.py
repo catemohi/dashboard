@@ -124,7 +124,7 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
         log.debug(f'Получено больше {needed_time_string_count} '
                   'значений даты. Возвращаем последнюю.')
         # возвращаем самую последнюю дату.
-        return_to_work_time = sorted(times)[-1]
+        return_to_work_time = sorted(times)[-1]  # type: ignore
     else:
         return_to_work_time = times[0]
     log.info(f'Найдена дата возврата в работу {return_to_work_time}')
