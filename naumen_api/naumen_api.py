@@ -102,6 +102,8 @@ class Client:
         number: Union[str, int] = "",
         name_contragent: str = "",
         number_contragent: Union[str, int] = "",
+        parse_issue_history: bool = False,
+        parse_issue_card: bool = False,
         **kwargs: Mapping,
     ) -> FORMATTED_RESPONSE:
         """Метод для получения для поиска обращения
@@ -110,6 +112,8 @@ class Client:
             number (int): номер обращения.
             name_contragent (str): имя контрагента.
             number_contragent (int): номер контрагента.
+            parse_issue_card (bool): собирать ли информацию с карточки обращения
+            parse_issue_history (bool): собирать ли информацию о работе по задаче
             *args: не используются и не пробрасываются.
             **kwargs: другие именнованные аргументы.
 
@@ -132,6 +136,10 @@ class Client:
             "byCntrTitle": name_contragent,
             "byCntrNumber": number_contragent,
         }
+        add_kwarg: Mapping = {
+            "parse_issue_history": parse_issue_history,
+            "parse_issue_cards": parse_issue_card,
+        }
         report_kwargs = tuple(_.items())
         return self._get_response(
             SearchType.ISSUES_SEARCH, mod_data=report_kwargs, mod_params=(), **kwargs
@@ -141,8 +149,8 @@ class Client:
         self,
         *args: Sequence,
         is_vip: bool = False,
-        parse_history: bool = False,
-        parse_issues_cards: bool = False,
+        parse_issue_history: bool = False,
+        parse_issue_card: bool = False,
         **kwargs: Mapping,
     ) -> FORMATTED_RESPONSE:
 
@@ -166,8 +174,8 @@ class Client:
         log.debug(f"Параметр is_vip: {is_vip}")
 
         report_kwargs: Mapping = {
-            "parse_history": parse_history,
-            "parse_issues_cards": parse_issues_cards,
+            "parse_issue_history": parse_issue_history,
+            "parse_issue_cards": parse_issue_card,
         }
         return self._get_response(report, mod_params=(), mod_data=(), **report_kwargs)
 

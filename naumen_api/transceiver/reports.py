@@ -46,12 +46,12 @@ def get_report(
     report_exists = True if naumen_uuid else False
     need_delete_report = False
     is_vip_issues = True if report == TypeReport.ISSUES_VIP_LINE else False
-    parse_history, parse_issues_cards = False, False
+    parse_issue_history, parse_issue_card = False, False
     report_name = get_report_name()
 
     if report in [TypeReport.ISSUES_FIRST_LINE, TypeReport.ISSUES_VIP_LINE]:
         _: Mapping[str, Any] = dict(mod_data)
-        parse_history, parse_issues_cards, _ = _check_issues_report_keys(**_)
+        parse_issue_history, parse_issue_card, _ = _check_issues_report_keys(**_)
         mod_data = tuple(_.items())
 
     if report_exists:
@@ -89,7 +89,7 @@ def get_report(
             if vip_issue:
                 vip_issue.vip_contragent = True
 
-    if parse_issues_cards:
+    if parse_issue_card:
         collect = list(collect)
         log.debug("Парсинг карточек обращений.")
 
@@ -106,7 +106,7 @@ def get_report(
 
             collect[num] = issue
 
-    if parse_history:
+    if parse_issue_history:
         log.debug("Парсинг истории обращений.")
         raise NotImplementedError
 
@@ -135,11 +135,11 @@ def _check_issues_report_keys(
     log.debug(
         "Проверка необходимости парсинга " "карточек обращений и историй обращений."
     )
-    parse_history: bool = kwargs.pop("parse_history", False)  # type: ignore
-    parse_issues_cards: bool = kwargs.pop("parse_issues_cards", False)  # type: ignore
-    log.debug(f"Парсить карточки обращений: {parse_issues_cards}")
-    log.debug(f"Парсить историю: {parse_history}")
-    return (parse_history, parse_issues_cards, kwargs)
+    parse_issue_history: bool = kwargs.pop("parse_issue_history", False)  # type: ignore
+    parse_issue_card: bool = kwargs.pop("parse_issue_card", False)  # type: ignore
+    log.debug(f"Парсить карточки обращений: {parse_issue_card}")
+    log.debug(f"Парсить историю: {parse_issue_history}")
+    return (parse_issue_history, parse_issue_card, kwargs)
 
 
 def _delete_report(crm: ActiveConnect, report: TypeReport, uuid: str) -> bool:
