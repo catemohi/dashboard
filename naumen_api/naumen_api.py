@@ -127,24 +127,15 @@ class Client:
             f"Параметр byCntrNumber: {number_contragent};"
         )
 
-        report_kwargs = {
+        _ = {
             "byNumber": number,
             "byCntrTitle": name_contragent,
             "byCntrNumber": number_contragent,
         }
-        report_kwargs = tuple(report_kwargs.items())
+        report_kwargs = tuple(_.items())
         return self._get_response(
-            SearchType.ISSUES_SEARCH, mod_data=report_kwargs, **kwargs
+            SearchType.ISSUES_SEARCH, mod_data=report_kwargs, mod_params=(), **kwargs
         )
-        # finded_items_obj = loads(finded_items_json)
-
-        # if finded_items_obj["status_code"] != 200:
-        #     return finded_items_json
-
-        # for num, item in enumerate(finded_items_obj["content"]):
-        #     finded_items_obj["content"][
-        #         num] = loads(self.get_issue_card(item['uuid']))["content"]
-        # return finded_items_obj
 
     def get_issues(
         self,
@@ -174,12 +165,11 @@ class Client:
         log.debug("Запрос открытых проблем техподдержки.")
         log.debug(f"Параметр is_vip: {is_vip}")
 
-        report_kwargs = {
+        report_kwargs: Mapping = {
             "parse_history": parse_history,
             "parse_issues_cards": parse_issues_cards,
         }
-        report_kwargs = tuple(report_kwargs.items())
-        return self._get_response(report, **report_kwargs)
+        return self._get_response(report, mod_params=(), mod_data=(), **report_kwargs)
 
     def get_issue_card(
         self, naumen_uuid: str, *args: Sequence, **kwargs: Mapping
@@ -201,7 +191,8 @@ class Client:
 
         report = TypeReport.ISSUE_CARD
         log.debug("Запрос данных с карточки обращения.")
-        return self._get_response(report, **{"naumen_uuid": naumen_uuid})
+        report_kwargs: Mapping = {"naumen_uuid": naumen_uuid}
+        return self._get_response(report, mod_params=(), mod_data=(), **report_kwargs)
 
     def get_sl_report(
         self,
@@ -252,14 +243,17 @@ class Client:
             f"Параметр deadline: {deadline}; "
         )
 
-        report_kwargs = {
+        _ = {
             "start_date": start_date,
             "end_date": end_date,
             "deadline": deadline,
         }
-        report_kwargs = tuple(report_kwargs.items())
+        report_kwargs = tuple(_.items())
         return self._get_response(
-            TypeReport.SERVICE_LEVEL, mod_data=report_kwargs, **kwargs
+            TypeReport.SERVICE_LEVEL,
+            mod_data=report_kwargs,
+            mod_params=(),
+            **kwargs,
         )
 
     def get_mttr_report(
@@ -289,13 +283,13 @@ class Client:
             f"Параметр start_date: {start_date}; " f"Параметр end_date: {end_date}; "
         )
 
-        report_kwargs = {
+        _ = {
             "start_date": start_date,
             "end_date": end_date,
         }
-        report_kwargs = tuple(report_kwargs.items())
+        report_kwargs = tuple(_.items())
         return self._get_response(
-            TypeReport.MTTR_LEVEL, mod_data=report_kwargs, **kwargs
+            TypeReport.MTTR_LEVEL, mod_data=report_kwargs, mod_params=(), **kwargs
         )
 
     def get_flr_report(
@@ -322,18 +316,18 @@ class Client:
             f"Параметр start_date: {start_date}; " f"Параметр end_date: {end_date}; "
         )
 
-        report_kwargs = {
+        _ = {
             "start_date": start_date,
             "end_date": end_date,
         }
-        report_kwargs = tuple(report_kwargs.items())
+        report_kwargs = tuple(_.items())
         return self._get_response(
-            TypeReport.FLR_LEVEL, mod_data=report_kwargs, **kwargs
+            TypeReport.FLR_LEVEL, mod_data=report_kwargs, mod_params=(), **kwargs
         )
 
     def _get_response(
         self,
-        report: TypeReport,
+        report: Union[TypeReport, SearchType],
         mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
         mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
         *args: Sequence,
@@ -343,7 +337,9 @@ class Client:
         """Шаблонный метод для получения ответа от CRM NAUMEN.
 
         Args:
-            report: необходимый отчёт.
+            report (Union[TypeReport, SearchType]): необходимый отчёт.
+            mod_params: (Union[Tuple[Tuple[str, Any]], Tuple]): модифицированные параметры запроса
+            mod_data: (Union[Tuple[Tuple[str, Any]], Tuple]): модифицированный данные запроса
             *args: прокинутые позиционные аргументы.
             **kwargs: прокинутые именнованные аргументы.
 
@@ -366,15 +362,15 @@ class Client:
             if report in TypeReport:
                 call_func = get_report
             elif report in SearchType:
-                call_func = search
+                call_func = search  # type: ignore
 
             content = call_func(
                 self._session,
-                report,
+                report,  # type: ignore
                 mod_params=mod_params,
                 mod_data=mod_data,
                 *args,
-                **kwargs,
+                **kwargs,  # type: ignore
             )
             api_response = ResponseTemplate(StatusType._SUCCESS, content)
             log.info("Ответ на запрос получен.")
@@ -402,3 +398,15 @@ class Client:
             log.exception("Ошибка соединения с CRM NAUMEN.")
             error_response = ResponseTemplate(StatusType._UNAUTHORIZED, ())
             return make_response(error_response, self.formatter)
+
+
+#  TODO
+# finded_items_obj = loads(finded_items_json)
+
+# if finded_items_obj["status_code"] != 200:
+#     return finded_items_json
+
+# for num, item in enumerate(finded_items_obj["content"]):
+#     finded_items_obj["content"][
+#         num] = loads(self.get_issue_card(item['uuid']))["content"]
+# return finded_items_obj
