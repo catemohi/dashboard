@@ -3,22 +3,26 @@ from json import load
 from logging import getLogger
 from pathlib import PurePath
 from random import randint
-from typing import Any, Literal, Mapping, Tuple, Union, Sequence
+from typing import Any, Literal, Mapping, Sequence, Tuple, Union
 
-from .structures import NaumenRequest, SearchOptions, TypeReport
-from .structures import NaumenRequestType, SearchType
 from ..exceptions import CantGetData, InvalidDate
-
+from .structures import (
+    NaumenRequest,
+    NaumenRequestType,
+    SearchOptions,
+    SearchType,
+    TypeReport,
+)
 
 log = getLogger(__name__)
 
 
 class AppConfig:
-    """Класс для хранения настроек приложения и переопределения их.
-    """
+    """Класс для хранения настроек приложения и переопределения их."""
 
-    def __init__(self, config: Mapping = {},
-                 config_path: Union[PurePath, None] = None) -> None:
+    def __init__(
+        self, config: Mapping = {}, config_path: Union[PurePath, None] = None
+    ) -> None:
         """
         Создание обьекта для хранения настроек приложения
 
@@ -43,14 +47,13 @@ class AppConfig:
         self._config_path = PurePath(value)
 
     def load_config(self) -> None:
-        """Метод для генирации конфигурационного атрибута.
-        """
+        """Метод для генирации конфигурационного атрибута."""
 
         if self.config_path is None:
             self._config_path = PurePath(__file__).with_name("config.json")
 
         path_to_config = str(self.config_path)
-        with open(path_to_config, encoding='utf-8') as file:
+        with open(path_to_config, encoding="utf-8") as file:
             self.config = load(file)
 
 
@@ -69,15 +72,16 @@ def _validate_date(check_date: str) -> str:
     """
 
     try:
-        return datetime.strptime(check_date, '%d.%m.%Y').strftime("%d.%m.%Y")
+        return datetime.strptime(check_date, "%d.%m.%Y").strftime("%d.%m.%Y")
     except ValueError:
         raise InvalidDate
     except TypeError:
         raise InvalidDate
 
 
-def _params_erector(params: Mapping[str, Mapping[Literal['name', 'value'],
-                                                 str]]) -> Mapping[str, str]:
+def _params_erector(
+    params: Mapping[str, Mapping[Literal["name", "value"], str]]
+) -> Mapping[str, str]:
     """Функция для уплотнения, даты или параметров запроса.
 
     Args:
@@ -87,8 +91,9 @@ def _params_erector(params: Mapping[str, Mapping[Literal['name', 'value'],
         Mapping: Готовый словарь для запроса.
     """
 
-    return dict([[val for _, val in root_val.items()
-                  ] for _, root_val in params.items()])
+    return dict(
+        [[val for _, val in root_val.items()] for _, root_val in params.items()]
+    )
 
 
 def get_report_name() -> str:
@@ -103,8 +108,10 @@ def get_report_name() -> str:
     return f"ID{randint(1000000,9999999)}"
 
 
-def get_search_create_report_params(report: TypeReport, report_name: str,
-                                    ) -> SearchOptions:
+def get_search_create_report_params(
+    report: TypeReport,
+    report_name: str,
+) -> SearchOptions:
     """Функция для формирования параметров для поиска созданного отчета
 
     Args:
@@ -114,18 +121,19 @@ def get_search_create_report_params(report: TypeReport, report_name: str,
     Returns:
         SearchOptions: параметры для поиска созданного отчета
     """
-    delay_attems = CONFIG.config[report.value]['delay_attems']['value']
-    num_attems = CONFIG.config[report.value]['num_attems']['value']
-    uuid = CONFIG.config[report.value]['uuid']
+    delay_attems = CONFIG.config[report.value]["delay_attems"]["value"]
+    num_attems = CONFIG.config[report.value]["num_attems"]["value"]
+    uuid = CONFIG.config[report.value]["uuid"]
     search_options = SearchOptions(report_name, delay_attems, num_attems, uuid)
     return search_options
 
 
-def configure_params(report: Union[TypeReport, SearchType],
-                     request_type: NaumenRequestType,
-                     mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
-                     mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
-                     ) -> NaumenRequest:
+def configure_params(
+    report: Union[TypeReport, SearchType],
+    request_type: NaumenRequestType,
+    mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+    mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+) -> NaumenRequest:
     """Функция для создания, даты или параметров запроса.
 
     Args:
@@ -140,19 +148,18 @@ def configure_params(report: Union[TypeReport, SearchType],
         SearchOptions: параметры для поиска созданного отчета
     """
     url_map = {
-        NaumenRequestType.CREATE_REPORT: CONFIG.config['url']['create'],
-        NaumenRequestType.SEARCH_REPORT: CONFIG.config['url']['open'],
-        NaumenRequestType.DELETE_REPORT: CONFIG.config['url']['delete'],
-        NaumenRequestType.CONTROL: CONFIG.config['url']['control'],
+        NaumenRequestType.CREATE_REPORT: CONFIG.config["url"]["create"],
+        NaumenRequestType.SEARCH_REPORT: CONFIG.config["url"]["open"],
+        NaumenRequestType.DELETE_REPORT: CONFIG.config["url"]["delete"],
+        NaumenRequestType.CONTROL: CONFIG.config["url"]["control"],
     }
-    date_name_keys = ('start_date', 'end_date')
+    date_name_keys = ("start_date", "end_date")
 
     try:
         headers = CONFIG.config["headers"]
         verify = CONFIG.config["verify"]["value"]
-        data = CONFIG.config[report.value][request_type.value]['data'].copy()
-        params = CONFIG.config[report.value][request_type.value]['params']\
-            .copy()
+        data = CONFIG.config[report.value][request_type.value]["data"].copy()
+        params = CONFIG.config[report.value][request_type.value]["params"].copy()
         url = url_map[request_type]
     except KeyError:
         raise CantGetData
@@ -160,10 +167,10 @@ def configure_params(report: Union[TypeReport, SearchType],
     for name, value in mod_data:
         if name in date_name_keys:
             value = _validate_date(value)
-        data[name]['value'] = value
+        data[name]["value"] = value
 
     for name, value in mod_params:
-        params[name]['value'] = value
+        params[name]["value"] = value
 
     data = _params_erector(data)
     params = _params_erector(params)
@@ -172,12 +179,14 @@ def configure_params(report: Union[TypeReport, SearchType],
     return request
 
 
-def create_naumen_request(obj: Union[TypeReport, SearchType],
-                          request_type: NaumenRequestType,
-                          mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
-                          mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
-                          *args: Sequence,
-                          **kwargs: Mapping) -> NaumenRequest:
+def create_naumen_request(
+    obj: Union[TypeReport, SearchType],
+    request_type: NaumenRequestType,
+    mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+    mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+    *args: Sequence,
+    **kwargs: Mapping,
+) -> NaumenRequest:
 
     """Метод для создания первичного запроса в NAUMEN .
 
@@ -199,17 +208,17 @@ def create_naumen_request(obj: Union[TypeReport, SearchType],
         CantGetData: в случае невозможности вернуть коллекцию.
     """
 
-    log.debug(f'Запуск создания отчета: {obj}')
-    log.debug(f'Переданы модифицированные params: {mod_params}')
-    log.debug(f'Переданы модифицированные data: {mod_data}')
-    log.debug(f'Переданы параметры args: {args}')
-    log.debug(f'Переданы параметры kwargs: {kwargs}')
+    log.debug(f"Запуск создания отчета: {obj}")
+    log.debug(f"Переданы модифицированные params: {mod_params}")
+    log.debug(f"Переданы модифицированные data: {mod_data}")
+    log.debug(f"Переданы параметры args: {args}")
+    log.debug(f"Переданы параметры kwargs: {kwargs}")
 
     if not any([isinstance(obj, TypeReport), isinstance(obj, SearchType)]):
         raise CantGetData
 
     naumen_reuqest = configure_params(obj, request_type, mod_data, mod_params)
-    log.debug(f'Запрос к CRM: {naumen_reuqest}')
+    log.debug(f"Запрос к CRM: {naumen_reuqest}")
     return naumen_reuqest
 
 

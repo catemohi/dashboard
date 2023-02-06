@@ -5,7 +5,6 @@ from typing import Any, Iterable, NamedTuple, Type
 
 from ..config.structures import StatusType
 
-
 FORMATTED_RESPONSE = str
 
 
@@ -13,10 +12,11 @@ class ResponseTemplate(NamedTuple):
 
     """Класс данных для хранения сформированного запроса к CRM Naumen.
 
-        Attributes:
-            status: состояние ответа
-            content: содержание ответа
+    Attributes:
+        status: состояние ответа
+        content: содержание ответа
     """
+
     status: StatusType
     content: Iterable
 
@@ -25,8 +25,8 @@ class ResponseFormatter:
 
     """Интерфейс для любых классов создания ответа.
 
-        Attributes:
-            FORMATTED_RESPONSE: форматированный ответа.
+    Attributes:
+        FORMATTED_RESPONSE: форматированный ответа.
     """
 
     @classmethod
@@ -65,32 +65,35 @@ class JSONResponseFormatter(ResponseFormatter):
         """
 
         dict_for_json = {
-            'status_code': api_response.status.code,
-            'status_message': api_response.status.message,
-            'description': api_response.status.description,
-            'content': api_response.content,
+            "status_code": api_response.status.code,
+            "status_message": api_response.status.message,
+            "description": api_response.status.description,
+            "content": api_response.content,
         }
         json_string = json.dumps(
-            dict_for_json, sort_keys=False, ensure_ascii=False,
-            separators=(',', ': '), cls=EnhancedJSONEncoder,
+            dict_for_json,
+            sort_keys=False,
+            ensure_ascii=False,
+            separators=(",", ": "),
+            cls=EnhancedJSONEncoder,
         )
         return json_string
 
 
 class EnhancedJSONEncoder(json.JSONEncoder):
-
     def default(self, encoding_object: Any) -> Any:
         if is_dataclass(encoding_object):
             return asdict(encoding_object)
         if isinstance(encoding_object, datetime):
-            return datetime.strftime(encoding_object, '%d.%m.%Y %H:%M:%S')
+            return datetime.strftime(encoding_object, "%d.%m.%Y %H:%M:%S")
         if isinstance(encoding_object, timedelta):
             return encoding_object.total_seconds()
         return super().default(encoding_object)
 
 
-def make_response(api_response: ResponseTemplate,
-                  formatter: Type[ResponseFormatter]) -> FORMATTED_RESPONSE:
+def make_response(
+    api_response: ResponseTemplate, formatter: Type[ResponseFormatter]
+) -> FORMATTED_RESPONSE:
 
     """Функция форматорования ответа.
 

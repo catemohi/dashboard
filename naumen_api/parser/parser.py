@@ -1,17 +1,25 @@
 import logging
 from typing import Callable, Mapping, Sequence, Union
 
-from . import flr, issue_card, issues, mttr, report_page, service_level
-from . import pagination, search_result_issues
-from .parser_base import PageType
 from ..exceptions import CantGetData
-
+from . import (
+    flr,
+    issue_card,
+    issues,
+    mttr,
+    pagination,
+    report_page,
+    search_result_issues,
+    service_level,
+)
+from .parser_base import PageType
 
 log = logging.getLogger(__name__)
 
 
-def parse_naumen_page(page: str, type_page: Union[PageType, None],
-                      name_report: str = '') -> Sequence:
+def parse_naumen_page(
+    page: str, type_page: Union[PageType, None], name_report: str = ""
+) -> Sequence:
 
     """Функция парсинга страниц из crm Naumen, входной интерфейс подмодуля.
 
@@ -29,11 +37,13 @@ def parse_naumen_page(page: str, type_page: Union[PageType, None],
 
     """
 
-    log.debug('Запущена функция парсинга страницы.'
-              f'Имя необходимого отчета: {name_report}.'
-              f'Тип отчёта: {type_page}')
+    log.debug(
+        "Запущена функция парсинга страницы."
+        f"Имя необходимого отчета: {name_report}."
+        f"Тип отчёта: {type_page}"
+    )
     if not isinstance(type_page, PageType):
-        log.error(f'Не зарегистрированный тип страницы: {type_page}')
+        log.error(f"Не зарегистрированный тип страницы: {type_page}")
         raise CantGetData
 
     page_parsers: Mapping[PageType, Callable] = {
@@ -48,6 +58,6 @@ def parse_naumen_page(page: str, type_page: Union[PageType, None],
     }
 
     parser = page_parsers[type_page]
-    log.debug(f'Получен парсер: {parser.__name__} для страницы: {type_page}')
+    log.debug(f"Получен парсер: {parser.__name__} для страницы: {type_page}")
     parsed_collections = parser(page, name_report)
     return parsed_collections

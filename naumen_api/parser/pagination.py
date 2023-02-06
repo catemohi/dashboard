@@ -1,11 +1,10 @@
 import logging
 from dataclasses import dataclass
-from typing import Sequence, Mapping
+from typing import Mapping, Sequence
 
 from bs4 import BeautifulSoup
 
 from .parser_base import _validate_text_for_parsing
-
 
 log = logging.getLogger(__name__)
 
@@ -15,18 +14,18 @@ class PaginationPage:
 
     """Класс данных для хранения данных одного результата поиска по обращениям.
 
-        Attributes:
-            number: номер обращения
-            url: ссылка на следующую страницу пагинации
+    Attributes:
+        number: номер обращения
+        url: ссылка на следующую страницу пагинации
 
 
     """
+
     number: int = 0
-    url: str = ''
+    url: str = ""
 
 
-def parse(text: str, *args: Sequence, **kwargs: Mapping
-          ) -> int:
+def parse(text: str, *args: Sequence, **kwargs: Mapping) -> int:
 
     """Функция парсинга пагинации страницы
 
@@ -45,7 +44,7 @@ def parse(text: str, *args: Sequence, **kwargs: Mapping
     i = 1
     raw_page_collection = []
     while i > 0:
-        page = soup.find(attrs={'id': f'advSearchTab.searchResults_page{i}'})
+        page = soup.find(attrs={"id": f"advSearchTab.searchResults_page{i}"})
         if page:
             raw_page_collection.append(page)
             i += 1

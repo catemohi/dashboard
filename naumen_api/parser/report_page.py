@@ -3,9 +3,7 @@ from typing import Sequence, Union
 
 from bs4 import BeautifulSoup
 
-from .parser_base import _get_url_param_value
-from .parser_base import _validate_text_for_parsing
-
+from .parser_base import _get_url_param_value, _validate_text_for_parsing
 
 log = logging.getLogger(__name__)
 
@@ -25,13 +23,13 @@ def parse(text: str, name: str) -> Union[Sequence[str], None]:
 
     """
 
-    log.debug(f'Поиск отчета с именем: {name}')
+    log.debug(f"Поиск отчета с именем: {name}")
     _validate_text_for_parsing(text)
     soup = BeautifulSoup(text, "html.parser")
     report_tag = soup.select(f'[title="{name}"]')
     if report_tag:
-        log.debug(f'Отчет с именем {name} найден.')
-        url = report_tag[0]['href']
-        return (str(_get_url_param_value(url, 'uuid')), )
-    log.debug(f'Отчет с именем {name} не найден.')
+        log.debug(f"Отчет с именем {name} найден.")
+        url = report_tag[0]["href"]
+        return (str(_get_url_param_value(url, "uuid")),)
+    log.debug(f"Отчет с именем {name} не найден.")
     return None

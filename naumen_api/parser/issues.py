@@ -2,14 +2,15 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from re import findall
-from typing import Any, Iterable, Sequence, Mapping, Union, Tuple
+from typing import Any, Iterable, Mapping, Sequence, Tuple, Union
 
 from bs4 import BeautifulSoup, element
 
-from .parser_base import _get_columns_name
-from .parser_base import _get_url_param_value
-from .parser_base import _validate_text_for_parsing
-
+from .parser_base import (
+    _get_columns_name,
+    _get_url_param_value,
+    _validate_text_for_parsing,
+)
 
 log = logging.getLogger(__name__)
 
@@ -19,60 +20,61 @@ class Issue:
 
     """Класс данных для хранения данных по обращению.
 
-        Attributes:
-            uuid: уникалный идентификатор обьекта в CRM системе.
-            number: номер обращения.
-            name: название обращения.
-            issue_type: тип обращения
-            step: шаг на котром находится обращение.
-            step_time: время последнего шага .
-            uuid_responsible: уникалный идентификатор обьекта в CRM системе.
-            responsible: ответственный за последний шаг.
-            last_edit_time: время последнего изменения.
-            vip_contragent: имеет ли клиент статус vip.
-            creation_date: дата создания обращения.
-            uuid_service: уникалный идентификатор обьекта в CRM системе.
-            name_service: название услуги.
-            info_service: данные услуги
-            uuid_contragent: уникалный идентификатор обьекта в CRM системе.
-            name_contragent: название контр агента.
-            return_to_work_time: время возврата обращения в работу.
-            description: описание обращения.
-            diagnostics: диагностика
-            required_date: стандартная дата отработки обращения
-            close_date: дата закрытия обращения
-            client_requisite: реквизиты клиента
-            contact: контакты клиента
+    Attributes:
+        uuid: уникалный идентификатор обьекта в CRM системе.
+        number: номер обращения.
+        name: название обращения.
+        issue_type: тип обращения
+        step: шаг на котром находится обращение.
+        step_time: время последнего шага .
+        uuid_responsible: уникалный идентификатор обьекта в CRM системе.
+        responsible: ответственный за последний шаг.
+        last_edit_time: время последнего изменения.
+        vip_contragent: имеет ли клиент статус vip.
+        creation_date: дата создания обращения.
+        uuid_service: уникалный идентификатор обьекта в CRM системе.
+        name_service: название услуги.
+        info_service: данные услуги
+        uuid_contragent: уникалный идентификатор обьекта в CRM системе.
+        name_contragent: название контр агента.
+        return_to_work_time: время возврата обращения в работу.
+        description: описание обращения.
+        diagnostics: диагностика
+        required_date: стандартная дата отработки обращения
+        close_date: дата закрытия обращения
+        client_requisite: реквизиты клиента
+        contact: контакты клиента
     """
 
-    uuid: str = ''
-    number: str = ''
-    name: str = ''
-    issue_type: str = ''
-    step: str = ''
+    uuid: str = ""
+    number: str = ""
+    name: str = ""
+    issue_type: str = ""
+    step: str = ""
     step_time: timedelta = timedelta(0, 0)
-    uuid_responsible: str = ''
-    responsible: str = ''
+    uuid_responsible: str = ""
+    responsible: str = ""
     last_edit_time: Union[datetime, None] = None
     vip_contragent: bool = False
     creation_date: datetime = datetime.now()
-    uuid_service: Union[Tuple, str] = ''
-    name_service: Union[Tuple, str] = ''
+    uuid_service: Union[Tuple, str] = ""
+    name_service: Union[Tuple, str] = ""
     info_service: Sequence = ()
-    uuid_contragent: str = ''
-    name_contragent: str = ''
-    contragent_category: str = ''
+    uuid_contragent: str = ""
+    name_contragent: str = ""
+    contragent_category: str = ""
     return_to_work_time: Union[datetime, None] = None
-    description: str = ''
-    diagnostics: Union[Sequence[Sequence[Any]], Sequence] = ''
+    description: str = ""
+    diagnostics: Union[Sequence[Sequence[Any]], Sequence] = ""
     required_date: Union[datetime, None] = None
     close_date: Union[datetime, None] = None
     client_requisite: Sequence = ()
     contact: Sequence = ()
 
 
-def parse(text: str, *args: Sequence, **kwargs: Mapping
-          ) -> Union[Sequence[Issue], Sequence]:
+def parse(
+    text: str, *args: Sequence, **kwargs: Mapping
+) -> Union[Sequence[Issue], Sequence]:
 
     """Функция парсинга страницы с обращениями на группе.
 
@@ -93,8 +95,9 @@ def parse(text: str, *args: Sequence, **kwargs: Mapping
     if len(rows) < 1:
         return ()
 
-    def parse_table_row(row: element.Tag, category: Iterable[str]
-                        ) -> Union[Issue, None]:
+    def parse_table_row(
+        row: element.Tag, category: Iterable[str]
+    ) -> Union[Issue, None]:
         """Функция парсинга строки таблицы.
 
         Args:
@@ -107,25 +110,24 @@ def parse(text: str, *args: Sequence, **kwargs: Mapping
         """
 
         issue = Issue()
-        issus_params = [
-            col.text.replace('\n', '').strip() for col in row.select('td')]
+        issus_params = [col.text.replace("\n", "").strip() for col in row.select("td")]
         issues_dict = dict(zip(category, issus_params))
-        url_tag = row.find('a', href=True)
+        url_tag = row.find("a", href=True)
 
         if url_tag is None:
             # Если нет ссылки то неудасться спарсить uuid.
             # Uuid это первичный ключ в БД, возращаем None.
             return None
 
-        _url = url_tag['href']
-        issue.uuid = _get_url_param_value(_url, 'uuid')
-        issue.number = _get_issue_num(issues_dict['Обращение'])
-        issue.step_time = _get_step_duration(issues_dict['Время решения'])
+        _url = url_tag["href"]
+        issue.uuid = _get_url_param_value(_url, "uuid")
+        issue.number = _get_issue_num(issues_dict["Обращение"])
+        issue.step_time = _get_step_duration(issues_dict["Время решения"])
         issue.last_edit_time = datetime.now() - issue.step_time
-        issue.name = issues_dict['Обращение']
-        issue.issue_type = issues_dict['Тип обращения']
-        issue.step = issues_dict['Состояние']
-        issue.responsible = issues_dict['Ответственный']
+        issue.name = issues_dict["Обращение"]
+        issue.issue_type = issues_dict["Тип обращения"]
+        issue.step = issues_dict["Состояние"]
+        issue.responsible = issues_dict["Ответственный"]
         return issue
 
     collection = [parse_table_row(row, category) for row in rows]
@@ -148,7 +150,7 @@ def _get_issue_num(issue_name: str) -> str:
 
     """
 
-    number = findall(r'\d{7,10}', issue_name)[0]
+    number = findall(r"\d{7,10}", issue_name)[0]
     return str(number)
 
 
@@ -166,9 +168,10 @@ def _get_step_duration(raw_duration: str) -> timedelta:
 
     """
 
-    raw_duration_dict = dict(zip(('days', 'h', 'min'),
-                                 findall(r'\d+', raw_duration)))
-    duration = timedelta(days=int(raw_duration_dict['days']),
-                         hours=int(raw_duration_dict['h']),
-                         minutes=int(raw_duration_dict['min']))
+    raw_duration_dict = dict(zip(("days", "h", "min"), findall(r"\d+", raw_duration)))
+    duration = timedelta(
+        days=int(raw_duration_dict["days"]),
+        hours=int(raw_duration_dict["h"]),
+        minutes=int(raw_duration_dict["min"]),
+    )
     return duration
