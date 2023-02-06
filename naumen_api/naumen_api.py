@@ -142,7 +142,7 @@ class Client:
         }
         report_kwargs = tuple(_.items())
         return self._get_response(
-            SearchType.ISSUES_SEARCH, mod_data=report_kwargs, mod_params=(), **kwargs
+            SearchType.ISSUES_SEARCH, mod_data=report_kwargs, mod_params=(), **add_kwarg
         )
 
     def get_issues(

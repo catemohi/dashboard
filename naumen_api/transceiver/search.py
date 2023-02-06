@@ -5,6 +5,7 @@ from typing import Any, Iterable, List, Mapping, Sequence, Tuple, Union
 from ..config.structures import NaumenRequestType, PageType, SearchType, TypeReport
 from ..parser.parser import parse_naumen_page
 from .crm import ActiveConnect, get_crm_response
+from .reports import _check_issues_report_keys
 
 log = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ def search(
     """
     collect: List = []
     if report in [SearchType.ISSUES_SEARCH]:
+        parse_issue_history, parse_issue_card, _ = _check_issues_report_keys(**kwargs)
         get_crm_response(
             crm, TypeReport.CONTROL_ENABLE_SEARCH, NaumenRequestType.CONTROL
         )
