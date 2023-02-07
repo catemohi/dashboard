@@ -164,8 +164,8 @@ class TypeReport(Enum):
         }
         try:
             return page_dict[self.name]
-        except (KeyError, TypeError):
-            raise CantGetData
+        except (KeyError, TypeError) as exc:
+            raise CantGetData from exc
 
 
 class SearchOptions(NamedTuple):
@@ -205,5 +205,5 @@ class SearchType(Enum):
         }
         try:
             return page_dict[self.name]
-        except (KeyError, TypeError):
-            raise CantGetData
+        except (KeyError, TypeError) as exc:
+            raise CantGetData from exc
