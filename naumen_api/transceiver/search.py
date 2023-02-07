@@ -38,11 +38,15 @@ def search(
     if report in [SearchType.ISSUES_SEARCH]:
         parse_issue_history, parse_issue_card, _ = _check_issues_report_keys(**kwargs)
         get_crm_response(
-            crm, TypeReport.CONTROL_ENABLE_SEARCH, NaumenRequestType.CONTROL
+            crm,
+            TypeReport.CONTROL_ENABLE_SEARCH,
+            NaumenRequestType.CONTROL,
         )
         sleep(1)
         get_crm_response(
-            crm, TypeReport.CONTROL_SELECT_SEARCH, NaumenRequestType.CONTROL
+            crm,
+            TypeReport.CONTROL_SELECT_SEARCH,
+            NaumenRequestType.CONTROL,
         )
         sleep(2)
         naumen_responce = get_crm_response(

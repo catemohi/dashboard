@@ -12,7 +12,8 @@ log = logging.getLogger(__name__)
 
 
 def _get_date_range(
-    date_first: Union[str, datetime], date_second: Union[str, datetime]
+    date_first: Union[str, datetime],
+    date_second: Union[str, datetime],
 ) -> Sequence[datetime]:
 
     """Функция для создания коллекции чисел.
@@ -45,7 +46,9 @@ def _get_date_range(
 
 
 def _forming_days_dict(
-    date_range: Sequence[datetime], day_collection: Sequence, report_type: PageType
+    date_range: Sequence[datetime],
+    day_collection: Sequence,
+    report_type: PageType,
 ) -> Dict:
 
     """Функция для преобразование сырых спаршенных данных к словарю с
@@ -76,7 +79,9 @@ def _forming_days_dict(
 
 
 def _forming_days_collecion(
-    data_table: Sequence, label: Sequence, report_type: PageType
+    data_table: Sequence,
+    label: Sequence,
+    report_type: PageType,
 ) -> Sequence:
 
     """Функция для преобразование сырых данных bs4 в коллекцию словарей.
@@ -97,7 +102,7 @@ def _forming_days_collecion(
             [
                 report_type == PageType.SERVICE_LEVEL_REPORT_PAGE,
                 not elem[0].isdigit(),
-            ]
+            ],
         ):
             elem.insert(0, day_collection[num - 1][0])
 
@@ -105,7 +110,7 @@ def _forming_days_collecion(
             [
                 report_type == PageType.FLR_LEVEL_REPORT_PAGE,
                 len(elem) < 5,
-            ]
+            ],
         ):
             elem.insert(0, day_collection[num - 1][0])
 
@@ -138,7 +143,9 @@ def _get_columns_name(soup: BeautifulSoup) -> Sequence[str]:
 
 
 def _parse_date_report(
-    soup: BeautifulSoup, name_start_date: str, name_end_date: str
+    soup: BeautifulSoup,
+    name_start_date: str,
+    name_end_date: str,
 ) -> Iterable[str]:
 
     """Функция парсинга дат отчёта, со страницы отчёта.

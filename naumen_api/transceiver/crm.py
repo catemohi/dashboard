@@ -58,15 +58,17 @@ def get_crm_response(
     mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
     mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
     method: Literal["GET", "POST"] = "POST",
-    **kwargs: Mapping
+    **kwargs: Mapping,
 ) -> Response:
     """Функция для получения ответа из CRM системы.
 
     Args:
         crm: сессия с CRM Naumen.
         obj (Union[TypeReport, SearchType]): обьект которого строится запрос.
-        mod_params (Union[Tuple[Tuple[str, Any]], Tuple]): модифицированные параметры запроса
-        mod_params (Union[Tuple[Tuple[str, Any]], Tuple]): модифицированные данные запроса
+        mod_params (Union[Tuple[Tuple[str, Any]], Tuple]): модифицированные
+        параметры запроса
+        mod_params (Union[Tuple[Tuple[str, Any]], Tuple]): модифицированные
+        данные запроса
         method: HTTP метод.
 
     Returns:
@@ -87,7 +89,10 @@ def get_crm_response(
         )
     else:
         _response = crm.session.get(
-            url=rq.url, headers=rq.headers, params=rq.params, verify=rq.verify
+            url=rq.url,
+            headers=rq.headers,
+            params=rq.params,
+            verify=rq.verify,
         )
     if _response.status_code != 200:
         raise CantGetData

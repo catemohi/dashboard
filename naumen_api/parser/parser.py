@@ -18,7 +18,9 @@ log = logging.getLogger(__name__)
 
 
 def parse_naumen_page(
-    page: str, type_page: Union[PageType, None], name_report: str = ""
+    page: str,
+    type_page: Union[PageType, None],
+    name_report: str = "",
 ) -> Sequence:
 
     """Функция парсинга страниц из crm Naumen, входной интерфейс подмодуля.
@@ -40,7 +42,7 @@ def parse_naumen_page(
     log.debug(
         "Запущена функция парсинга страницы."
         f"Имя необходимого отчета: {name_report}."
-        f"Тип отчёта: {type_page}"
+        f"Тип отчёта: {type_page}",
     )
     if not isinstance(type_page, PageType):
         log.error(f"Не зарегистрированный тип страницы: {type_page}")

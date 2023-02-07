@@ -69,7 +69,8 @@ def parse(
 
 
 def _parse_result_table(
-    soup: BeautifulSoup, category: Sequence[str]
+    soup: BeautifulSoup,
+    category: Sequence[str],
 ) -> Union[Sequence[SearchIssueResult], Sequence]:
     """Функция парсинга таблицы с результатами поиска.
 

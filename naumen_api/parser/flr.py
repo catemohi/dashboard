@@ -38,7 +38,9 @@ class Flr:
 
 
 def parse(
-    text: str, *args: Sequence, **kwargs: Mapping
+    text: str,
+    *args: Sequence,
+    **kwargs: Mapping,
 ) -> Union[Sequence[Flr], Sequence]:
 
     """Функция парсинга карточки обращения.
@@ -58,7 +60,9 @@ def parse(
     _validate_text_for_parsing(text)
     soup = BeautifulSoup(text, "html.parser")
     start_date, end_date = _parse_date_report(
-        soup, "Дата перевода, с", "Дата перевода, по"
+        soup,
+        "Дата перевода, с",
+        "Дата перевода, по",
     )
     log.debug(f"Получены даты отчета с {start_date} по {end_date}")
     label = _get_columns_name(soup)
@@ -66,17 +70,21 @@ def parse(
     data_table = soup.find("table", id="stdViewpart0.part0_TableList")
     data_table = data_table.find_all("tr")[3:-1]
     day_collection = _forming_days_collecion(
-        data_table, label, PageType.FLR_LEVEL_REPORT_PAGE
+        data_table,
+        label,
+        PageType.FLR_LEVEL_REPORT_PAGE,
     )
     date_range = _get_date_range(start_date, end_date)
     days = _forming_days_dict(
-        date_range, day_collection, PageType.FLR_LEVEL_REPORT_PAGE
+        date_range,
+        day_collection,
+        PageType.FLR_LEVEL_REPORT_PAGE,
     )
     days = _flr_data_completion(days, label)
     collection = _formating_flr_data(days)
     log.debug(
         f"Парсинг завершился успешно. Колекция отчетов FLR "
-        f"с {start_date} по {end_date} содержит {len(collection)} элем."
+        f"с {start_date} по {end_date} содержит {len(collection)} элем.",
     )
     return tuple(collection)
 
@@ -112,8 +120,8 @@ def _flr_data_completion(days: dict, lable: Sequence) -> Dict[int, Sequence]:
                             num_issues_closed_independently,
                             total_primary_issues,
                         ),
-                    )
-                )
+                    ),
+                ),
             ]
     return days
 
@@ -136,7 +144,10 @@ def _formating_flr_data(days: Mapping[int, Sequence]) -> Sequence[Flr]:
         num_issues_closed_independently = day_content[0]["Закрыто ТП без др отд"]
         total_primary_issues = day_content[0]["Количество первичных"]
         flr = Flr(
-            date, flr_level, num_issues_closed_independently, total_primary_issues
+            date,
+            flr_level,
+            num_issues_closed_independently,
+            total_primary_issues,
         )
         collection.append(flr)
 

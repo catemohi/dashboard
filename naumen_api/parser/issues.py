@@ -73,7 +73,9 @@ class Issue:
 
 
 def parse(
-    text: str, *args: Sequence, **kwargs: Mapping
+    text: str,
+    *args: Sequence,
+    **kwargs: Mapping,
 ) -> Union[Sequence[Issue], Sequence]:
 
     """Функция парсинга страницы с обращениями на группе.
@@ -96,7 +98,8 @@ def parse(
         return ()
 
     def parse_table_row(
-        row: element.Tag, category: Iterable[str]
+        row: element.Tag,
+        category: Iterable[str],
     ) -> Union[Issue, None]:
         """Функция парсинга строки таблицы.
 

@@ -92,7 +92,8 @@ class EnhancedJSONEncoder(json.JSONEncoder):
 
 
 def make_response(
-    api_response: ResponseTemplate, formatter: Type[ResponseFormatter]
+    api_response: ResponseTemplate,
+    formatter: Type[ResponseFormatter],
 ) -> FORMATTED_RESPONSE:
 
     """Функция форматорования ответа.

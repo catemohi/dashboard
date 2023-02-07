@@ -21,7 +21,9 @@ class AppConfig:
     """Класс для хранения настроек приложения и переопределения их."""
 
     def __init__(
-        self, config: Mapping = {}, config_path: Union[PurePath, None] = None
+        self,
+        config: Mapping = {},
+        config_path: Union[PurePath, None] = None,
     ) -> None:
         """
         Создание обьекта для хранения настроек приложения
@@ -73,14 +75,14 @@ def _validate_date(check_date: str) -> str:
 
     try:
         return datetime.strptime(check_date, "%d.%m.%Y").strftime("%d.%m.%Y")
-    except ValueError:
-        raise InvalidDate
-    except TypeError:
-        raise InvalidDate
+    except ValueError as exc:
+        raise InvalidDate from exc
+    except TypeError as exc:
+        raise InvalidDate from exc
 
 
 def _params_erector(
-    params: Mapping[str, Mapping[Literal["name", "value"], str]]
+    params: Mapping[str, Mapping[Literal["name", "value"], str]],
 ) -> Mapping[str, str]:
     """Функция для уплотнения, даты или параметров запроса.
 
@@ -92,7 +94,7 @@ def _params_erector(
     """
 
     return dict(
-        [[val for _, val in root_val.items()] for _, root_val in params.items()]
+        [[val for _, val in root_val.items()] for _, root_val in params.items()],
     )
 
 
@@ -161,8 +163,8 @@ def configure_params(
         data = CONFIG.config[report.value][request_type.value]["data"].copy()
         params = CONFIG.config[report.value][request_type.value]["params"].copy()
         url = url_map[request_type]
-    except KeyError:
-        raise CantGetData
+    except KeyError as exc:
+        raise CantGetData from exc
 
     for name, value in mod_data:
         if name in date_name_keys:

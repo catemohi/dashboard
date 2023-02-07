@@ -38,7 +38,9 @@ class Mttr:
 
 
 def parse(
-    text: str, *args: Sequence, **kwargs: Mapping
+    text: str,
+    *args: Sequence,
+    **kwargs: Mapping,
 ) -> Union[Sequence[Mttr], Sequence]:
 
     """
@@ -58,7 +60,9 @@ def parse(
     _validate_text_for_parsing(text)
     soup = BeautifulSoup(text, "html.parser")
     start_date, end_date = _parse_date_report(
-        soup, "Дата регистр, с", "Дата регистр, по"
+        soup,
+        "Дата регистр, с",
+        "Дата регистр, по",
     )
     log.debug(f"Получены даты отчета с {start_date} по {end_date}")
     label = _get_columns_name(soup)
@@ -66,17 +70,21 @@ def parse(
     data_table = soup.find("table", id="stdViewpart0.part0_TableList")
     data_table = data_table.find_all("tr")[3:]
     day_collection = _forming_days_collecion(
-        data_table, label, PageType.MMTR_LEVEL_REPORT_PAGE
+        data_table,
+        label,
+        PageType.MMTR_LEVEL_REPORT_PAGE,
     )
     date_range = _get_date_range(start_date, end_date)
     days = _forming_days_dict(
-        date_range, day_collection, PageType.MMTR_LEVEL_REPORT_PAGE
+        date_range,
+        day_collection,
+        PageType.MMTR_LEVEL_REPORT_PAGE,
     )
     days = _mttr_data_completion(days, label)
     collection = _formating_mttr_data(days)
     log.debug(
         f"Парсинг завершился успешно. Колекция отчетов MTTR "
-        f"с {start_date} по {end_date} содержит {len(collection)} элем."
+        f"с {start_date} по {end_date} содержит {len(collection)} элем.",
     )
     return tuple(collection)
 

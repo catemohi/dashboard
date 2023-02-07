@@ -79,7 +79,10 @@ def get_report(
 
     mod_params = tuple({"uuid": naumen_uuid}.items())
     report_page = _get_report(
-        crm, report, NaumenRequestType.SEARCH_REPORT, mod_params=mod_params
+        crm,
+        report,
+        NaumenRequestType.SEARCH_REPORT,
+        mod_params=mod_params,
     )
 
     collect = parse_naumen_page(report_page, report.page)
@@ -117,7 +120,8 @@ def get_report(
 
 
 def _check_issues_report_keys(
-    *args: Sequence, **kwargs: Mapping
+    *args: Sequence,
+    **kwargs: Mapping,
 ) -> Tuple[bool, bool, Mapping]:
 
     """Функция для проверки определенных атрибутов ключей.
@@ -133,7 +137,7 @@ def _check_issues_report_keys(
     """
 
     log.debug(
-        "Проверка необходимости парсинга " "карточек обращений и историй обращений."
+        "Проверка необходимости парсинга " "карточек обращений и историй обращений.",
     )
     parse_issue_history: bool = kwargs.pop("parse_issue_history", False)  # type: ignore
     parse_issue_card: bool = kwargs.pop("parse_issue_card", False)  # type: ignore
@@ -162,7 +166,11 @@ def _delete_report(crm: ActiveConnect, report: TypeReport, uuid: str) -> bool:
     params = tuple({"uuid": uuid}.items())
     log.debug(f"Параметры для удаления отчёта {params}")
     _responce = get_crm_response(
-        crm, report, NaumenRequestType.DELETE_REPORT, mod_params=params, method="GET"
+        crm,
+        report,
+        NaumenRequestType.DELETE_REPORT,
+        mod_params=params,
+        method="GET",
     )
 
     if _responce:
@@ -174,7 +182,9 @@ def _delete_report(crm: ActiveConnect, report: TypeReport, uuid: str) -> bool:
 
 
 def _find_report_uuid(
-    crm: ActiveConnect, options: SearchOptions, report: TypeReport
+    crm: ActiveConnect,
+    options: SearchOptions,
+    report: TypeReport,
 ) -> str:
     """Функция поиска сформированного отчета в CRM Naumen.
 
@@ -211,7 +221,7 @@ def _find_report_uuid(
 
         log.debug(
             f"Поиск свормированного отчета: {options.name}."
-            f"Осталось попыток: {num_attems}"
+            f"Осталось попыток: {num_attems}",
         )
         sleep(options.delay_attems)
         response = get_crm_response(

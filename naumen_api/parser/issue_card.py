@@ -17,7 +17,9 @@ log = logging.getLogger(__name__)
 
 
 def parse(
-    text: str, *args: Sequence, issue: Union[Issue, None] = None
+    text: str,
+    *args: Sequence,
+    issue: Union[Issue, None] = None,
 ) -> Sequence[Issue]:
 
     """Функция парсинга карточки обращения.
@@ -70,7 +72,7 @@ def _return_defalut_time() -> datetime:
     log.debug(
         "Дата возврата в работу не обнаружена, "
         "поставлено значение по умолчанию: "
-        f"{return_to_work_time}"
+        f"{return_to_work_time}",
     )
     return return_to_work_time
 
@@ -119,7 +121,7 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
         except ValueError:
             log.error(
                 f"Значение {string_time} не удалось преобразовать "
-                "в обьект datetime, по шаблону %d.%m.%Y %H:%M"
+                "в обьект datetime, по шаблону %d.%m.%Y %H:%M",
             )
             return None
 
@@ -133,7 +135,7 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
     if len(times) > needed_time_string_count:
         log.debug(
             f"Получено больше {needed_time_string_count} "
-            "значений даты. Возвращаем последнюю."
+            "значений даты. Возвращаем последнюю.",
         )
         # возвращаем самую последнюю дату.
         return_to_work_time = sorted(times)[-1]  # type: ignore
@@ -377,7 +379,8 @@ def _get_service_info(soup: BeautifulSoup) -> Union[Sequence[Sequence[Any]], Seq
             item_list = [
                 _.replace(":", "").strip()
                 for _ in re.split(
-                    r"(Услуга\s?:) | (Адрес установки\s?:) | (Состояние\s?:)", item
+                    r"(Услуга\s?:) | (Адрес установки\s?:) | (Состояние\s?:)",
+                    item,
                 )
                 if _
             ]
@@ -429,8 +432,8 @@ def _get_diagnostics(soup: BeautifulSoup) -> Union[Sequence[Sequence[Any]], Sequ
         except KeyError:
             diagnostics_base_dict = {
                 "Диагностика": " ".join(
-                    [text.strip() for text in diagnostics_tag.stripped_strings]
-                )
+                    [text.strip() for text in diagnostics_tag.stripped_strings],
+                ),
             }
         return tuple(diagnostics_base_dict.items())
     return ()
@@ -514,7 +517,7 @@ def _get_client_requisite(soup: BeautifulSoup) -> Union[Sequence[str], Sequence]
                 **client_kpp,
                 **client_address,
                 **client_mail_address,
-            }.items()
+            }.items(),
         )
     return ()
 

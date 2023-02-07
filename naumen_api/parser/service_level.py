@@ -68,7 +68,9 @@ def parse(
     _validate_text_for_parsing(text)
     soup = BeautifulSoup(text, "html.parser")
     start_date, end_date = _parse_date_report(
-        soup, "Дата перевода, с", "Дата перевода, по"
+        soup,
+        "Дата перевода, с",
+        "Дата перевода, по",
     )
     log.debug(f"Получены даты отчета с {start_date} по {end_date}")
     if start_date == end_date:
@@ -79,11 +81,15 @@ def parse(
     data_table = soup.find("table", id="stdViewpart0.part0_TableList")
     data_table = data_table.find_all("tr")[3:-1]
     day_collection = _forming_days_collecion(
-        data_table, label, PageType.SERVICE_LEVEL_REPORT_PAGE
+        data_table,
+        label,
+        PageType.SERVICE_LEVEL_REPORT_PAGE,
     )
     date_range = _get_date_range(start_date, end_date)
     days = _forming_days_dict(
-        date_range, day_collection, PageType.SERVICE_LEVEL_REPORT_PAGE
+        date_range,
+        day_collection,
+        PageType.SERVICE_LEVEL_REPORT_PAGE,
     )
     group = set([_["Группа"] for _ in day_collection])
 
@@ -93,11 +99,12 @@ def parse(
 
     if len(group) == support_group_count / 2:
         log.warning(
-            "Найдена только половина названий групп ТП. " "Добовляем дефолтные названия"
+            "Найдена только половина названий групп ТП. "
+            "Добовляем дефолтные названия",
         )
         default_group = CONFIG.config["defaul_group_name"]["value"]
         log.warning(
-            "Группы по умолчанию из конфигурации приложения:" f"{default_group}"
+            "Группы по умолчанию из конфигурации приложения:" f"{default_group}",
         )
         group = set([*default_group, *group])
         log.warning(group)
@@ -110,13 +117,15 @@ def parse(
     collection = _formating_service_level_data(days)
     log.debug(
         f"Парсинг завершился успешно. Колекция отчетов SL "
-        f"с {start_date} по {end_date} содержит {len(collection)} элем."
+        f"с {start_date} по {end_date} содержит {len(collection)} элем.",
     )
     return tuple(collection)
 
 
 def _service_lavel_data_completion(
-    days: Dict, groups: Sequence, lable: Sequence
+    days: Dict,
+    groups: Sequence,
+    lable: Sequence,
 ) -> Dict[int, Sequence]:
 
     """Функция для дополнения данных отчёта  Service Level.
@@ -153,13 +162,13 @@ def _service_lavel_data_completion(
                     days[day].append(
                         dict(
                             zip(lable, (str(day), group, "0", "0", "0", "0", sl)),
-                        )
+                        ),
                     )
     return days
 
 
 def _formating_service_level_data(
-    days: Mapping[int, Sequence]
+    days: Mapping[int, Sequence],
 ) -> Sequence[Sequence[ServiceLevel]]:
 
     """Формирование итоговой коллекции обьектов отчёта Service Level.

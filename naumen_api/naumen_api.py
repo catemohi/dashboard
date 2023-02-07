@@ -44,7 +44,7 @@ class Client:
         log.debug("Инициализация клиента API.")
         log.debug(
             f"Переданы параметры: username: {username};"
-            f"password: {password};domain: {domain}."
+            f"password: {password};domain: {domain}.",
         )
         self.username = username
         self.password = password
@@ -53,7 +53,11 @@ class Client:
         self._session: Union[ActiveConnect, None] = None
 
     def connect(
-        self, *, username: str = "", password: str = "", domain: DOMAIN = ""
+        self,
+        *,
+        username: str = "",
+        password: str = "",
+        domain: DOMAIN = "",
     ) -> FORMATTED_RESPONSE:
 
         """Метод для соединение с системой NAUMEN.
@@ -72,7 +76,7 @@ class Client:
         log.debug("Создание соединения с CRM NAUMEN.")
         log.debug(
             f"Переданы параметры: username: {username};"
-            f"password: {password};domain: {domain}."
+            f"password: {password};domain: {domain}.",
         )
         local_credentials = all([username, password, domain])
         self_credentials = all([self.username, self.password, self.domain])
@@ -128,7 +132,7 @@ class Client:
         log.debug(
             f"Параметр byNumber: {number}; "
             f"Параметр byCntrTitle: {name_contragent}; "
-            f"Параметр byCntrNumber: {number_contragent};"
+            f"Параметр byCntrNumber: {number_contragent};",
         )
 
         _ = {
@@ -142,7 +146,10 @@ class Client:
         }
         report_kwargs = tuple(_.items())
         return self._get_response(
-            SearchType.ISSUES_SEARCH, mod_data=report_kwargs, mod_params=(), **add_kwarg
+            SearchType.ISSUES_SEARCH,
+            mod_data=report_kwargs,
+            mod_params=(),
+            **add_kwarg,
         )
 
     def get_issues(
@@ -180,7 +187,10 @@ class Client:
         return self._get_response(report, mod_params=(), mod_data=(), **report_kwargs)
 
     def get_issue_card(
-        self, naumen_uuid: str, *args: Sequence, **kwargs: Mapping
+        self,
+        naumen_uuid: str,
+        *args: Sequence,
+        **kwargs: Mapping,
     ) -> FORMATTED_RESPONSE:
 
         """Метод для получения данных с карточки обращения
@@ -237,7 +247,7 @@ class Client:
             deadline = int(deadline)
         except (ValueError, TypeError):
             logging.exception(
-                f"Аргумент deadline не int и" f"не валидный литерал: " f"{deadline}"
+                f"Аргумент deadline не int и" f"не валидный литерал: " f"{deadline}",
             )
             error_response = ResponseTemplate(StatusType._BAD_REQUEST, ())
             error_response.status.description = (
@@ -248,7 +258,7 @@ class Client:
         log.debug(
             f"Параметр start_date: {start_date}; "
             f"Параметр end_date: {end_date}; "
-            f"Параметр deadline: {deadline}; "
+            f"Параметр deadline: {deadline}; ",
         )
 
         _ = {
@@ -265,7 +275,11 @@ class Client:
         )
 
     def get_mttr_report(
-        self, start_date: str, end_date: str, *args: Sequence, **kwargs: Mapping
+        self,
+        start_date: str,
+        end_date: str,
+        *args: Sequence,
+        **kwargs: Mapping,
     ) -> FORMATTED_RESPONSE:
 
         """Метод для получения отчёта о Mttr за период.
@@ -288,7 +302,7 @@ class Client:
         """
 
         log.debug(
-            f"Параметр start_date: {start_date}; " f"Параметр end_date: {end_date}; "
+            f"Параметр start_date: {start_date}; " f"Параметр end_date: {end_date}; ",
         )
 
         _ = {
@@ -297,11 +311,18 @@ class Client:
         }
         report_kwargs = tuple(_.items())
         return self._get_response(
-            TypeReport.MTTR_LEVEL, mod_data=report_kwargs, mod_params=(), **kwargs
+            TypeReport.MTTR_LEVEL,
+            mod_data=report_kwargs,
+            mod_params=(),
+            **kwargs,
         )
 
     def get_flr_report(
-        self, start_date: str, end_date: str, *args: Sequence, **kwargs: Mapping
+        self,
+        start_date: str,
+        end_date: str,
+        *args: Sequence,
+        **kwargs: Mapping,
     ) -> FORMATTED_RESPONSE:
 
         """Метод для получения отчёта о Flr за период.
@@ -321,7 +342,7 @@ class Client:
         """
 
         log.debug(
-            f"Параметр start_date: {start_date}; " f"Параметр end_date: {end_date}; "
+            f"Параметр start_date: {start_date}; " f"Параметр end_date: {end_date}; ",
         )
 
         _ = {
@@ -330,7 +351,10 @@ class Client:
         }
         report_kwargs = tuple(_.items())
         return self._get_response(
-            TypeReport.FLR_LEVEL, mod_data=report_kwargs, mod_params=(), **kwargs
+            TypeReport.FLR_LEVEL,
+            mod_data=report_kwargs,
+            mod_params=(),
+            **kwargs,
         )
 
     def _get_response(
@@ -346,8 +370,10 @@ class Client:
 
         Args:
             report (Union[TypeReport, SearchType]): необходимый отчёт.
-            mod_params: (Union[Tuple[Tuple[str, Any]], Tuple]): модифицированные параметры запроса
-            mod_data: (Union[Tuple[Tuple[str, Any]], Tuple]): модифицированный данные запроса
+            mod_params: (Union[Tuple[Tuple[str, Any]], Tuple]):
+            модифицированные параметры запроса
+            mod_data: (Union[Tuple[Tuple[str, Any]], Tuple]):
+            модифицированный данные запроса
             *args: прокинутые позиционные аргументы.
             **kwargs: прокинутые именнованные аргументы.
 
@@ -375,9 +401,9 @@ class Client:
             content = call_func(
                 self._session,
                 report,  # type: ignore
+                *args,
                 mod_params=mod_params,
                 mod_data=mod_data,
-                *args,
                 **kwargs,  # type: ignore
             )
             api_response = ResponseTemplate(StatusType._SUCCESS, content)

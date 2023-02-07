@@ -36,7 +36,8 @@ class InvalidDate(Exception):
     """
 
     def __init__(
-        self, message: str = ("Формат даты неверный." "Необходимый формат %d.%m.%Y")
+        self,
+        message: str = ("Формат даты неверный." "Необходимый формат %d.%m.%Y"),
     ) -> None:
         self.message = message
         super().__init__(self.message)
