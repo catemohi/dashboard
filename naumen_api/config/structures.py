@@ -92,6 +92,7 @@ class PageType(Enum):
         FLR_LEVEL_REPORT: Страница с отчётом flr level.
         SEARCH_RESULT_ISSUES_PAGE: Страница с результатом поиска обращений
         PAGINATION_PAGE: Парсинг пагинации
+        AHT_LEVEL_REPORT: Страница с отчётом aht level.
 
     """
 
@@ -103,6 +104,7 @@ class PageType(Enum):
     FLR_LEVEL_REPORT_PAGE = 6
     SEARCH_RESULT_ISSUES_PAGE = 7
     PAGINATION_PAGE = 8
+    AHT_LEVEL_REPORT_PAGE = 9
 
 
 class NaumenRequestType(Enum):
@@ -134,6 +136,7 @@ class TypeReport(Enum):
         SERVICE_LEVEL: отчет по уровню SL
         MTTR_LEVEL: отчет по уровню MTTR
         FLR_LAVEL: отчет по уровню FLR
+        AHT_LEVEL: отчет по уровню AHT
 
     """
 
@@ -146,6 +149,7 @@ class TypeReport(Enum):
     FLR_LEVEL = "flr report"
     CONTROL_ENABLE_SEARCH = "enable search"
     CONTROL_SELECT_SEARCH = "select search"
+    AHT_LEVEL = "aht report"
 
     def __init__(self, value: Any):
         self.page = self._get_page()
@@ -161,6 +165,7 @@ class TypeReport(Enum):
             "FLR_LEVEL": PageType.FLR_LEVEL_REPORT_PAGE,
             "CONTROL_ENABLE_SEARCH": None,
             "CONTROL_SELECT_SEARCH": None,
+            "AHT_LEVEL": PageType.AHT_LEVEL_REPORT_PAGE,
         }
         try:
             return page_dict[self.name]

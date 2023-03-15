@@ -63,7 +63,10 @@ def _forming_days_dict(
     """
 
     days: Dict = {}
-    if report_type == PageType.FLR_LEVEL_REPORT_PAGE:
+    if (
+        report_type == PageType.FLR_LEVEL_REPORT_PAGE
+        or report_type == PageType.AHT_LEVEL_REPORT_PAGE
+    ):
 
         for day in date_range:
             days[day.strftime("%d.%m.%Y")] = [
@@ -113,7 +116,6 @@ def _forming_days_collecion(
             ],
         ):
             elem.insert(0, day_collection[num - 1][0])
-
         day_collection.append(elem)
     day_collection = [dict(zip(label, day)) for day in day_collection]
     return day_collection
@@ -164,18 +166,38 @@ def _parse_date_report(
 
     log.debug("Парсинг параметров отчёта.")
     options_table = soup.find("table", id="stdViewpart0.legendTableList")
-
+    report_options = {}
     if not options_table:
         log.error("BeautifulSoup нечего не нашел.")
         raise CantGetData
-
-    options_tag = options_table.find_all("td", attrs={"style": "width:100%;"})
-    name_tag = options_table.find_all("td", attrs={"style": "white-space:nowrap;"})
-    name = [name.text.strip().replace(":", "") for name in name_tag]
-    options = [option.text.strip() for option in options_tag]
-    report_options = dict(zip(name, options))
+    options_row = options_table.find_all("tr")
+    log.debug("Options row: %s", options_row)
+    for row in options_row:
+        td_tags = row.find_all("td")
+        td_content = [td.text.strip().replace(":", "") for td in td_tags]
+        log.debug("Options td: %s", td_content)
+        if len(td_content) == 2:
+            report_options[td_content[0]] = td_content[1]
+    log.debug("Report options: %s", report_options)
     start_date = report_options.get(name_start_date, None)
+    log.debug("Start date: %s", start_date)
     end_date = report_options.get(name_end_date, None)
+    log.debug("End date: %s", end_date)
+    if all([start_date, end_date]):
+        return start_date, end_date
+
+    # options_tag = options_table.find_all("td", attrs={"style": "width:100%;"})
+    # name_tag = options_table.find_all("td", attrs={"style": "white-space:nowrap;"})
+    # name = [name.text.strip().replace(":", "") for name in name_tag]
+    # log.debug("Names: %s", name)
+    # options = [option.text.strip() for option in options_tag]
+    # log.debug("Options: %s", options)
+    # report_options = dict(zip(name, options))
+    # log.debug("Report options: %s", report_options)
+    # start_date = report_options.get(name_start_date, None)
+    # log.debug("Start date: %s", start_date)
+    # end_date = report_options.get(name_end_date, None)
+    # log.debug("End date: %s", end_date)
 
     if not all([start_date, end_date]):
         raise CantGetData

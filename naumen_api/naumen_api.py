@@ -357,6 +357,46 @@ class Client:
             **kwargs,
         )
 
+    def get_aht_report(
+        self,
+        start_date: str,
+        end_date: str,
+        *args: Sequence,
+        **kwargs: Mapping,
+    ) -> FORMATTED_RESPONSE:
+
+        """Метод для получения отчёта о AHT за период.
+           Метод возвращает дни, c привязкой к месяцу.
+
+        Args:
+            start_date: дата начала периода.
+            end_date: дата конца периода.
+            *args: не используются и не пробрасываются.
+            **kwargs: другие именнованные аргументы.
+
+        Returns:
+            FORMATTED_RESPONSE: отформатированный ответ
+
+        Raises:
+
+        """
+
+        log.debug(
+            f"Параметр start_date: {start_date}; " f"Параметр end_date: {end_date}; ",
+        )
+
+        _ = {
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+        report_kwargs = tuple(_.items())
+        return self._get_response(
+            TypeReport.AHT_LEVEL,
+            mod_data=report_kwargs,
+            mod_params=(),
+            **kwargs,
+        )
+
     def _get_response(
         self,
         report: Union[TypeReport, SearchType],

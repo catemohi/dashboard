@@ -3,6 +3,7 @@ from typing import Callable, Mapping, Sequence, Union
 
 from ..exceptions import CantGetData
 from . import (
+    aht,
     flr,
     issue_card,
     issues,
@@ -57,6 +58,7 @@ def parse_naumen_page(
         PageType.FLR_LEVEL_REPORT_PAGE: flr.parse,
         PageType.SEARCH_RESULT_ISSUES_PAGE: search_result_issues.parse,
         PageType.PAGINATION_PAGE: pagination.parse,
+        PageType.AHT_LEVEL_REPORT_PAGE: aht.parse,
     }
 
     parser = page_parsers[type_page]
