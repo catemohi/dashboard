@@ -1,170 +1,231 @@
+from datetime import datetime
 from json import load
+from logging import getLogger
 from pathlib import PurePath
-from typing import Mapping, NamedTuple
+from random import randint
+from typing import Any, Literal, Mapping, Sequence, Tuple, Union
+
+from ..exceptions import CantGetData, InvalidDate
+from .structures import (
+    NaumenRequest,
+    NaumenRequestType,
+    SearchOptions,
+    SearchType,
+    TypeReport,
+)
+
+log = getLogger(__name__)
 
 
 class AppConfig:
-    """Класс для хранения настроек приложения и переопределения их.
-    """
+    """Класс для хранения настроек приложения и переопределения их."""
 
-    def __init__(self) -> None:
-        self.config = {}
-        self._config_path = ''
+    def __init__(
+        self,
+        config: Mapping = {},
+        config_path: Union[PurePath, None] = None,
+    ) -> None:
+        """
+        Создание обьекта для хранения настроек приложения
+
+        Args:
+            config (Mapping): параметры конфигурации.По умолчанию {}.
+            config_path (Union[PurePath, None]): путь к файлу конфигрурации.
+            По умолчанию None.
+        """
+        self.config = config
+        self._config_path = config_path
 
     @property
-    def config_path(self) -> str:
+    def config_path(self) -> Union[PurePath, None]:
         return self._config_path
 
     @config_path.setter
-    def config_path(self, value: str) -> None:
-        if not isinstance(value, str):
+    def config_path(self, value: Union[PurePath, str]) -> None:
+        if not any([isinstance(value, str), isinstance(value, PurePath)]):
             raise TypeError("Path must be in string format.")
+        if isinstance(value, str):
+            value = PurePath(value)
         self._config_path = PurePath(value)
 
     def load_config(self) -> None:
-        """Метод для генирации конфигурационного атрибута.
-        """
+        """Метод для генирации конфигурационного атрибута."""
 
-        if not self.config_path:
+        if self.config_path is None:
             self._config_path = PurePath(__file__).with_name("config.json")
 
-        with open(self.config_path, encoding='utf-8') as file:
+        path_to_config = str(self.config_path)
+        with open(path_to_config, encoding="utf-8") as file:
             self.config = load(file)
 
 
-class CreateParams(NamedTuple):
-
-    """Класс данных для хранения данных для создания отчета в CRM Naumen.
-
-        Attributes:
-            url: ссылка для создания отчета
-            uuid: идентификатор обьекта
-            headers: header для запроса
-            params: параметры для запроса
-            data: данные запроса
-            verify: верификация
-    """
-    url: str
-    uuid: str
-    headers: Mapping
-    params: Mapping
-    data: Mapping
-    verify: bool
-    delay_attems: int
-    num_attems: int
-
-
-class FindParams(NamedTuple):
-
-    """Класс данных для хранения сформированного запроса поиска обьекта
-    к CRM Naumen.
-
-        Attributes:
-            url: ссылка
-            headers: headers для запроса
-            params: параметры для запроса
-            data: данные запроса
-            verify: верификация
-    """
-    url: str
-    headers: Mapping
-    params: Mapping
-    data: Mapping
-    verify: bool
-
-
-class DeleteParams(FindParams):
-    """Класс данных для хранения сформированного запроса на удаление обьекта
-    к CRM Naumen.
+def _validate_date(check_date: str) -> str:
+    """Функция проверки формата даты.
 
     Args:
-        FindParams (NamedTuple): Класс данных для хранения
-        сформированного запроса поиска обьекта к CRM Naumen.
-    """
-
-
-def get_params_create_report(report_name: str) -> CreateParams:
-
-    """Функция которая достает необходимые параметры
-    из конфигурационного файла.
-
-    Args:
-        report_name: название отчета
+        first_date: первая дата, format '%d.%m.%Y'
 
     Returns:
-        Коллекцию параметров.
+        date: строка даты необходимого формата.
 
     Raises:
+        InvalidDate: при неудачной проверке или конвертиртации даты.
 
     """
-    url = CONFIG.config['url']['create']
-    data_create = CreateParams(url, '', {}, {}, {}, False, 0, 0)
-    reports_name = [
-        key for key, val in CONFIG.config.items() if "create_request" in val
-        ]
-    if report_name not in reports_name:
-        return data_create
-    uuid = CONFIG.config[report_name]['uuid']
-    headers = CONFIG.config['headers']
-    data = CONFIG.config[report_name]['create_request']['data']
-    params = CONFIG.config[report_name]['create_request']['params']
-    verify = CONFIG.config['verify']['value']
-    delay_attems = CONFIG.config[report_name]['delay_attems']['value']
-    num_attems = CONFIG.config[report_name]['num_attems']['value']
-    params["param2"] = {'name': 'uuid', 'value': uuid}
 
-    return CreateParams(url, uuid, headers, params, data,
-                        verify, delay_attems, num_attems)
+    try:
+        return datetime.strptime(check_date, "%d.%m.%Y").strftime("%d.%m.%Y")
+    except ValueError as exc:
+        raise InvalidDate from exc
+    except TypeError as exc:
+        raise InvalidDate from exc
 
 
-def get_params_find() -> FindParams:
-
-    """Функция которая достает необходимые параметры из
-    конфигурационного файла.
+def _params_erector(
+    params: Mapping[str, Mapping[Literal["name", "value"], str]],
+) -> Mapping[str, str]:
+    """Функция для уплотнения, даты или параметров запроса.
 
     Args:
-        report_name: название отчета
+        params: данные которые необходимо собрать
 
     Returns:
-        Коллекцию параметров.
-
-    Raises:
-
+        Mapping: Готовый словарь для запроса.
     """
 
-    url = CONFIG.config['url']['open']
-    headers = CONFIG.config['headers']
-    data = {}
-    params = {}
-    verify = CONFIG.config['verify']['value']
-    return FindParams(url, headers, params, data, verify)
+    return dict(
+        [[val for _, val in root_val.items()] for _, root_val in params.items()],
+    )
 
 
-def get_params_for_delete() -> DeleteParams:
-
-    """Функция которая достает необходимые параметры
-    из конфигурационного файла.
+def get_report_name() -> str:
+    """Функция получения уникального названия для отчета.
 
     Args:
 
     Returns:
-        Коллекцию параметров.
-
-    Raises:
-
+        Строку названия.
     """
 
-    url = CONFIG.config['url']['delete']
-    headers = CONFIG.config['headers']
-    data = {}
-    params = CONFIG.config['delete_report']['params']
-    verify = CONFIG.config['verify']['value']
-    return DeleteParams(url, headers, params, data, verify)
+    return f"ID{randint(1000000,9999999)}"
+
+
+def get_search_create_report_params(
+    report: TypeReport,
+    report_name: str,
+) -> SearchOptions:
+    """Функция для формирования параметров для поиска созданного отчета
+
+    Args:
+        report: тип запрашиваемого отчета.
+        report_name: название созданного отчета
+
+    Returns:
+        SearchOptions: параметры для поиска созданного отчета
+    """
+    delay_attems = CONFIG.config[report.value]["delay_attems"]["value"]
+    num_attems = CONFIG.config[report.value]["num_attems"]["value"]
+    uuid = CONFIG.config[report.value]["uuid"]
+    search_options = SearchOptions(report_name, delay_attems, num_attems, uuid)
+    return search_options
+
+
+def configure_params(
+    report: Union[TypeReport, SearchType],
+    request_type: NaumenRequestType,
+    mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+    mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+) -> NaumenRequest:
+    """Функция для создания, даты или параметров запроса.
+
+    Args:
+        report (Union[TypeReport, SearchType]): тип запрашиваемого отчета.
+        request_type (NaumenRequestType): тип запроса к NAUMEN
+        mod_data (Union[Tuple[Tuple[str, Any]], Tuple]): данные запроса,
+        которые необходимо модифицировать
+        mod_params (Union[Tuple[Tuple[str, Any]], Tuple]): параметры запроса,
+        которые необходимо модифицировать
+    Returns:
+        NaumenRequest: сформированный запрос для CRM Naumen
+        SearchOptions: параметры для поиска созданного отчета
+    """
+    url_map = {
+        NaumenRequestType.CREATE_REPORT: CONFIG.config["url"]["create"],
+        NaumenRequestType.SEARCH_REPORT: CONFIG.config["url"]["open"],
+        NaumenRequestType.DELETE_REPORT: CONFIG.config["url"]["delete"],
+        NaumenRequestType.CONTROL: CONFIG.config["url"]["control"],
+    }
+    date_name_keys = ("start_date", "end_date")
+
+    try:
+        headers = CONFIG.config["headers"]
+        verify = CONFIG.config["verify"]["value"]
+        data = CONFIG.config[report.value][request_type.value]["data"].copy()
+        params = CONFIG.config[report.value][request_type.value]["params"].copy()
+        url = url_map[request_type]
+    except KeyError as exc:
+        raise CantGetData from exc
+
+    for name, value in mod_data:
+        if name in date_name_keys:
+            value = _validate_date(value)
+        data[name]["value"] = value
+
+    for name, value in mod_params:
+        params[name]["value"] = value
+
+    data = _params_erector(data)
+    params = _params_erector(params)
+
+    request = NaumenRequest(url, headers, params, data, verify)
+    return request
+
+
+def create_naumen_request(
+    obj: Union[TypeReport, SearchType],
+    request_type: NaumenRequestType,
+    mod_params: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+    mod_data: Union[Tuple[Tuple[str, Any]], Tuple] = (),
+    *args: Sequence,
+    **kwargs: Mapping,
+) -> NaumenRequest:
+
+    """Метод для создания первичного запроса в NAUMEN .
+
+    Args:
+        obj (Union[TypeReport, SearchType]): обьект, который необходимо
+        создать/получить из CRM.
+        request_type (NaumenRequestType): типа запроса
+        mod_params (Union[Tuple[Tuple[str, Any]], Tuple]): параметры, которые
+        необходимо модифицировать в запроса
+        mod_data (Union[Tuple[Tuple[str, Any]], Tuple]): данные, которые
+        необходимо модифицировать в запросе
+        *args: позиционные аргументы(не используются)
+        **kwargs: именнованные аргументы для создания отчёта.
+
+    Returns:
+        Tuple[NaumenRequest, SearchOptions]: запрос и данные для нахождения
+        Tuple[Response, SearchOptions]: коллекция обьектов необходимого отчёта.
+    Raises:
+        CantGetData: в случае невозможности вернуть коллекцию.
+    """
+
+    log.debug(f"Запуск создания отчета: {obj}")
+    log.debug(f"Переданы модифицированные params: {mod_params}")
+    log.debug(f"Переданы модифицированные data: {mod_data}")
+    log.debug(f"Переданы параметры args: {args}")
+    log.debug(f"Переданы параметры kwargs: {kwargs}")
+
+    if not any([isinstance(obj, TypeReport), isinstance(obj, SearchType)]):
+        raise CantGetData
+
+    naumen_reuqest = configure_params(obj, request_type, mod_data, mod_params)
+    log.debug(f"Запрос к CRM: {naumen_reuqest}")
+    return naumen_reuqest
 
 
 CONFIG = AppConfig()
 CONFIG.load_config()
 
 if __name__ == "__main__":
-    data = get_params_create_report('')
-    print(data)
+    ...

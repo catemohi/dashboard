@@ -1,15 +1,19 @@
-
 class ConnectionsFailed(Exception):
 
     """Исключение возвращяемой при невозможности создать соединение CRM.
 
-        Attributes:
+    Attributes:
 
     """
 
-    def __init__(self,
-                 message="Неудалось создать подключение используя "
-                 "переданные данные. Проверьте данные и маршрут до системы."):
+    def __init__(
+        self,
+        message: str = (
+            "Неудалось создать подключение используя "
+            "переданные данные. Проверьте данные и "
+            "маршрут до системы."
+        ),
+    ) -> None:
         self.message = message
         super().__init__(self.message)
 
@@ -18,7 +22,7 @@ class CantGetData(Exception):
 
     """Исключение возвращяемой при невозможности получить данные из CRM.
 
-        Attributes:
+    Attributes:
 
     """
 
@@ -27,11 +31,13 @@ class InvalidDate(Exception):
 
     """Исключение возвращяемой при невозможности получить данные из CRM.
 
-        Attributes:
-            message: объяснение ошибки.
+    Attributes:
+        message: объяснение ошибки.
     """
 
-    def __init__(self,
-                 message="Формат даты неверный. Необходимый формат %d.%m.%Y"):
+    def __init__(
+        self,
+        message: str = ("Формат даты неверный." "Необходимый формат %d.%m.%Y"),
+    ) -> None:
         self.message = message
         super().__init__(self.message)

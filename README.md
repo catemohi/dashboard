@@ -38,15 +38,15 @@ naumen-api
 Методы API
 -----------
 
-- __get_issues(is_vip: bool = False, parse_issues_cards: bool = False)__:
+- __get_issues(is_vip: bool = False, parse_issue_card : bool = False)__:
 
     Метод для получения задач открытых на тех.поддержке в данный момент. Именнованный аргумент is_vip указывает на линию, задачи которой необходимо получить:
 
     * is_vip = False: первая линия.
     * is_vip = True: vip линия.
 
-    parse_issues_cards, указывает нужно ли парсить данные с карточек этих задач. Иногда нам не нужна вся ифнормация о задаче, а только ее статус.
-    Тогда имеет смысл передать parse_issues_cards = False, для ускорения.
+    parse_issue_card, указывает нужно ли парсить данные с карточек этих задач. Иногда нам не нужна вся ифнормация о задаче, а только ее статус.
+    Тогда имеет смысл передать parse_issue_card = False, для ускорения.
 
 - __get_sl_report(start_date: str, end_date: str, deadline: int)__:
 

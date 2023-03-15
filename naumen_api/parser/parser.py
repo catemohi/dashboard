@@ -1,23 +1,35 @@
 import logging
-from typing import Callable, Mapping, Sequence
+from typing import Callable, Mapping, Sequence, Union
 
-from . import flr, issue_card, issues, mttr, report_page, service_level
-from .parser_base import PageType
 from ..exceptions import CantGetData
-
+from . import (
+    flr,
+    issue_card,
+    issues,
+    mttr,
+    pagination,
+    report_page,
+    search_result_issues,
+    service_level,
+)
+from .parser_base import PageType
 
 log = logging.getLogger(__name__)
 
 
-def parse_naumen_page(page: str, name_report: str,
-                      type_page: PageType) -> Sequence:
+def parse_naumen_page(
+    page: str,
+    type_page: Union[PageType, None],
+    name_report: str = "",
+) -> Sequence:
 
     """Функция парсинга страниц из crm Naumen, входной интерфейс подмодуля.
 
     Args:
-        page: страница которую требуется распарсить.
-        type_page: тип страницы
-        name_report: уникальное имя сформированное отчёта.
+        page (str): страница которую требуется распарсить.
+        type_page (Union[PageType, None]): тип страницы
+        name_report (str): уникальное имя сформированное отчёта.
+        По умолчанию ''
 
     Returns:
         Sequence: Результат парсинга страницы, коллекция распаршенных элементов
@@ -27,11 +39,13 @@ def parse_naumen_page(page: str, name_report: str,
 
     """
 
-    log.debug('Запущена функция парсинга страницы.'
-              f'Имя необходимого отчета: {name_report}.'
-              f'Тип отчёта: {type_page}')
+    log.debug(
+        "Запущена функция парсинга страницы."
+        f"Имя необходимого отчета: {name_report}."
+        f"Тип отчёта: {type_page}",
+    )
     if not isinstance(type_page, PageType):
-        log.error(f'Не зарегистрированный тип страницы: {type_page}')
+        log.error(f"Не зарегистрированный тип страницы: {type_page}")
         raise CantGetData
 
     page_parsers: Mapping[PageType, Callable] = {
@@ -41,9 +55,11 @@ def parse_naumen_page(page: str, name_report: str,
         PageType.SERVICE_LEVEL_REPORT_PAGE: service_level.parse,
         PageType.MMTR_LEVEL_REPORT_PAGE: mttr.parse,
         PageType.FLR_LEVEL_REPORT_PAGE: flr.parse,
+        PageType.SEARCH_RESULT_ISSUES_PAGE: search_result_issues.parse,
+        PageType.PAGINATION_PAGE: pagination.parse,
     }
 
     parser = page_parsers[type_page]
-    log.debug(f'Получен парсер: {parser.__name__} для страницы: {type_page}')
+    log.debug(f"Получен парсер: {parser.__name__} для страницы: {type_page}")
     parsed_collections = parser(page, name_report)
     return parsed_collections
