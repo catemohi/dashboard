@@ -145,7 +145,7 @@ def _service_lavel_data_completion(
     today = datetime.now().day
     for day, content in days.items():
         sl = "0.0"
-        if today >= day:
+        if today >= int(day):
             sl = "100.0"
         if len(content) == 0:
             days[day] = [
