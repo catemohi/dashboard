@@ -52,12 +52,24 @@ def parse(
     issue.name_service, issue.uuid_service = _get_service_params(soup)
     issue.info_service = _get_service_info(soup)
     issue.return_to_work_time = _get_return_to_work_time(soup)
-    issue.diagnostics = _get_diagnostics(soup)
+    try:
+        issue.diagnostics = _get_diagnostics(soup)
+    except:
+        issue.diagnostics = ""
     issue.required_date = _get_required_date(soup)
     issue.close_date = _get_close_date(soup)
-    issue.client_requisite = _get_client_requisite(soup)
-    issue.contragent_category = _get_contragent_category(soup)
-    issue.contact = _get_contact(soup)
+    try:
+        issue.client_requisite = _get_client_requisite(soup)
+    except:
+        issue.client_requisite = ()
+    try:
+        issue.contragent_category = _get_contragent_category(soup)
+    except:
+        issue.contragent_category = ""
+    try:
+        issue.contact = _get_contact(soup)
+    except:
+        issue.contact = ()
     return (issue,)
 
 
@@ -504,11 +516,26 @@ def _get_client_requisite(soup: BeautifulSoup) -> Union[Sequence[str], Sequence]
             for item in re.split(reg_template, client_requisite)
             if item
         ]
-        client_fullname = {client_requisite_list[0]: client_requisite_list[1]}
-        client_inn = {client_requisite_list[2]: client_requisite_list[3]}
-        client_kpp = {client_requisite_list[4]: client_requisite_list[5]}
-        client_address = {client_requisite_list[6]: client_requisite_list[7]}
-        client_mail_address = {client_requisite_list[8]: client_requisite_list[9]}
+        try:
+            client_fullname = {client_requisite_list[0]: client_requisite_list[1]}
+        except IndexError:
+            client_fullname = {"Полное наименование": ""}
+        try:
+            client_inn = {client_requisite_list[2]: client_requisite_list[3]}
+        except IndexError:
+            client_inn = {"ИНН": ""}
+        try:
+            client_kpp = {client_requisite_list[4]: client_requisite_list[5]}
+        except IndexError:
+            client_kpp = {"КПП": ""}
+        try:
+            client_address = {client_requisite_list[6]: client_requisite_list[7]}
+        except IndexError:
+            client_address = {"Юр. адрес": ""}
+        try:
+            client_mail_address = {client_requisite_list[8]: client_requisite_list[9]}
+        except IndexError:
+            client_mail_address = {"Почт. адрес": ""}
 
         return tuple(
             {
