@@ -52,24 +52,12 @@ def parse(
     issue.name_service, issue.uuid_service = _get_service_params(soup)
     issue.info_service = _get_service_info(soup)
     issue.return_to_work_time = _get_return_to_work_time(soup)
-    try:
-        issue.diagnostics = _get_diagnostics(soup)
-    except:
-        issue.diagnostics = ""
+    issue.diagnostics = _get_diagnostics(soup)
     issue.required_date = _get_required_date(soup)
     issue.close_date = _get_close_date(soup)
-    try:
-        issue.client_requisite = _get_client_requisite(soup)
-    except:
-        issue.client_requisite = ()
-    try:
-        issue.contragent_category = _get_contragent_category(soup)
-    except:
-        issue.contragent_category = ""
-    try:
-        issue.contact = _get_contact(soup)
-    except:
-        issue.contact = ()
+    issue.client_requisite = _get_client_requisite(soup)
+    issue.contragent_category = _get_contragent_category(soup)
+    issue.contact = _get_contact(soup)
     return (issue,)
 
 
