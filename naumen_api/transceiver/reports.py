@@ -174,7 +174,7 @@ def _delete_report(crm: ActiveConnect, report: TypeReport, uuid: str) -> bool:
     )
 
     if _responce:
-        log.info("Отчет в CRM Наумен удален.")
+        log.debug("Отчет в CRM Наумен удален.")
         return True
 
     log.error("Отчет в CRM Наумен не удален.")

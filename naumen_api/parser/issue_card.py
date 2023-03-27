@@ -141,7 +141,7 @@ def _get_return_to_work_time(soup: BeautifulSoup) -> datetime:
         return_to_work_time = sorted(times)[-1]  # type: ignore
     else:
         return_to_work_time = times[0]
-    log.info(f"Найдена дата возврата в работу {return_to_work_time}")
+    log.debug(f"Найдена дата возврата в работу {return_to_work_time}")
 
     if return_to_work_time is None:
         return _return_defalut_time()

@@ -81,8 +81,6 @@ def parse(
         PageType.AHT_LEVEL_REPORT_PAGE,
     )
     days = _aht_data_completion(days, label)
-    for day, content in days.items():
-        print(day, content)
     collection = _formating_aht_data(days)
     return tuple(collection)
 

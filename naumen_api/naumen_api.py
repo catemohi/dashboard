@@ -447,7 +447,7 @@ class Client:
                 **kwargs,  # type: ignore
             )
             api_response = ResponseTemplate(StatusType._SUCCESS, content)
-            log.info("Ответ на запрос получен.")
+            log.debug("Ответ на запрос получен.")
             return make_response(api_response, self.formatter)
 
         except exceptions.ConnectionError:
