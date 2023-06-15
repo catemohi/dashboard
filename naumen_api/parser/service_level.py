@@ -200,7 +200,6 @@ def _formating_service_level_data(
             gen_total_primary_issues += total_primary_issues
             gen_num_issues_before_deadline += num_issues_before_deadline
             gen_num_issues_after_deadline += num_issues_after_deadline
-            gen_service_level += service_level
             sl = ServiceLevel(
                 day,
                 group,
@@ -212,6 +211,7 @@ def _formating_service_level_data(
             )
             day_collection.append(sl)
         group = "Итог"
+        gen_service_level = gen_num_issues_before_deadline / gen_total_issues * 100
         sl = ServiceLevel(
             day,
             group,
@@ -219,7 +219,8 @@ def _formating_service_level_data(
             gen_total_primary_issues,
             gen_num_issues_before_deadline,
             gen_num_issues_after_deadline,
-            gen_service_level / 2,
+            # gen_service_level / 2, Устаревшее значение
+            gen_service_level,
         )
         day_collection.append(sl)
         collection.append(day_collection)
